@@ -10,6 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/daemon.exe",
             "args": [
+                "-c:C:\\Users\\jecat\\source\\repos\\obl\\daemon\\build\\cfg.dat",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
