@@ -3,349 +3,172 @@
 #include <vector>
 #include <map>
 
+#include "json.h"
+
 namespace json {
+    node *parse (char *stream, int& offset);
 
-    enum nodeType {
-        null = 0,
-        number,
-        string,
-        array,
-        hash,
-    };
-
-    struct node {
-        nodeType type;
-
-        node (nodeType _type = nodeType::null) : type (_type) {}
-
-        virtual void *get () { return 0; }
-        virtual void parse (char *) {}
-    };
-
-    struct stringNode: node {
-        std::string value;
-
-        stringNode (): node (nodeType::string) {}
-        stringNode (const char *src): node (nodeType::string), value (src) {}
-
-        virtual void *get () { return (void *) value.c_str (); }
-        virtual void parse (char *) {}
-    };
-
-    struct numberNode: node {
-        double value;
-
-        numberNode (): node (nodeType::number) {}
-        numberNode (const char *src): node (nodeType::number), value (atof (src)) {}
-
-        virtual void *get () { return (void *) & value; }
-        virtual void parse (char *) {}
-    };
-
-    struct arrayNode: node {
-        std::vector<node *> value;
-
-        arrayNode (): node (nodeType::array) {}
-
-        virtual void *get () { return (void *) & value; }
-        virtual void parse (char *) {}
-
-        void add (node *val) {
-            value.push_back (val);
-        }
-
-        node *operator [] (size_t index) { return value [index]; }
-    };
-
-    struct hashNode: node {
-        std::map<char *, node *> value;
-
-        hashNode (): node (nodeType::hash) {}
-
-        virtual void *get () { return (void *) & value; }
-        virtual void parse (char *);
-
-        void add (char *key, node *val) {
-            value.insert (value.end (), std::pair<char *, node *> (key, val));
-        }
-
-        node *operator [] (char *key) { return value [key]; }
-    };
-
-    char *findEndBrace (char *brace);
-    void split (char *source, char separator, std::vector<std::string>& parts);
-    void parseKvp (char *source, std::string& key, std::string& value);
-    void removeWhitespaces (char *source, std::string& result);
-
-    node *parse (char *source, char *&next);
-    char *extractLiteral (char *start, std::string& extraction);
-    char *extractNumber (char *start, std::string& extraction);
-    char *extractHash (char *start, std::string& extraction);
-    char *extractArray (char *start, std::string& extraction);
+    bool extractLiteral (char *stream, std::string& extraction, int& offset);
+    node *extractLiteral (char *stream, int& offset);
+    node *extractNumber (char *stream, int& offset);
+    node *extractHash (char *stream, int& offset);
+    node *extractArray (char *stream, int& offset);
 }
 
-void json::parseKvp (char *source, std::string& key, std::string& value) {
-    auto colon = strchr (source, ':');
-
-    key.clear ();
-    value.clear ();
-
-    if (colon) {
-        key.insert (key.begin (), source, colon);
-        value.insert (value.begin (), colon + 1, colon + strlen (colon));
-    }
-}
-
-void json::split (char *source, char separator, std::vector<std::string>& parts) {
-    parts.clear ();
-
-    char *start = source;
-    char *end;
-    
-    auto addPart = [&parts] (char *from, char *to) {
-        std::string part;
-
-        part.insert (part.begin (), from, to);
-        parts.push_back (part);
-    };
-
-    do {
-        end = strchr (start + 1, separator);
-
-        if (end) {
-            addPart (start, end);
-
-            start = end + 1;
-        } else {
-            addPart (start, start + strlen (start));
-
-            start = 0;
-        }
-    } while (start && *start);
-}
-
-char *json::findEndBrace (char *brace) {
-    char beginBrace = *brace, endBrace;
-
-    switch (*brace) {
-        case '{': endBrace = '}'; break;
-        case '[': endBrace = ']'; break;
-        default: return 0;
-    }
-
-    int count = 1;
-
-    for (auto chr = brace + 1; *chr; ++ chr) {
-        if (*chr == beginBrace) {
-            ++ count;
-        } else if (*chr == endBrace) {
-            -- count;
-
-            if (count == 0) return chr;
-        }
-    }
-
-    return 0;
-};
-
-char *json::extractHash (char *start, std::string& extraction) {
-    char *result = 0;
-
-    extraction.clear ();
-
-    if (*start = '{') {
-        auto end = findEndBrace (start);
-
-        if (end) {
-            result = end + 1;
-
-            extraction.insert (extraction.begin (), start + 1, end - 1);
-        }
-    }
-
-    return result;
-}
-
-char *json::extractArray (char *start, std::string& extraction) {
-    char *result = 0;
-
-    extraction.clear ();
-
-    if (*start = '[') {
-        auto end = findEndBrace (start);
-
-        if (end) {
-            result = end + 1;
-
-            extraction.insert (extraction.begin (), start + 1, end - 1);
-        }
-    }
-
-    return result;
-}
-
-char *json::extractLiteral (char *start, std::string& extraction) {
-    char *result = 0;
-
-    extraction.clear ();
-
-    if (*start == '"') {
-        char *chr;
-
-        for (chr = start + 1; *chr && *chr != '"'; extraction += *(chr ++));
-
-        if (*chr == '"') ++ chr;
-
-        result = chr;
-    }
-
-    return result;
-}
-
-char *json::extractNumber (char *start, std::string& extraction) {
-    char *result = 0;
-
-    extraction.clear ();
-
-    if (*start == '-') {
-        extraction += *(start ++);
-    }
-
-    if (isdigit (*start)) {
-        char *chr;
-        bool dotPassed = false;
-
-        for (chr = start; *chr && *chr != ','; extraction += *(chr ++)) {
-            switch (*chr) {
-                case '.': {
-                    if (dotPassed) exit (0);
-                    
-                    dotPassed = true; break;
-                }
-                default: {
-                    if (!isdigit (*chr)) exit (0);
-                }
-            }
-        }
-
-        if (*chr == ',') ++ chr;
-
-        result = chr;
-    }
-
-    return result;
-}
-
-void json::hashNode::parse (char *source) {
-    char key [200];
-
-    while (*source == '"') {
-        auto nextChar = extractLiteral (source, key, sizeof (key));
-        auto count = nextChar - source;
-
-        if (source [count] != ':') exit (0);
-
-        size_t next;
-
-        value [key] = json::parse (source + (++count), next);
-
-        if (source [next] != ',' && source [next] != '\0') exit (0);
-
-        source += next + 1;
-    }
-}
-
-void json::removeWhitespaces (char *source, std::string& result) {
+void json::removeWhiteSpaces (char *source, std::string& result) {
     result.clear ();
 
-    bool inQuote = false;
-
-    for (char *org = source; *org; ++ org) {
-        switch (*org) {
+    for (auto chr = source; *chr; ++ chr) {
+        switch (*chr) {
             case ' ':
             case '\t':
             case '\r':
             case '\n':
-                if (inQuote) result += *org;
                 break;
 
-            case '\"':
-                inQuote = !inQuote;
-
             default:
-                result += *org;
+                result += *chr;
         }
     }
 }
 
-json::node *json::parse (char *sourceString, char *& next) {
-    std::string source;
+bool json::extractLiteral (char *stream, std::string& extraction, int& offset) {
+    extraction.clear ();
 
-    removeWhitespaces (sourceString, source);
+    if (stream [offset] != '"') return false;
 
-    node *result = 0;
+    for (auto i = offset + 1; stream [i] && stream [i] != '"'; ++ i) extraction += stream [i];
 
-    switch (source [0]) {
+    offset += extraction.length () + 2;
+
+    return true;
+}
+
+json::node *json::extractLiteral (char *stream, int& offset) {
+    std::string extraction;
+
+    if (!extractLiteral (stream, extraction, offset)) return 0;
+
+    return new stringNode (extraction.c_str ());
+}
+
+json::node *json::extractNumber (char *stream, int& offset) {
+    if (!isdigit (stream [offset]) && stream [offset] != '-') return 0;
+
+    std::string extraction;
+    bool dotPassed = false;
+
+    if (stream [offset] == '-') {
+        extraction += '-';
+
+        ++ offset;
+    }
+
+    for (auto i = offset; isdigit (stream [i]) || stream [i] == '.'; ++ i) {
+        if (stream [i] == '.') {
+            if (dotPassed) return 0;
+
+            dotPassed = true;
+        }
+
+        extraction += stream [i];
+    }
+
+    offset += extraction.length ();
+
+    return new numberNode (extraction.c_str ());
+}
+
+json::node *json::parse (char *stream, int& offset) {
+    json::node *item;
+
+    switch (stream [offset]) {
         case '{': {
-            std::string hashData;
-            std::vector<std::string> parts;
-            auto item = new json::hashNode ();
+            item = extractHash (stream, offset);
 
-            next = extractHash ((char *) source.c_str (), hashData);
-
-            split ((char *) hashData.c_str (), ',', parts);
-
-            for (auto& part: parts) {
-                std::string key, value;
-                char *dummy;
-
-                parseKvp ((char *) part.c_str (), key, value);
-
-                auto node = parse ((char *) value.c_str (), dummy);
-
-                item->add ((char *) key.c_str (), node);
-            }
+            if (!item) return 0;
 
             break;
         }
         case '[': {
-            std::string arrData;
-            std::vector<std::string> parts;
-            auto item = new json::arrayNode ();
+            item = extractArray (stream, offset);
 
-            next = extractArray ((char *) source.c_str (), arrData);
-
-            split ((char *) arrData.c_str (), ',', parts);
-
-            for (auto& part: parts) {
-                char *dummy;
-
-                auto node = parse ((char *) part.c_str (), dummy);
-
-                item->add (node);
-            }
+            if (!item) return 0;
 
             break;
         }
         case '"': {
-            std::string value;
+            item = extractLiteral (stream, offset);
 
-            extractLiteral ((char *) source.c_str (), value);
+            if (!item) return 0;
 
-            result = new json::stringNode (value.c_str ()); break;
+            break;
         }
         default: {
-            if (isdigit (source [0]) || source [0] == '-') {
-                std::string value;
-
-                json::extractNumber ((char *) source.c_str (), value);
-
-                result = new json::numberNode ((char *) value.c_str ()); break;
+            if (isdigit (stream [offset]) || stream [offset] == '.') {
+                item = extractNumber (stream, offset);
             } else {
-                result = new node ();
+                item = 0;
             }
+
+            break;
         }
     }
+
+    return item;
+}
+
+json::node *json::extractHash (char *stream, int& offset) {
+    hashNode *result = new hashNode ();
+    
+    if (stream [offset] != '{') return  0;
+
+    ++ offset;
+
+    while (stream [offset] == '"') {
+        std::string key;
+
+        if (!extractLiteral (stream, key, offset)) return 0;
+        if (stream [offset] != ':') return 0;
+
+        ++ offset;
+
+        json::node *item = parse (stream, offset);
+
+        if (!item) return 0;
+
+        result->add ((char *) key.c_str (), item);
+
+        if (stream [offset] == ',') ++ offset;
+    }
+
+    if (stream [offset] != '}') return 0;
+
+    ++ offset;
+
+    return result;
+}
+
+json::node *json::extractArray (char *stream, int& offset) {
+    arrayNode *result = new arrayNode ();
+    
+    if (stream [offset] != '[') return  0;
+
+    ++ offset;
+
+    while (stream [offset] != ']') {
+        json::node *item = parse (stream, offset);
+
+        if (!item) return 0;
+
+        result->add (item);
+
+        if (stream [offset] == ',') ++ offset;
+    }
+
+    if (stream [offset] != ']') return 0;
+
+    ++ offset;
 
     return result;
 }
