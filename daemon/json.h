@@ -58,6 +58,9 @@ namespace json {
         inline node *operator [] (size_t index) {
             return index < value.size () ? value [index] : 0;
         }
+
+        inline auto begin () { return value.begin (); }
+        inline auto end () { return value.end (); }
     };
 
     struct hashNode: node {
@@ -81,11 +84,13 @@ namespace json {
                 auto result = strcmp (item.first, key);
                 
                 if (result == 0) return item.second;
-                if (result > 0) return 0;
             }
 
             return 0;
         }
+
+        inline auto begin () { return value.begin (); }
+        inline auto end () { return value.end (); }
     };
 
     node *parse (char *sourceString, int& nextChar);

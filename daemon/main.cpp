@@ -46,10 +46,14 @@ void parseCfgFile (config& cfg) {
 
         json::arrayNode *values = (json::arrayNode *) (*root) ["values"];
 
-        for (auto i = 0; i < values->size (); ++ i) {
-            json::numberNode *val = (json::numberNode *) (*values) [i];
+        for (auto curVal = values->begin (); curVal != values->end (); ++ curVal) {
+            if ((*curVal)->type == json::nodeType::null) {
+                printf ("Null value\n");
+            } else {
+                json::numberNode *val = (json::numberNode *) (*curVal);
 
-            printf ("Value %d: %.f\n", i + 1, val->getValue ());
+                printf ("Value %.f\n", val->getValue ());
+            }
         }
 
         free (buffer);

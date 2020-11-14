@@ -107,6 +107,9 @@ json::node *json::parse (char *stream, int& offset) {
         default: {
             if (isdigit (stream [offset]) || stream [offset] == '.') {
                 item = extractNumber (stream, offset);
+            } else if (memcmp (stream + offset, "null", 4) == 0) {
+                item = new node ();
+                offset += 4;
             } else {
                 item = 0;
             }
