@@ -53,17 +53,21 @@ void parseCfgFile (config& cfg) {
                 printf ("[%s] ", key.hashKey.c_str ());
             }
 
-            switch (_node->type) {
-                case json::nodeType::null:
-                    printf ("Null value\n"); break;
-                case json::nodeType::number:
-                    printf ("%f\n", nodeVal.numericValue); break;
-                case json::nodeType::string:
-                    printf ("%s\n", nodeVal.stringValue.c_str ()); break;
-                case json::nodeType::array:
-                    printf ("array\n"); break;
-                case json::nodeType::hash:
-                    printf ("hash\n"); break;
+            if (!_node) {
+                printf ("Missing value\n");
+            } else {
+                switch (_node->type) {
+                    case json::nodeType::null:
+                        printf ("Null value\n"); break;
+                    case json::nodeType::number:
+                        printf ("%f\n", nodeVal.numericValue); break;
+                    case json::nodeType::string:
+                        printf ("%s\n", nodeVal.stringValue.c_str ()); break;
+                    case json::nodeType::array:
+                        printf ("array\n"); break;
+                    case json::nodeType::hash:
+                        printf ("hash\n"); break;
+                }
             }
         };
 

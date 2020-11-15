@@ -144,6 +144,10 @@ namespace json {
     template<typename Cb> void walkThrough (node *_node, Cb cb, valueKey& key) {
         nodeValue val;
 
+        if (!_node) {
+            cb (_node, val, key); return;
+        }
+
         // populate node value and make a first, very general call of the callback
         // for hashes and arrays we will call callback recursively later
         getValue (_node, val);
