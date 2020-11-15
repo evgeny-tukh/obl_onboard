@@ -81,6 +81,11 @@ json::node *json::extractNumber (char *stream, int& offset) {
 
 json::node *json::parse (char *stream, int& offset) {
     json::node *item;
+    std::string streamHolder;
+
+    removeWhiteSpaces (stream, streamHolder);
+
+    stream = (char *) streamHolder.c_str ();
 
     switch (stream [offset]) {
         case '{': {

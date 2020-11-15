@@ -33,10 +33,10 @@ void parseCfgFile (config& cfg) {
         fread (buffer, sizeof (char), size, cfgFile);
 
         int next = 0;
-        std::string source;
-        json::removeWhiteSpaces (buffer, source);
+        //std::string source;
+        //json::removeWhiteSpaces (buffer, source);
         
-        auto json = json::parse ((char *) source.c_str (), next);
+        auto json = json::parse (/*(char *) source.c_str ()*/buffer, next);
         json::hashNode *root = (json::hashNode *) json;
         json::hashNode *server = (json::hashNode *) (*root) ["server"];
         json::numberNode *port = (json::numberNode *) (*server) ["port"];
