@@ -55,8 +55,16 @@ namespace json {
             value.push_back (val);
         }
 
-        inline node *operator [] (size_t index) {
+        inline node *&operator [] (size_t index) {
+            return value [index];
+        }
+
+        inline node *at (size_t index) {
             return index < value.size () ? value [index] : 0;
+        }
+
+        inline void setAt (size_t index, node *nodeValue) {
+            if (index < value.size ()) value [index] = nodeValue;
         }
 
         inline auto begin () { return value.begin (); }
@@ -79,7 +87,17 @@ namespace json {
             value.insert (value.end (), std::pair<char *, node *> (_strdup (key), val));
         }
 
-        inline node *operator [] (char *key) {
+        inline node *&operator [] (char *key) {
+            for (auto& item: value) {
+                auto result = strcmp (item.first, key);
+                
+                if (result == 0) return item.second;
+            }
+
+            return value.end ()->second;
+        }
+
+        inline node *at (char *key) {
             for (auto& item: value) {
                 auto result = strcmp (item.first, key);
                 
@@ -89,10 +107,68 @@ namespace json {
             return 0;
         }
 
+        inline void setAt (char *key, node *nodeValue) {
+            for (auto& item: value) {
+                auto result = strcmp (item.first, key);
+                
+                if (result == 0) {
+                    item.second = nodeValue; break;
+                }
+            }
+        }
+
         inline auto begin () { return value.begin (); }
         inline auto end () { return value.end (); }
     };
 
+    struct valueKey {
+        size_t arrayIndex;
+        std::string hashKey;
+
+        static const size_t noIndex = 0xFFFFFFFF;
+
+        valueKey (): arrayIndex (noIndex) {}
+    };
+
+    struct nodeValue {
+        std::string stringValue;
+        double numericValue;
+        std::vector<node *> arrayValue;
+        std::map<char *, node *> hashValue;
+    };
+
     node *parse (char *sourceString, int& nextChar);
     void removeWhiteSpaces (char *source, std::string& result);
+    void getValue (node *_node, nodeValue& value);
+
+    template<typename Cb> void walkThrough (node *_node, Cb cb, valueKey& key) {
+        nodeValue val;
+
+        // populate node value and make a first, very general call of the callback
+        // for hashes and arrays we will call callback recursively later
+        getValue (_node, val);
+        cb (_node, val, key); 
+
+        switch ((*(_node)).type) {
+            case nodeType::array: {
+                valueKey itemKey;
+
+                // go through all array elements
+                for (itemKey.arrayIndex = 0; itemKey.arrayIndex < val.arrayValue.size (); ++ itemKey.arrayIndex) {
+                    walkThrough (val.arrayValue [itemKey.arrayIndex], cb, itemKey);
+                }
+                break;
+            }
+            case nodeType::hash: {
+                valueKey itemKey;
+
+                // go through all hash elements
+                for (auto& element: val.hashValue) {
+                    itemKey.hashKey = element.first;
+                    walkThrough (element.second, cb, itemKey);
+                }
+                break;
+            }
+        }
+    }
 }

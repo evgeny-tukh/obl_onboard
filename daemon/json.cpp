@@ -175,3 +175,22 @@ json::node *json::extractArray (char *stream, int& offset) {
 
     return result;
 }
+
+void json::getValue (node *_node, nodeValue& value) {
+    switch ((*_node).type) {
+        case nodeType::number: {
+            value.numericValue = ((numberNode *)_node)->getValue (); break;
+        }
+        case nodeType::string: {
+            value.stringValue = ((stringNode *)_node)->getValue (); break;
+        }
+        case nodeType::hash: {
+            hashNode *hash = (hashNode *) _node;
+            value.hashValue.insert ((*hash).begin (), (*hash).end ()); break;
+        }
+        case nodeType::array: {
+            arrayNode *array = (arrayNode *) _node;
+            value.arrayValue.insert (value.arrayValue.begin (), (*array).begin (), (*array).end ()); break;
+        }
+    }
+}
