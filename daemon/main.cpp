@@ -87,6 +87,8 @@ void parseCfgFile (config& cfg) {
         json::walkThrough (json, showValue, key, level);
         //json::walkThrough (values, showValue, key);
 
+        printf ("\n\n%s\n", json->serialize ().c_str ());
+
         free (buffer);
         fclose (cfgFile);
     }

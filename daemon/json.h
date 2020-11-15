@@ -18,6 +18,7 @@ namespace json {
         node (nodeType _type = nodeType::null) : type (_type) {}
 
         virtual void *get () { return 0; }
+        virtual std::string serialize () { return "null"; }
     };
 
     struct stringNode: node {
@@ -28,6 +29,15 @@ namespace json {
 
         virtual void *get () { return (void *) value.c_str (); }
         inline const char *getValue () { return value.c_str (); }
+
+        virtual std::string serialize () {
+            std::string result = "\"";
+
+            result += value;
+            result += '"';
+
+            return result;
+        }
     };
 
     struct numberNode: node {
@@ -38,6 +48,18 @@ namespace json {
 
         virtual void *get () { return (void *) & value; }
         inline double getValue () { return value; }
+
+        virtual std::string serialize () {
+            char buffer [100];
+            sprintf (buffer, "%f", value);
+
+            std::string result = "\"";
+
+            result += buffer;
+            result += '"';
+
+            return result;
+        }
     };
 
     struct arrayNode: node {
@@ -69,6 +91,20 @@ namespace json {
 
         inline auto begin () { return value.begin (); }
         inline auto end () { return value.end (); }
+
+        virtual std::string serialize () {
+            std::string result = "[";
+
+            for (auto i = 0; i < value.size (); ++ i) {
+                result += value [i]->serialize ();
+
+                if (i < (value.size () - 1)) result += ',';
+            }
+
+            result += ']';
+
+            return result;
+        }
     };
 
     struct hashNode: node {
@@ -119,6 +155,29 @@ namespace json {
 
         inline auto begin () { return value.begin (); }
         inline auto end () { return value.end (); }
+
+        virtual std::string serialize () {
+            std::string result = "{";
+
+            for (auto& element: value) {
+                result += "\"";
+                result += element.first;
+                result += "\":";
+
+                if (element.second) {
+                    result += element.second->serialize ();
+                } else {
+                    result += "null";
+                }
+
+                result += ',';
+            }
+
+            if (result.length () > 2)
+                result.back () = '}';
+
+            return result;
+        }
     };
 
     struct valueKey {
