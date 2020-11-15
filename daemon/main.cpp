@@ -46,7 +46,9 @@ void parseCfgFile (config& cfg) {
 
         json::arrayNode *values = (json::arrayNode *) (*root) ["values"];
 
-        auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key) {
+        auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key, uint16_t level) {
+            printf ("Level %d ", level);
+
             if (key.arrayIndex != json::valueKey::noIndex) {
                 printf ("[%zd] ", key.arrayIndex);
             } else if (!key.hashKey.empty ()) {
@@ -72,14 +74,18 @@ void parseCfgFile (config& cfg) {
         };
 
         json::valueKey key;
-        json::walkThrough (values, showValue, key);
+        uint16_t level = 0;
+        json::walkThrough (json, showValue, key, level);
+        //json::walkThrough (values, showValue, key);
 
         next = 0;
-        values->setAt (2, json::parse ("{val1:\"abc\",val2:5}", next));
+        values->setAt (2, json::parse ("{\"val1\":\"abc\",\"val2\":5,\"val3\":{\"sv1\":11,\"sv2\":22}}", next));
 
+        level = 0;
         key.arrayIndex = json::valueKey::noIndex;
         key.hashKey.clear ();
-        json::walkThrough (values, showValue, key);
+        json::walkThrough (json, showValue, key, level);
+        //json::walkThrough (values, showValue, key);
 
         free (buffer);
         fclose (cfgFile);

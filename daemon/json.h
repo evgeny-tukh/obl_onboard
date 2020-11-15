@@ -141,17 +141,17 @@ namespace json {
     void removeWhiteSpaces (char *source, std::string& result);
     void getValue (node *_node, nodeValue& value);
 
-    template<typename Cb> void walkThrough (node *_node, Cb cb, valueKey& key) {
+    template<typename Cb> void walkThrough (node *_node, Cb cb, valueKey& key, uint16_t level) {
         nodeValue val;
 
         if (!_node) {
-            cb (_node, val, key); return;
+            cb (_node, val, key, level); return;
         }
 
         // populate node value and make a first, very general call of the callback
         // for hashes and arrays we will call callback recursively later
         getValue (_node, val);
-        cb (_node, val, key); 
+        cb (_node, val, key, level); 
 
         switch ((*(_node)).type) {
             case nodeType::array: {
@@ -159,7 +159,7 @@ namespace json {
 
                 // go through all array elements
                 for (itemKey.arrayIndex = 0; itemKey.arrayIndex < val.arrayValue.size (); ++ itemKey.arrayIndex) {
-                    walkThrough (val.arrayValue [itemKey.arrayIndex], cb, itemKey);
+                    walkThrough (val.arrayValue [itemKey.arrayIndex], cb, itemKey, level + 1);
                 }
                 break;
             }
@@ -169,7 +169,7 @@ namespace json {
                 // go through all hash elements
                 for (auto& element: val.hashValue) {
                     itemKey.hashKey = element.first;
-                    walkThrough (element.second, cb, itemKey);
+                    walkThrough (element.second, cb, itemKey, level + 1);
                 }
                 break;
             }
