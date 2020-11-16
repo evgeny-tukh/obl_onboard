@@ -15,7 +15,9 @@
           "build/daemon.exe",
           "main.cpp",
           "json.cpp",
+          "req_mgr.cpp",
           "wsock32.lib",
+          "wininet.lib",
         ],
         "problemMatcher": ["$msCompile"],
         "group": {

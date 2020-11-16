@@ -5,6 +5,7 @@
 #include <WinSock2.h>
 #include <string>
 #include "json.h"
+#include "req_mgr.h"
 
 struct config {
     in_addr host;
@@ -161,6 +162,17 @@ int main (int argCount, char *args []) {
     printf ("OBL Daemon v1.0\n");
 
     parseParams (argCount, args, cfg);
+
+    reqManager mgr (3500, "localhost");
+
+    if (mgr.open ()) {
+        char buffer [10000];
+
+        if (mgr.sendRequest ("config", buffer, sizeof (buffer)))
+            printf ("%s\n\n", buffer);
+        if (mgr.sendRequest ("channels", buffer, sizeof (buffer)))
+            printf ("%s\n\n", buffer);
+    }
 
     exit (0);
 }
