@@ -8,12 +8,41 @@
 #include "req_mgr.h"
 
 struct config {
-    in_addr host;
+    char host [200];
     uint16_t port;
+    uint64_t begin, end;
     std::string cfgFile;
+    bool queryData;
 
-    config () : port (3500) {
-        host.S_un.S_addr = INADDR_LOOPBACK;
+    config () : port (3500), queryData (false), begin (0), end (0) {
+        memset (host, 0, sizeof (host));
+    }
+};
+
+auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key, uint16_t level) {
+    printf ("Level %d ", level);
+
+    if (key.arrayIndex != json::valueKey::noIndex) {
+        printf ("[%zd] ", key.arrayIndex);
+    } else if (!key.hashKey.empty ()) {
+        printf ("[%s] ", key.hashKey.c_str ());
+    }
+
+    if (!_node) {
+        printf ("Missing value\n");
+    } else {
+        switch (_node->type) {
+            case json::nodeType::null:
+                printf ("Null value\n"); break;
+            case json::nodeType::number:
+                printf ("%f\n", nodeVal.numericValue); break;
+            case json::nodeType::string:
+                printf ("%s\n", nodeVal.stringValue.c_str ()); break;
+            case json::nodeType::array:
+                printf ("array\n"); break;
+            case json::nodeType::hash:
+                printf ("hash\n"); break;
+        }
     }
 };
 
@@ -47,33 +76,6 @@ void parseCfgFile (config& cfg) {
 
         json::arrayNode *values = (json::arrayNode *) (*root) ["values"];
 
-        auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key, uint16_t level) {
-            printf ("Level %d ", level);
-
-            if (key.arrayIndex != json::valueKey::noIndex) {
-                printf ("[%zd] ", key.arrayIndex);
-            } else if (!key.hashKey.empty ()) {
-                printf ("[%s] ", key.hashKey.c_str ());
-            }
-
-            if (!_node) {
-                printf ("Missing value\n");
-            } else {
-                switch (_node->type) {
-                    case json::nodeType::null:
-                        printf ("Null value\n"); break;
-                    case json::nodeType::number:
-                        printf ("%f\n", nodeVal.numericValue); break;
-                    case json::nodeType::string:
-                        printf ("%s\n", nodeVal.stringValue.c_str ()); break;
-                    case json::nodeType::array:
-                        printf ("array\n"); break;
-                    case json::nodeType::hash:
-                        printf ("hash\n"); break;
-                }
-            }
-        };
-
         json::valueKey key;
         uint16_t level = 0;
         json::walkThrough (json, showValue, key, level);
@@ -104,6 +106,9 @@ void showHelp () {
         "\t-p:port\t\tset port\n"
         "\t-h:host\t\tset host\n"
         "\t-c:cfgfile\tset config file\n"
+        "\t-q\t\tquery data values; might be used in together with -b and -e; otherwise recent data will be received\n"
+        "\t-b:timestamp\tinterval begin\n"
+        "\t-e:timestamp\tinterval end\n"
     );
     
     exit (0);
@@ -123,6 +128,22 @@ void parseParams (int argCount, char *args [], config& cfg) {
                 case '?': {
                     showHelp ();
                 }
+                case 'b': {
+                    if (arg [2] == ':') {
+                        cfg.begin = atol (arg + 3);
+                    } else {
+                        invalidArgMsg (arg);
+                    }
+                    break;
+                }
+                case 'e': {
+                    if (arg [2] == ':') {
+                        cfg.end = atol (arg + 3);
+                    } else {
+                        invalidArgMsg (arg);
+                    }
+                    break;
+                }
                 case 'p': {
                     if (arg [2] == ':') {
                         cfg.port = atoi (arg + 3);
@@ -133,7 +154,7 @@ void parseParams (int argCount, char *args [], config& cfg) {
                 }
                 case 'h': {
                     if (arg [2] == ':') {
-                        cfg.host.S_un.S_addr = inet_addr (arg + 3);
+                        strcpy (cfg.host, arg + 3);
                     } else {
                         invalidArgMsg (arg);
                     }
@@ -146,6 +167,9 @@ void parseParams (int argCount, char *args [], config& cfg) {
                         invalidArgMsg (arg);
                     }
                     break;
+                }
+                case 'q': {
+                    cfg.queryData = true; break;
                 }
             }
         } else {
@@ -166,12 +190,26 @@ int main (int argCount, char *args []) {
     reqManager mgr (3500, "localhost");
 
     if (mgr.open ()) {
-        char buffer [10000];
+        char buffer [50000];
 
         if (mgr.sendRequest ("config", buffer, sizeof (buffer)))
             printf ("%s\n\n", buffer);
         if (mgr.sendRequest ("channels", buffer, sizeof (buffer)))
             printf ("%s\n\n", buffer);
+
+        if (cfg.queryData) {
+            if (mgr.sendRequest ("history_values/DBExport", buffer, sizeof (buffer))) {
+                printf ("%s\n\n", buffer);
+
+                int next = 0;
+                json::valueKey key;
+                uint16_t level = 0;
+                auto *json = (json::hashNode *) json::parse (buffer, next);
+                json::walkThrough (json, showValue, key, level);
+
+                printf ("Bytes parsed: %d\n", next);
+            }
+        }
     }
 
     exit (0);
