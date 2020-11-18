@@ -15,6 +15,7 @@
           "build/daemon.exe",
           "main.cpp",
           "json.cpp",
+          "poller.cpp",
           "req_mgr.cpp",
           "wsock32.lib",
           "wininet.lib",

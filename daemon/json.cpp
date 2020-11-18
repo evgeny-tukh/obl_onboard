@@ -16,15 +16,19 @@ namespace json {
 }
 
 void json::removeWhiteSpaces (char *source, std::string& result) {
+    bool insideString = false;
+
     result.clear ();
 
     for (auto chr = source; *chr; ++ chr) {
+        if (*chr == '"') insideString = !insideString;
+        
         switch (*chr) {
             case ' ':
             case '\t':
             case '\r':
             case '\n':
-                break;
+                if (!insideString) break;
 
             default:
                 result += *chr;

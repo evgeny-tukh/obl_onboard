@@ -4,20 +4,9 @@
 #include <cstdint>
 #include <WinSock2.h>
 #include <string>
+#include <vector>
 #include "json.h"
-#include "req_mgr.h"
-
-struct config {
-    char host [200];
-    uint16_t port;
-    uint64_t begin, end;
-    std::string cfgFile;
-    bool queryData;
-
-    config () : port (3500), queryData (false), begin (0), end (0) {
-        memset (host, 0, sizeof (host));
-    }
-};
+#include "defs.h"
 
 auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key, uint16_t level) {
     printf ("Level %d ", level);
@@ -63,23 +52,62 @@ void parseCfgFile (config& cfg) {
         fread (buffer, sizeof (char), size, cfgFile);
 
         int next = 0;
-        //std::string source;
-        //json::removeWhiteSpaces (buffer, source);
         
         auto json = json::parse (/*(char *) source.c_str ()*/buffer, next);
         json::hashNode *root = (json::hashNode *) json;
         json::hashNode *server = (json::hashNode *) (*root) ["server"];
         json::numberNode *port = (json::numberNode *) (*server) ["port"];
         json::stringNode *host = (json::stringNode *) (*server) ["host"];
+        json::hashNode *shipInfo = (json::hashNode *) (*root) ["vessel"];
+        json::arrayNode *tanks = (json::arrayNode *) (*root) ["tanks"];
+        json::hashNode *settings = (json::hashNode *) (*root) ["settings"];
+
+        if (host) cfg.host = host->getValue ();
+        if (port) cfg.port = (uint16_t) port->getValue ();
+        if (shipInfo) {
+            auto& ship = (*shipInfo);
+            json::stringNode *master = (json::stringNode *) ship ["master"];
+            json::stringNode *cheng = (json::stringNode *) ship ["cheng"];
+            json::stringNode *name = (json::stringNode *) ship ["name"];
+            json::numberNode *mmsi = (json::numberNode *) ship ["mmsi"];
+            json::numberNode *imo = (json::numberNode *) ship ["imo"];
+            json::numberNode *mtID = (json::numberNode *) ship ["mt_id"];
+
+            if (master) cfg.shipInfo.master = master->getValue ();
+            if (cheng) cfg.shipInfo.cheng = cheng->getValue ();
+            if (name) cfg.shipInfo.name = name->getValue ();
+            if (mmsi) cfg.shipInfo.mmsi = mmsi->getValue ();
+            if (imo) cfg.shipInfo.imo = imo->getValue ();
+            if (mtID) cfg.shipInfo.mtID = mtID->getValue ();
+        }
+        if (tanks) {
+            for (auto i = 0; i < tanks->size (); ++ i) {
+                json::hashNode *tank = (json::hashNode *) (*tanks) [i];
+
+                if (tank) {
+                    json::stringNode *name = (json::stringNode *) (*tank) ["name"];
+                    json::stringNode *type = (json::stringNode *) (*tank) ["type"];
+                    json::numberNode *volume = (json::numberNode *) (*tank) ["volume"];
+
+                    if (name && type && volume) {
+                        cfg.tanks.emplace_back (name->getValue (), type->getValue (), volume->getValue ());
+                    }
+                }
+            }
+        }
+        if (settings) {
+            json::numberNode *pollingInterval = (json::numberNode *) (*settings) ["pollingInterval"];
+
+            if (pollingInterval) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
+        }
 
         printf ("port: %.f; host: %s\n", port->getValue (), host->getValue ());
 
-        json::arrayNode *values = (json::arrayNode *) (*root) ["values"];
+        /*json::arrayNode *values = (json::arrayNode *) (*root) ["values"];
 
         json::valueKey key;
         uint16_t level = 0;
         json::walkThrough (json, showValue, key, level);
-        //json::walkThrough (values, showValue, key);
 
         next = 0;
         values->setAt (2, json::parse ("{\"val1\":\"abc\",\"val2\":5,\"val3\":{\"sv1\":11,\"sv2\":22}}", next));
@@ -90,7 +118,7 @@ void parseCfgFile (config& cfg) {
         json::walkThrough (json, showValue, key, level);
         //json::walkThrough (values, showValue, key);
 
-        printf ("\n\n%s\n", json->serialize ().c_str ());
+        printf ("\n\n%s\n", json->serialize ().c_str ());*/
 
         free (buffer);
         fclose (cfgFile);
@@ -154,7 +182,7 @@ void parseParams (int argCount, char *args [], config& cfg) {
                 }
                 case 'h': {
                     if (arg [2] == ':') {
-                        strcpy (cfg.host, arg + 3);
+                        cfg.host = arg + 3;
                     } else {
                         invalidArgMsg (arg);
                     }
@@ -186,31 +214,10 @@ int main (int argCount, char *args []) {
     printf ("OBL Daemon v1.0\n");
 
     parseParams (argCount, args, cfg);
-
-    reqManager mgr (3500, "localhost");
-
-    if (mgr.open ()) {
-        char buffer [50000];
-
-        if (mgr.sendRequest ("config", buffer, sizeof (buffer)))
-            printf ("%s\n\n", buffer);
-        if (mgr.sendRequest ("channels", buffer, sizeof (buffer)))
-            printf ("%s\n\n", buffer);
-
-        if (cfg.queryData) {
-            if (mgr.sendRequest ("history_values/DBExport", buffer, sizeof (buffer))) {
-                printf ("%s\n\n", buffer);
-
-                int next = 0;
-                json::valueKey key;
-                uint16_t level = 0;
-                auto *json = (json::hashNode *) json::parse (buffer, next);
-                json::walkThrough (json, showValue, key, level);
-
-                printf ("Bytes parsed: %d\n", next);
-            }
-        }
-    }
+    
+    auto runnerCtx = startPoller (cfg);
+ 
+    if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
 
     exit (0);
 }

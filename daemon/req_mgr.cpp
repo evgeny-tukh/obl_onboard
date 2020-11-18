@@ -12,12 +12,14 @@ reqManager::~reqManager () {
 }
 
 bool reqManager::open () {
-    internet = InternetOpen ("OblDeaemon", INTERNET_OPEN_TYPE_DIRECT, 0, 0, 0);
-
     if (!internet) {
-        printf ("Error %d connecting to Internet\n", GetLastError ()); return false;
-    }
+        internet = InternetOpen ("OblDeaemon", INTERNET_OPEN_TYPE_DIRECT, 0, 0, 0);
 
+        if (!internet) {
+            printf ("Error %d connecting to Internet\n", GetLastError ()); return false;
+        }
+    }
+    
     return internet != 0;
 }
 
