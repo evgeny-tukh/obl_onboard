@@ -7,6 +7,7 @@
 #include <vector>
 #include "json.h"
 #include "defs.h"
+#include "db.h"
 
 auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key, uint16_t level) {
     printf ("Level %d ", level);
@@ -58,11 +59,15 @@ void parseCfgFile (config& cfg) {
         json::hashNode *server = (json::hashNode *) (*root) ["server"];
         json::numberNode *port = (json::numberNode *) (*server) ["port"];
         json::stringNode *host = (json::stringNode *) (*server) ["host"];
+        json::stringNode *path = (json::stringNode *) (*server) ["path"];
         json::hashNode *shipInfo = (json::hashNode *) (*root) ["vessel"];
         json::arrayNode *tanks = (json::arrayNode *) (*root) ["tanks"];
         json::hashNode *settings = (json::hashNode *) (*root) ["settings"];
+        json::arrayNode *params = (json::arrayNode *) (*root) ["params"];
+        json::arrayNode *paramGroups = (json::arrayNode *) (*root) ["paramGroups"];
 
         if (host) cfg.host = host->getValue ();
+        if (path) cfg.path = path->getValue ();
         if (port) cfg.port = (uint16_t) port->getValue ();
         if (shipInfo) {
             auto& ship = (*shipInfo);
@@ -100,6 +105,52 @@ void parseCfgFile (config& cfg) {
 
             if (pollingInterval) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
         }
+        if (params) {
+            for (auto i = 0; i < params->size (); ++ i) {
+                json::hashNode *parameter = (json::hashNode *) (*params) [i];
+
+                if (parameter) {
+                    json::numberNode *id = (json::numberNode *) (*parameter) ["id"];
+                    json::stringNode *key = (json::stringNode *) (*parameter) ["key"];
+                    json::stringNode *name = (json::stringNode *) (*parameter) ["name"];
+                    json::numberNode *isNumber = (json::numberNode *) (*parameter) ["isNumber"];
+                    json::numberNode *multiplier = (json::numberNode *) (*parameter) ["multiplier"];
+                    json::numberNode *group = (json::numberNode *) (*parameter) ["group"];
+
+                    auto& newParam = cfg.params.emplace (
+                        (uint8_t) id->getValue (),
+                        param (
+                            (uint8_t) id->getValue (),
+                            key->getValue (),
+                            name->getValue (),
+                            (uint8_t) multiplier->getValue (),
+                            (uint8_t) isNumber->getValue (),
+                            (uint8_t) group->getValue ()
+                        )
+                    ).first->second;
+                }
+            }
+        }
+        if (paramGroups) {
+            for (auto i = 0; i < paramGroups->size (); ++ i) {
+                json::hashNode *parameterGroup = (json::hashNode *) (*paramGroups) [i];
+
+                if (parameterGroup) {
+                    json::numberNode *id = (json::numberNode *) (*parameterGroup) ["id"];
+                    json::stringNode *key = (json::stringNode *) (*parameterGroup) ["key"];
+                    json::stringNode *name = (json::stringNode *) (*parameterGroup) ["name"];
+
+                    cfg.paramGroups.emplace (
+                        (uint8_t) id->getValue (),
+                        paramGroup (
+                            (uint8_t) id->getValue (),
+                            key->getValue (),
+                            name->getValue ()
+                        )
+                    );
+                }
+            }
+        }
 
         printf ("port: %.f; host: %s\n", port->getValue (), host->getValue ());
 
@@ -133,6 +184,7 @@ void showHelp () {
         "\t-?\t\tshow help\n"
         "\t-p:port\t\tset port\n"
         "\t-h:host\t\tset host\n"
+        "\t-a:path\t\tset host path\n"
         "\t-c:cfgfile\tset config file\n"
         "\t-q\t\tquery data values; might be used in together with -b and -e; otherwise recent data will be received\n"
         "\t-b:timestamp\tinterval begin\n"
@@ -180,6 +232,14 @@ void parseParams (int argCount, char *args [], config& cfg) {
                     }
                     break;
                 }
+                case 'a': {
+                    if (arg [2] == ':') {
+                        cfg.path = arg + 3;
+                    } else {
+                        invalidArgMsg (arg);
+                    }
+                    break;
+                }
                 case 'h': {
                     if (arg [2] == ':') {
                         cfg.host = arg + 3;
@@ -210,6 +270,7 @@ void parseParams (int argCount, char *args [], config& cfg) {
 
 int main (int argCount, char *args []) {
     config cfg;
+    database db;
 
     printf ("OBL Daemon v1.0\n");
 

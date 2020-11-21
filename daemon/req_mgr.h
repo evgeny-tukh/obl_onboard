@@ -7,15 +7,15 @@
 
 class reqManager {
     public:
-        reqManager (uint16_t port, char *host);
+        reqManager (uint16_t port, char *host, char *path);
         virtual ~reqManager ();
 
         bool open ();
-        bool sendRequest (char *reqCmd, char *buffer, size_t size);
+        bool sendRequest (char *buffer, size_t size);
 
     protected:
         HINTERNET internet;
         uint16_t port;
-        char *host;
+        char *host, *path;
 };
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "req_mgr.h"
 
-reqManager::reqManager (uint16_t _port, char *_host): port (_port), host (_strdup (_host)), internet (0) {
+reqManager::reqManager (uint16_t _port, char *_host, char *_path): port (_port), host (_strdup (_host)), internet (0), path (_path) {
 }
 
 reqManager::~reqManager () {
@@ -19,14 +19,14 @@ bool reqManager::open () {
             printf ("Error %d connecting to Internet\n", GetLastError ()); return false;
         }
     }
-    
+
     return internet != 0;
 }
 
-bool reqManager::sendRequest (char *reqCmd, char *buffer, size_t size) {
-    char url [500] { "/api" };
+bool reqManager::sendRequest (char *buffer, size_t size) {
+    char url [500];
 
-    sprintf (url, "http://%s:%d/api/%s", host, port, reqCmd);
+    sprintf (url, "http://%s:%d%s", host, port, path ? path : "");
 
     auto urlHandle = InternetOpenUrl (internet, url, 0, 0, 0, 0);
 

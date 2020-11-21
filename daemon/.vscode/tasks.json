@@ -17,6 +17,8 @@
           "json.cpp",
           "poller.cpp",
           "req_mgr.cpp",
+          "db.cpp",
+          "sqlite3.c",
           "wsock32.lib",
           "wininet.lib",
         ],

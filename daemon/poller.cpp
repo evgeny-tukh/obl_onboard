@@ -56,7 +56,7 @@ void poll (reqManager& reqMgr) {
         if (buffer) {
             printf ("Requesting...");
 
-            if (reqMgr.sendRequest ("channels", buffer, bufSize)) {
+            if (reqMgr.sendRequest (buffer, bufSize)) {
                 printf ("%zd bytes received\n", strlen (buffer));
 
                 parsePollResult (buffer);
@@ -70,7 +70,7 @@ void poll (reqManager& reqMgr) {
 }
 
 void pollerProc (pollerContext *ctx, config& cfg) {
-    reqManager reqMgr (cfg.port, (char *) cfg.host.c_str ());
+    reqManager reqMgr (cfg.port, (char *) cfg.host.c_str (), (char *) cfg.path.c_str ());
 
     while (ctx->keepRunning) {
         time_t now = time (0);
