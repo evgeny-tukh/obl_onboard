@@ -6,11 +6,27 @@
 #include <cstdint>
 #include <thread>
 
+enum dataColumn {
+    bunkeringReport = 0,
+    sensorData = 1,
+    hoppeData = 2,
+    analyzeResult = 3,
+};
+
+enum fuelOperType {
+    operate = 1,
+    bunkering = 2,
+    move = 3,
+
+    unknown = 0,
+};
+
 struct tank {
+    uint16_t id;
     std::string name, type;
     float volume;
 
-    tank (const char *_name, const char *_type, float _vol): name (_name), type (_type), volume (_vol) {}
+    tank (const uint16_t _id, const char *_name, const char *_type, float _vol): name (_name), type (_type), volume (_vol), id (_id) {}
 };
 
 struct ship {
@@ -50,6 +66,7 @@ struct config {
     std::string host, path;
     uint16_t port;
     uint64_t begin, end;
+    float timezone;
     std::string cfgFile;
     bool queryData;
     std::vector<tank> tanks;
@@ -57,6 +74,31 @@ struct config {
     time_t pollingInterval;
     std::map<uint8_t, param> params;
     std::map<uint8_t, paramGroup> paramGroups;
+    std::map<char *, uint8_t> columnMap;
+
+    tank *findTank (char *name) {
+        for (auto& tank: tanks) {
+            if (strcmp (tank.name.c_str (), name) == 0) return & tank;
+        }
+
+        return 0;
+    }
+
+    param *findParam (char *key) {
+        for (auto iter = params.begin (); iter != params.end (); ++ iter) {
+            if (strcmp (iter->second.key.c_str (), key) == 0) return & iter->second;
+        }
+
+        return 0;
+    }
+
+    int findColumnMap (char *key) {
+        for (auto iter = columnMap.begin (); iter != columnMap.end (); ++ iter) {
+            if (strcmp (iter->first, key) == 0) return (int) iter->second;
+        }
+
+        return -1;
+    }
 
     config () : port (3500), queryData (false), begin (0), end (0), pollingInterval (120) {
     }

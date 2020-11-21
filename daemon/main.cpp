@@ -65,6 +65,7 @@ void parseCfgFile (config& cfg) {
         json::hashNode *settings = (json::hashNode *) (*root) ["settings"];
         json::arrayNode *params = (json::arrayNode *) (*root) ["params"];
         json::arrayNode *paramGroups = (json::arrayNode *) (*root) ["paramGroups"];
+        json::hashNode *columnMap = (json::hashNode *) (*root) ["columnMap"];
 
         if (host) cfg.host = host->getValue ();
         if (path) cfg.path = path->getValue ();
@@ -90,20 +91,23 @@ void parseCfgFile (config& cfg) {
                 json::hashNode *tank = (json::hashNode *) (*tanks) [i];
 
                 if (tank) {
+                    json::numberNode *id = (json::numberNode *) (*tank) ["id"];
                     json::stringNode *name = (json::stringNode *) (*tank) ["name"];
                     json::stringNode *type = (json::stringNode *) (*tank) ["type"];
                     json::numberNode *volume = (json::numberNode *) (*tank) ["volume"];
 
-                    if (name && type && volume) {
-                        cfg.tanks.emplace_back (name->getValue (), type->getValue (), volume->getValue ());
+                    if (id, name && type && volume) {
+                        cfg.tanks.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue (), volume->getValue ());
                     }
                 }
             }
         }
         if (settings) {
             json::numberNode *pollingInterval = (json::numberNode *) (*settings) ["pollingInterval"];
+            json::numberNode *timezone = (json::numberNode *) (*settings) ["timezone"];
 
             if (pollingInterval) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
+            if (timezone) cfg.timezone = (float) timezone->getValue ();
         }
         if (params) {
             for (auto i = 0; i < params->size (); ++ i) {
@@ -149,6 +153,13 @@ void parseCfgFile (config& cfg) {
                         )
                     );
                 }
+            }
+        }
+        if (columnMap) {
+            for (auto iter = columnMap->begin (); iter != columnMap->end (); ++ iter) {
+                json::numberNode *column = (json::numberNode *) iter->second;
+
+                cfg.columnMap.emplace (iter->first, (uint8_t) column->getValue ());
             }
         }
 
