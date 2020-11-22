@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../common/defs.h"
-#include "wui/WindowWrapper.h"
+#include "../../common/defs.h"
+#include "../wui/WindowWrapper.h"
 
 class ShipSchema: public CWindowWrapper {
     public:

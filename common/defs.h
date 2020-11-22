@@ -21,12 +21,19 @@ enum fuelOperType {
     unknown = 0,
 };
 
+enum tankSide {
+    starboard = 's',
+    port = 'p',
+    center = 'c',
+};
+
 struct tank {
     uint16_t id;
     std::string name, type;
     float volume;
+    char side;
 
-    tank (const uint16_t _id, const char *_name, const char *_type, float _vol): name (_name), type (_type), volume (_vol), id (_id) {}
+    tank (const uint16_t _id, const char *_name, const char *_type, float _vol, const char *_side): name (_name), type (_type), volume (_vol), id (_id), side (*_side) {}
 };
 
 struct ship {

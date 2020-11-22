@@ -9,7 +9,7 @@
 #include "wui/ListBoxWrapper.h"
 #include "wui/StaticWrapper.h"
 #include "wui/InputBox.h"
-#include "ship_schema.h"
+#include "schema/ship_schema.h"
 #include "../common/defs.h"
 
 class CMainWnd : public CWindowWrapper
