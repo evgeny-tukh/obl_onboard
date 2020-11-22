@@ -1,19 +1,36 @@
-﻿#include "resource.h"
+﻿#include <Shlwapi.h>
+#include "resource.h"
 #include "main_wnd.h"
+#include "../common/defs.h"
 
-CMainWnd::CMainWnd (HINSTANCE instance): CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU)))
+CMainWnd::CMainWnd (HINSTANCE instance): CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))), shipSchema (0)
 {
+    char path [MAX_PATH];
+
+    GetModuleFileName (0, path, sizeof (path));
+    PathRemoveFileSpec (path);
+    PathAppend (path, "cfg.dat");
+
+    cfg.cfgFile = path;
+
+    parseCfgFile (cfg);
 }
 
 CMainWnd::~CMainWnd ()
 {
 }
 
-void CMainWnd::Initialize()
+void CMainWnd::OnCreate ()
 {
     RECT client;
 
     GetClientRect (& client);
+
+    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg);
+
+    shipSchema->Create (0, 0, 0, SHIP_SCHEMA_WIDTH, client.bottom + 1, WS_VISIBLE | WS_CHILD);
+    shipSchema->Show (SW_SHOW);
+    shipSchema->Update ();
 }
 
 void CMainWnd::RequestAppQuit ()
@@ -25,11 +42,8 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-        case WM_CREATE:
-            Initialize (); break;
-
         case WM_DESTROY:
-            //DestroyMenu (menu);
+            DestroyMenu (menu);
             PostQuitMessage (0);
 
             break;
@@ -74,6 +88,8 @@ LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam)
 
 LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD height)
 {
+    shipSchema->Move (0, 0, SHIP_SCHEMA_WIDTH, height, TRUE);
+
     return FALSE;
 }
 

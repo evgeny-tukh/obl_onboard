@@ -3,9 +3,9 @@
 #include <thread>
 #include <chrono>
 
-#include "defs.h"
+#include "../common/defs.h"
 #include "req_mgr.h"
-#include "json.h"
+#include "../common/json.h"
 #include "db.h"
 
 class tankData {

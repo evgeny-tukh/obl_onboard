@@ -113,3 +113,4 @@ struct pollerContext {
 };
 
 extern pollerContext *startPoller (config& cfg);
+extern void parseCfgFile (config& cfg);

@@ -9,6 +9,8 @@
 #include "wui/ListBoxWrapper.h"
 #include "wui/StaticWrapper.h"
 #include "wui/InputBox.h"
+#include "ship_schema.h"
+#include "../common/defs.h"
 
 class CMainWnd : public CWindowWrapper
 {
@@ -16,7 +18,13 @@ class CMainWnd : public CWindowWrapper
         CMainWnd (HINSTANCE instance);
         virtual ~CMainWnd ();
 
-    private:
+    protected:
+        static const int SHIP_SCHEMA_WIDTH = 300;
+        
+        ShipSchema *shipSchema;
+        HMENU       menu;
+        config      cfg;
+
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnSysCommand (WPARAM wParam, LPARAM lParam);
@@ -26,5 +34,5 @@ class CMainWnd : public CWindowWrapper
 
         void RequestAppQuit ();
 
-        void Initialize ();
+        virtual void OnCreate ();
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "sqlite3.h"
+#include "../common/sqlite3.h"
 
 class database {
     public:
