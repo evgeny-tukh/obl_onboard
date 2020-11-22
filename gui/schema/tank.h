@@ -5,8 +5,24 @@
 
 class tankDisplay {
     public:
-        tankDisplay (tank& tankCfg);
+        static const int VER_EDGE = 80;
+        static const int HOR_EDGE = 10;
+
+        struct metrics {
+            int stbd, port, middle, width, height;
+
+            metrics () : stbd (VER_EDGE), port (VER_EDGE), middle (VER_EDGE) {}
+        };
+
+        struct gdiObjects {
+            HBRUSH freeArea, filledArea;
+        };
+
+        tankDisplay (tank&);
         ~tankDisplay ();
 
-        void draw (HDC drawCtx, HWND wnd, int& offsetFromBow, double level);
+        void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume);
+
+    protected:
+        tank& tankCfg;
 };

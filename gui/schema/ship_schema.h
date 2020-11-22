@@ -2,6 +2,7 @@
 
 #include "../../common/defs.h"
 #include "../wui/WindowWrapper.h"
+#include "tank.h"
 
 class ShipSchema: public CWindowWrapper {
     public:
@@ -10,6 +11,10 @@ class ShipSchema: public CWindowWrapper {
 
     private:
         config& cfg;
+        tankDisplay::gdiObjects objects;
+
+        void recalc (tankDisplay::metrics&);
+
         virtual void OnCreate ();
         virtual LRESULT OnPaint ();
 };
