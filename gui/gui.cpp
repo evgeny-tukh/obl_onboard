@@ -4,7 +4,13 @@
 int CALLBACK WinMain (HINSTANCE instance, HINSTANCE prevInstance, char *cmdLine, int showCmd)
 {
     CMainWnd mainWindow (instance);
+    INITCOMMONCONTROLSEX ctlInitData;
 
+    ctlInitData.dwSize = sizeof (ctlInitData);
+    ctlInitData.dwICC = ICC_DATE_CLASSES;
+
+    InitCommonControlsEx (& ctlInitData);
+    
     if (mainWindow.Create ("Fuel Control Utility", 100, 100, 800, 600))
     {
         mainWindow.Show (SW_SHOW);

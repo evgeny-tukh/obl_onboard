@@ -3,6 +3,7 @@
 #include "main_wnd.h"
 #include "../common/defs.h"
 #include "wui/StaticWrapper.h"
+#include "wui/DateTimePickerWrapper.h"
 
 CMainWnd::CMainWnd (HINSTANCE instance):
     CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))),
@@ -22,6 +23,10 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 
 CMainWnd::~CMainWnd ()
 {
+    delete shipSchema;
+    delete tankSelector;
+    delete tankLabel, beginLabel, endLabel;
+    delete beginDate, endDate, beginTime, endTime;
 }
 
 void CMainWnd::OnCreate ()
@@ -37,16 +42,28 @@ void CMainWnd::OnCreate ()
     shipSchema->Update ();
 
     tankSelector = new CComboBoxWrapper (m_hwndHandle, ID_TANK_SELECTOR);
+    beginDate = new CDateTimePickerWrapper (m_hwndHandle, ID_BEGIN_DATE);
+    endDate = new CDateTimePickerWrapper (m_hwndHandle, ID_END_DATE);
+    beginTime = new CDateTimePickerWrapper (m_hwndHandle, ID_BEGIN_TIME);
+    endTime = new CDateTimePickerWrapper (m_hwndHandle, ID_END_TIME);
 
     tankSelector->CreateControl (SHIP_SCHEMA_WIDTH + 80, 0, 200, 100, CBS_AUTOHSCROLL | CBS_DROPDOWNLIST | WS_VISIBLE);
+    beginDate->CreateControl (SHIP_SCHEMA_WIDTH + 80, 25, 100, 25, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
+    endDate->CreateControl (SHIP_SCHEMA_WIDTH + 80, 50, 100, 25, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
+    beginTime->CreateControl (SHIP_SCHEMA_WIDTH + 180, 25, 100, 25, DTS_TIMEFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
+    endTime->CreateControl (SHIP_SCHEMA_WIDTH + 180, 50, 100, 25, DTS_TIMEFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
 
     for (auto iter = cfg.tanks.begin (); iter != cfg.tanks.end (); ++ iter) {
         tankSelector->AddString ((iter->name + " " + iter->type).c_str (), iter->id);
     }
 
-    auto tankLabel = new CStaticWrapper (m_hwndHandle, -1);
+    tankLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
+    beginLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
+    endLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
 
     tankLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 0, 75, 25, SS_LEFT | WS_VISIBLE, "Танк");
+    beginLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 25, 75, 25, SS_LEFT | WS_VISIBLE, "Начало");
+    endLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 50, 75, 25, SS_LEFT | WS_VISIBLE, "Конец");
 }
 
 void CMainWnd::RequestAppQuit ()
@@ -83,7 +100,7 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
                 selectedTank = tankSelector->GetItemData (selection);
 
                 shipSchema->selectTank (selectedTank);
-                
+
                 InvalidateRect (shipSchema->GetHandle (), 0, TRUE);
             }
 
