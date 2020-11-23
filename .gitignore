@@ -3,3 +3,6 @@
 *.ilk
 *.exe
 *.dat
+*.db
+*.res
+*.idb
