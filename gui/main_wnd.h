@@ -6,6 +6,7 @@
 #include "wui/WindowWrapper.h"
 #include "wui/ListCtrlWrapper.h"
 #include "wui/TreeCtrlWrapper.h"
+#include "wui/TabCtrlWrapper.h"
 #include "wui/ListBoxWrapper.h"
 #include "wui/ComboBoxWrapper.h"
 #include "wui/StaticWrapper.h"
@@ -23,12 +24,15 @@ class CMainWnd : public CWindowWrapper
 
     protected:
         static const int SHIP_SCHEMA_WIDTH = 300;
+        static const int BUNK_INFO_HEIGHT = 200;
         
         ShipSchema             *shipSchema;
         CComboBoxWrapper       *tankSelector;
         CStaticWrapper         *tankLabel, *beginLabel, *endLabel;
         CDateTimePickerWrapper *beginDate, *endDate, *beginTime, *endTime;
         CTrackbarWrapper       *timeSelector;
+        CListCtrlWrapper       *bunkerList;
+        CTabCtrlWrapper        *bunkerInfo;
         HMENU                   menu;
         config                  cfg;
         int                     selectedTank;

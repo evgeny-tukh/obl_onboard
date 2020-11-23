@@ -28,6 +28,7 @@
           "gui/wui/StaticWrapper.cpp",
           "gui/wui/time_functions.c",
           "gui/wui/TreeCtrlWrapper.cpp",
+          "gui/wui/TabCtrlWrapper.cpp",
           "gui/wui/DateTimePickerWrapper.cpp",
           "gui/wui/TrackbarWrapper.cpp",
           "gui/wui/UpDownWrapper.cpp",
