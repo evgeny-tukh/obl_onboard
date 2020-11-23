@@ -10,5 +10,6 @@
 #define ID_END_DATE                             1002
 #define ID_BEGIN_TIME                           1003
 #define ID_END_TIME                             1004
+#define ID_TIME_SELECTOR                        1005
 
 

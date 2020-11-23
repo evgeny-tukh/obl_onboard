@@ -11,6 +11,7 @@
 #include "wui/StaticWrapper.h"
 #include "wui/InputBox.h"
 #include "wui/DateTimePickerWrapper.h"
+#include "wui/TrackbarWrapper.h"
 #include "schema/ship_schema.h"
 #include "../common/defs.h"
 
@@ -27,6 +28,7 @@ class CMainWnd : public CWindowWrapper
         CComboBoxWrapper       *tankSelector;
         CStaticWrapper         *tankLabel, *beginLabel, *endLabel;
         CDateTimePickerWrapper *beginDate, *endDate, *beginTime, *endTime;
+        CTrackbarWrapper       *timeSelector;
         HMENU                   menu;
         config                  cfg;
         int                     selectedTank;

@@ -29,6 +29,7 @@
           "gui/wui/time_functions.c",
           "gui/wui/TreeCtrlWrapper.cpp",
           "gui/wui/DateTimePickerWrapper.cpp",
+          "gui/wui/TrackbarWrapper.cpp",
           "gui/wui/UpDownWrapper.cpp",
           "gui/wui/WindowWrapper.cpp",
           "common/config.cpp",

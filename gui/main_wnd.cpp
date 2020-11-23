@@ -27,6 +27,7 @@ CMainWnd::~CMainWnd ()
     delete tankSelector;
     delete tankLabel, beginLabel, endLabel;
     delete beginDate, endDate, beginTime, endTime;
+    delete timeSelector;
 }
 
 void CMainWnd::OnCreate ()
@@ -46,12 +47,14 @@ void CMainWnd::OnCreate ()
     endDate = new CDateTimePickerWrapper (m_hwndHandle, ID_END_DATE);
     beginTime = new CDateTimePickerWrapper (m_hwndHandle, ID_BEGIN_TIME);
     endTime = new CDateTimePickerWrapper (m_hwndHandle, ID_END_TIME);
+    timeSelector = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
 
     tankSelector->CreateControl (SHIP_SCHEMA_WIDTH + 80, 0, 200, 100, CBS_AUTOHSCROLL | CBS_DROPDOWNLIST | WS_VISIBLE);
     beginDate->CreateControl (SHIP_SCHEMA_WIDTH + 80, 25, 100, 25, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
     endDate->CreateControl (SHIP_SCHEMA_WIDTH + 80, 50, 100, 25, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
     beginTime->CreateControl (SHIP_SCHEMA_WIDTH + 180, 25, 100, 25, DTS_TIMEFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
     endTime->CreateControl (SHIP_SCHEMA_WIDTH + 180, 50, 100, 25, DTS_TIMEFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
+    timeSelector->CreateControl (SHIP_SCHEMA_WIDTH + 180, 75, client.right - (SHIP_SCHEMA_WIDTH + 180), 25, TBS_AUTOTICKS | WS_VISIBLE, 0);
 
     for (auto iter = cfg.tanks.begin (); iter != cfg.tanks.end (); ++ iter) {
         tankSelector->AddString ((iter->name + " " + iter->type).c_str (), iter->id);
@@ -140,6 +143,7 @@ LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam)
 LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD height)
 {
     shipSchema->Move (0, 0, SHIP_SCHEMA_WIDTH, height, TRUE);
+    timeSelector->Move (SHIP_SCHEMA_WIDTH + 180, 75, width - (SHIP_SCHEMA_WIDTH + 180), 25, TRUE);
 
     return FALSE;
 }
