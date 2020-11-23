@@ -2,14 +2,18 @@
 #include "resource.h"
 #include "main_wnd.h"
 #include "../common/defs.h"
+#include "wui/StaticWrapper.h"
 
-CMainWnd::CMainWnd (HINSTANCE instance): CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))), shipSchema (0)
+CMainWnd::CMainWnd (HINSTANCE instance):
+    CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))),
+    shipSchema (0),
+    selectedTank (-1)
 {
     char path [MAX_PATH];
 
-    GetModuleFileName (0, path, sizeof (path));
-    PathRemoveFileSpec (path);
-    PathAppend (path, "cfg.dat");
+    GetModuleFileNameA (0, path, sizeof (path));
+    PathRemoveFileSpecA (path);
+    PathAppendA (path, "cfg.dat");
 
     cfg.cfgFile = path;
 
@@ -31,6 +35,18 @@ void CMainWnd::OnCreate ()
     shipSchema->Create (0, 0, 0, SHIP_SCHEMA_WIDTH, client.bottom + 1, WS_VISIBLE | WS_CHILD);
     shipSchema->Show (SW_SHOW);
     shipSchema->Update ();
+
+    tankSelector = new CComboBoxWrapper (m_hwndHandle, ID_TANK_SELECTOR);
+
+    tankSelector->CreateControl (SHIP_SCHEMA_WIDTH + 80, 0, 200, 100, CBS_AUTOHSCROLL | CBS_DROPDOWNLIST | WS_VISIBLE);
+
+    for (auto iter = cfg.tanks.begin (); iter != cfg.tanks.end (); ++ iter) {
+        tankSelector->AddString ((iter->name + " " + iter->type).c_str (), iter->id);
+    }
+
+    auto tankLabel = new CStaticWrapper (m_hwndHandle, -1);
+
+    tankLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 0, 75, 25, SS_LEFT | WS_VISIBLE, "Танк");
 }
 
 void CMainWnd::RequestAppQuit ()
@@ -58,11 +74,29 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
 
     switch (LOWORD (wParam))
     {
-        case ID_EXIT:
-            RequestAppQuit (); break;
+        case ID_TANK_SELECTOR:
+        {
+            int selection = tankSelector->GetCurSel ();
 
+            if (selection >= 0)
+            {
+                selectedTank = tankSelector->GetItemData (selection);
+
+                shipSchema->selectTank (selectedTank);
+                
+                InvalidateRect (shipSchema->GetHandle (), 0, TRUE);
+            }
+
+            break;
+        }
+        case ID_EXIT:
+        {
+            RequestAppQuit (); break;
+        }
         default:
+        {
             result = TRUE;
+        }
     }
 
     return result;

@@ -16,12 +16,13 @@ class tankDisplay {
 
         struct gdiObjects {
             HBRUSH freeArea, filledArea;
+            HPEN selectionBorder;
         };
 
         tankDisplay (tank&);
         ~tankDisplay ();
 
-        void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume, uint16_t id, const char *type);
+        void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume, uint16_t id, const char *type, bool selected);
 
     protected:
         tank& tankCfg;

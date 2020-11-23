@@ -7,6 +7,7 @@
 #include "wui/ListCtrlWrapper.h"
 #include "wui/TreeCtrlWrapper.h"
 #include "wui/ListBoxWrapper.h"
+#include "wui/ComboBoxWrapper.h"
 #include "wui/StaticWrapper.h"
 #include "wui/InputBox.h"
 #include "schema/ship_schema.h"
@@ -21,9 +22,11 @@ class CMainWnd : public CWindowWrapper
     protected:
         static const int SHIP_SCHEMA_WIDTH = 300;
         
-        ShipSchema *shipSchema;
-        HMENU       menu;
-        config      cfg;
+        ShipSchema       *shipSchema;
+        CComboBoxWrapper *tankSelector;
+        HMENU             menu;
+        config            cfg;
+        int               selectedTank;
 
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);

@@ -9,9 +9,12 @@ class ShipSchema: public CWindowWrapper {
         ShipSchema (HINSTANCE instance, HWND parent, config& _cfg);
         virtual ~ShipSchema ();
 
+        inline void selectTank (int id) { selectedTank = id; }
+        
     private:
         config& cfg;
         tankDisplay::gdiObjects objects;
+        int selectedTank;
 
         void recalc (tankDisplay::metrics&);
 

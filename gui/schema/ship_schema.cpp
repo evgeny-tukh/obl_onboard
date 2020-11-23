@@ -2,14 +2,17 @@
 
 ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg) :
     cfg (_cfg),
+    selectedTank (-1),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
     objects.filledArea = CreateSolidBrush (RGB (200, 160, 255));
     objects.freeArea = CreateSolidBrush (RGB (255, 200, 255));
+    objects.selectionBorder = CreatePen (PS_SOLID, 5, RGB (255, 0, 0));
 }
 
 ShipSchema::~ShipSchema () {
     DeleteObject (objects.filledArea);
     DeleteObject (objects.freeArea);
+    DeleteObject (objects.selectionBorder);
 }
 
 void ShipSchema::OnCreate () {
@@ -70,7 +73,7 @@ LRESULT ShipSchema::OnPaint () {
     for (auto tank = cfg.tanks.begin (); tank != cfg.tanks.end (); ++ tank) {
         tankDisplay tankDisp (*tank);
 
-        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, 50.0, tank->id, tank->type.c_str ());
+        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, 50.0, tank->id, tank->type.c_str (), selectedTank == tank->id);
     }
 
     EndPaint (m_hwndHandle, & data);
