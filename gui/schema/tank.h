@@ -21,7 +21,7 @@ class tankDisplay {
         tankDisplay (tank&);
         ~tankDisplay ();
 
-        void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume);
+        void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume, uint16_t id, const char *type);
 
     protected:
         tank& tankCfg;

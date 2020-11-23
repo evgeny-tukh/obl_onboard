@@ -8,7 +8,7 @@ tankDisplay::~tankDisplay () {
 
 }
 
-void tankDisplay::draw (HDC drawCtx, HWND wnd, metrics& tankMetrics, gdiObjects& objects, double volume) {
+void tankDisplay::draw (HDC drawCtx, HWND wnd, metrics& tankMetrics, gdiObjects& objects, double volume, uint16_t id, const char *type) {
     int x, y;
 
     switch (tankCfg.side) {
@@ -29,6 +29,10 @@ void tankDisplay::draw (HDC drawCtx, HWND wnd, metrics& tankMetrics, gdiObjects&
     }
 
     int filledPartHeight = (int) ((volume / tankCfg.volume) * (double) tankMetrics.height);
+    char idString [10], volString [50];
+
+    sprintf (idString, "#%d", id);
+    sprintf (volString, "%.1f/%.f", volume, tankCfg.volume);
 
     SelectObject (drawCtx, objects.freeArea);
     SelectObject (drawCtx, (HBRUSH) GetStockObject (BLACK_PEN));
@@ -36,5 +40,11 @@ void tankDisplay::draw (HDC drawCtx, HWND wnd, metrics& tankMetrics, gdiObjects&
     SelectObject (drawCtx, objects.filledArea);
     RoundRect (drawCtx, x, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 1, 20, 20);
     SelectObject (drawCtx, (HBRUSH) GetStockObject (NULL_PEN));
-    Rectangle (drawCtx, x, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 20);
+    Rectangle (drawCtx, x + 1, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 20);
+
+    SetTextColor (drawCtx, 0);
+    SetBkMode (drawCtx, TRANSPARENT);
+    TextOutA (drawCtx, x + 10, y + 10, idString, strlen (idString));
+    TextOutA (drawCtx, x + 10, y + 25, type, strlen (type));
+    TextOutA (drawCtx, x + 10, y + 40, volString, strlen (volString));
 }
