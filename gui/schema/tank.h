@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include "../../common/defs.h"
+#include "gdiobjects.h"
 
 class tankDisplay {
     public:
@@ -12,11 +13,6 @@ class tankDisplay {
             int stbd, port, middle, width, height;
 
             metrics () : stbd (VER_EDGE), port (VER_EDGE), middle (VER_EDGE) {}
-        };
-
-        struct gdiObjects {
-            HBRUSH freeArea, filledArea;
-            HPEN selectionBorder;
         };
 
         tankDisplay (tank&);

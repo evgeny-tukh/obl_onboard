@@ -2,7 +2,9 @@
 
 #include "../../common/defs.h"
 #include "../wui/WindowWrapper.h"
+#include "gdiobjects.h"
 #include "tank.h"
+#include "fuelmeter.h"
 #include "../data_history.h"
 
 class ShipSchema: public CWindowWrapper {
@@ -15,7 +17,7 @@ class ShipSchema: public CWindowWrapper {
         
     private:
         config& cfg;
-        tankDisplay::gdiObjects objects;
+        gdiObjects objects;
         int selectedTank;
         dataHistory *history;
         time_t timestamp;

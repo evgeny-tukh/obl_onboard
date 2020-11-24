@@ -1,19 +1,15 @@
+#include <Windows.h>
 #include "ship_schema.h"
 
 ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHistory *hist) :
     history (hist),
+    objects (),
     cfg (_cfg),
     selectedTank (-1),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
-    objects.filledArea = CreateSolidBrush (RGB (200, 160, 255));
-    objects.freeArea = CreateSolidBrush (RGB (255, 200, 255));
-    objects.selectionBorder = CreatePen (PS_SOLID, 5, RGB (255, 0, 0));
 }
 
 ShipSchema::~ShipSchema () {
-    DeleteObject (objects.filledArea);
-    DeleteObject (objects.freeArea);
-    DeleteObject (objects.selectionBorder);
 }
 
 void ShipSchema::setTimestamp (time_t ts)
@@ -82,6 +78,27 @@ LRESULT ShipSchema::OnPaint () {
         tankDisplay tankDisp (*tank);
 
         tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
+    }
+
+    int fmCount = 0;
+    int middle = client.right >> 1;
+
+    for (auto fuelMeter = cfg.fuelMeters.begin (); fuelMeter != cfg.fuelMeters.end (); ++ fuelMeter, ++ fmCount) {
+        int x;
+        int placeFromCenter = fmCount >> 1;
+        int offsetFromCenter = placeFromCenter * (fuelMeterDisplay::WIDTH + fuelMeterDisplay::GAP) + (fuelMeterDisplay::GAP >> 1);
+
+        if (fmCount & 1) {
+            // left side
+            x = middle - offsetFromCenter - fuelMeterDisplay::WIDTH;
+        } else {
+            // right side
+            x = middle + offsetFromCenter;
+        }
+
+        fuelMeterDisplay fmDisplay (*fuelMeter);
+
+        fmDisplay.draw (paintCtx, m_hwndHandle, x, objects, history->getData (fuelMeter->id, timestamp), fuelMeter->name.c_str ());
     }
 
     EndPaint (m_hwndHandle, & data);

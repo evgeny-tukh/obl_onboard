@@ -1,11 +1,9 @@
 #include "tank.h"
 
 tankDisplay::tankDisplay (tank& cfg): tankCfg (cfg) {
-
 }
 
 tankDisplay::~tankDisplay () {
-
 }
 
 void tankDisplay::draw (
