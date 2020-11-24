@@ -7,7 +7,7 @@
 #include <vector>
 #include "../common/json.h"
 #include "../common/defs.h"
-#include "db.h"
+#include "../common/db.h"
 
 void showHelp () {
     printf (

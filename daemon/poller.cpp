@@ -6,80 +6,38 @@
 #include "../common/defs.h"
 #include "req_mgr.h"
 #include "../common/json.h"
-#include "db.h"
+#include "../common/db.h"
 
 class tankData {
     public:
         tankData (config& _cfg, time_t ts = 0): cfg (_cfg), timestamp (ts) {}
         inline void setTimestamp (time_t ts) { timestamp = ts; }
-        void addSensorInput (const char *inputKey, const char *value);
-        void saveData (database& db);
+        void addSensorInput (const char *inputKey, const char *value, database& db);
 
     private:
-        // first is column, second is input value
-        typedef std::map<uint8_t, double> sensorInputs;
-
-        // first is tank id, second is a map of input volumes
-        typedef std::map<uint16_t, sensorInputs> tankVolumes;
-
         time_t timestamp;
-        tankVolumes volumes;
         config& cfg;
 };
 
-void tankData::addSensorInput (const char *inputKey, const char *value) {
+void tankData::addSensorInput (const char *inputKey, const char *value, database& db) {
     char key [100];
     int column;
 
     // Nothing to do if value is "no data"
     if (*value == '*') return;
 
-    // Field name key contains parameter identifier in the last part
-    // We are interesting into ".vol" (volume) and ".hop" (volume measured by Hoppe sensor)
-    // Both of them should be recorded as "volumeAfter" but into different columns (sensorData and hoppeData, respectively)
-    strcpy (key, inputKey);
+    double numValue = atof (value);
 
-    char *lastDot = strrchr (key, '.');
+    // Does input key belong to the tank?
+    tank *tankCfg = cfg.findTank ((char *) inputKey);
 
-    // Nothing to do if we can't find the last field
-    if (!*lastDot) return;
+    if (tankCfg) {
+        db.addData (tankCfg->id, timestamp, database::dataValueType::tankVolume, numValue);
+    } else {
+        // Does input key belong to the fuel meter?
+        fuelMeter *fmCfg = cfg.findFuelMeter ((char *) inputKey);
 
-    // Map the last field to the column
-    column = cfg.findColumnMap (lastDot);
-
-    // Nothing to do if this key is nott mapped by the config
-    if (column < 0) return;
-
-    // Remove last part from tank key
-    *lastDot = 0;
-
-    // Find tank configuration by the key except the last part
-    tank *curTank = cfg.findTank (key);
-
-    // Nothing no do if tank is now known
-    if (!curTank) return;
-
-    // Find tank volumes map for this key
-    auto item = volumes.find (curTank->id);
-
-    if (item == volumes.end ()) {
-        // No tank info yet, add new one
-        item = volumes.emplace (curTank->id, sensorInputs ()).first;
-    }
-
-    // Add new value to tank volumes map
-    item->second.emplace (column, atof (value));
-}
-
-void tankData::saveData (database& db) {
-    param *volParam = cfg.findParam ("volumeAfter");
-
-    for (auto tank = volumes.begin (); tank != volumes.end (); ++ tank) {
-        uint64_t operation = db.addFuelOperation (tank->first, fuelOperType::operate, timestamp);
-
-        for (auto input = tank->second.begin (); input != tank->second.end (); ++ input) {
-            db.addFuelParameter (operation, volParam->id, input->first, input->second);
-        }
+        if (fmCfg) db.addData (fmCfg->id, timestamp, database::dataValueType::fuelMeter, numValue);
     }
 }
 
@@ -125,42 +83,11 @@ void parsePollResult (char *buffer, config& cfg, database& db) {
 
                         data.setTimestamp (timestamp);
                     } else {
-                        data.addSensorInput (fldName, fldValue);
-                        #if 0
-                        char key [100];
-                        int column;
-
-                        // Field name key contains parameter identifier in the last part
-                        // We are interesting into ".vol" (volume) and ".hop" (volume measured by Hoppe sensor)
-                        // Both of them should be recorded as "volumeAfter" but into different columns (sensorData and hoppeData, respectively)
-                        strcpy (key, fldName);
-
-                        char *lastDot = strrchr (key, '.');
-
-                        if (!*lastDot) continue;
-
-                        column = cfg.findColumnMap (lastDot);
-
-                        if (column < 0) continue;
-
-                        // Remove last part from tank key
-                        *lastDot = 0;
-
-                        tank *curTank = cfg.findTank (key);
-
-                        if (curTank) {
-                            uint64_t operation = db.addFuelOperation (curTank->id, fuelOperType::operate, timestamp);
-
-                            if (*fldValue != '*') db.addFuelParameter (operation, volParam->id, column, atof (fldValue));
-                        }
-                        #endif
+                        data.addSensorInput (fldName, fldValue, db);
                     }
                 }
             }
         }
-
-        // Store operations
-        data.saveData (db);
     }
 }
 

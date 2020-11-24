@@ -27,6 +27,13 @@ enum tankSide {
     center = 'c',
 };
 
+struct fuelMeter {
+    uint16_t id;
+    std::string name, type;
+
+    fuelMeter (const uint16_t _id, const char *_name, const char *_type): name (_name), type (_type), id (_id) {}
+};
+
 struct tank {
     uint16_t id;
     std::string name, type;
@@ -77,6 +84,7 @@ struct config {
     std::string cfgFile;
     bool queryData;
     std::vector<tank> tanks;
+    std::vector<fuelMeter> fuelMeters;
     ship shipInfo;
     time_t pollingInterval;
     std::map<uint8_t, param> params;
@@ -86,6 +94,14 @@ struct config {
     tank *findTank (char *name) {
         for (auto& tank: tanks) {
             if (strcmp (tank.name.c_str (), name) == 0) return & tank;
+        }
+
+        return 0;
+    }
+
+    fuelMeter *findFuelMeter (char *name) {
+        for (auto& fuelMeter: fuelMeters) {
+            if (strcmp (fuelMeter.name.c_str (), name) == 0) return & fuelMeter;
         }
 
         return 0;

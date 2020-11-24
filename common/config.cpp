@@ -60,6 +60,7 @@ void parseCfgFile (config& cfg) {
         json::stringNode *path = (json::stringNode *) (*server) ["path"];
         json::hashNode *shipInfo = (json::hashNode *) (*root) ["vessel"];
         json::arrayNode *tanks = (json::arrayNode *) (*root) ["tanks"];
+        json::arrayNode *fuelMeters = (json::arrayNode *) (*root) ["fuelMeters"];
         json::hashNode *settings = (json::hashNode *) (*root) ["settings"];
         json::arrayNode *params = (json::arrayNode *) (*root) ["params"];
         json::arrayNode *paramGroups = (json::arrayNode *) (*root) ["paramGroups"];
@@ -95,8 +96,23 @@ void parseCfgFile (config& cfg) {
                     json::numberNode *volume = (json::numberNode *) (*tank) ["volume"];
                     json::stringNode *side = (json::stringNode *) (*tank) ["side"];
 
-                    if (id, name && type && volume) {
+                    if (id && name && type && volume) {
                         cfg.tanks.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue (), volume->getValue (), side->getValue ());
+                    }
+                }
+            }
+        }
+        if (fuelMeters) {
+            for (auto i = 0; i < fuelMeters->size (); ++ i) {
+                json::hashNode *fuelMeter = (json::hashNode *) (*fuelMeters) [i];
+
+                if (fuelMeter) {
+                    json::numberNode *id = (json::numberNode *) (*fuelMeter) ["id"];
+                    json::stringNode *name = (json::stringNode *) (*fuelMeter) ["name"];
+                    json::stringNode *type = (json::stringNode *) (*fuelMeter) ["type"];
+
+                    if (id && name && type) {
+                        cfg.fuelMeters.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue ());
                     }
                 }
             }
@@ -163,23 +179,6 @@ void parseCfgFile (config& cfg) {
         }
 
         printf ("port: %.f; host: %s\n", port->getValue (), host->getValue ());
-
-        /*json::arrayNode *values = (json::arrayNode *) (*root) ["values"];
-
-        json::valueKey key;
-        uint16_t level = 0;
-        json::walkThrough (json, showValue, key, level);
-
-        next = 0;
-        values->setAt (2, json::parse ("{\"val1\":\"abc\",\"val2\":5,\"val3\":{\"sv1\":11,\"sv2\":22}}", next));
-
-        level = 0;
-        key.arrayIndex = json::valueKey::noIndex;
-        key.hashKey.clear ();
-        json::walkThrough (json, showValue, key, level);
-        //json::walkThrough (values, showValue, key);
-
-        printf ("\n\n%s\n", json->serialize ().c_str ());*/
 
         free (buffer);
         fclose (cfgFile);

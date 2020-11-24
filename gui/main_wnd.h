@@ -15,6 +15,8 @@
 #include "wui/TrackbarWrapper.h"
 #include "schema/ship_schema.h"
 #include "../common/defs.h"
+#include "../common/db.h"
+#include "data_history.h"
 
 class CMainWnd : public CWindowWrapper
 {
@@ -36,6 +38,9 @@ class CMainWnd : public CWindowWrapper
         HMENU                   menu;
         config                  cfg;
         int                     selectedTank;
+        database                db;
+        dataHistory            *history;
+        time_t                  beginTimestamp, endTimestamp;
 
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);

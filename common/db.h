@@ -12,6 +12,13 @@ class database {
         bool executeSimple (char *query, uint64_t *insertID = 0);
         long executeAndGet (char *query, sqlite3_callback cb, void *arg, char **errorMsg);
 
+        enum dataValueType {
+            tankVolume = 1,
+            fuelMeter,
+        };
+
+        void addData (uint32_t object, time_t timestamp, dataValueType type, double value);
+
         uint32_t addFuelOperation (
             uint32_t tank,
             uint8_t operationType,

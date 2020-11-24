@@ -16,6 +16,14 @@ char *initialQueries [] {
     "operation integer not null,parameter integer not null,column integer not null,value real not null)",
     "create index idx_order on data(operation,parameter,column)",
 
+    "create table volumes(id integer not null primary key asc,tank integer not null,timestamp integer not null,value real not null)",
+    "create index idx_vol1 on volumes(tank,timestamp)",
+    "create index idx_vol2 on volumes(timestamp,tank)",
+
+    "create table meters(id integer not null primary key asc,meter integer not null,timestamp integer not null,value real not null)",
+    "create index idx_mtr1 on meters(meter,timestamp)",
+    "create index idx_mtr2 on meters(timestamp,meter)",
+
     0,
 };
 
@@ -71,6 +79,28 @@ long database::executeAndGet (char *query, sqlite3_callback cb, void *arg, char 
     }
 
     return result;
+}
+
+void database::addData (uint32_t object, time_t timestamp, dataValueType type, double value) {
+    char query [100];
+    const char *table;
+    const char *field;
+
+    switch (type) {
+        case dataValueType::tankVolume:
+            table = "volumes";
+            field = "tank";
+            break;
+        case dataValueType::fuelMeter:
+            table = "meters";
+            field = "meter";
+            break;
+        default:
+            return;
+    }
+
+    sprintf (query, "insert into %s(%s,timestamp,value) values(%d,%I64d,%f)", table, field, object, timestamp, value);
+    executeSimple (query);
 }
 
 uint32_t database::addFuelOperation (

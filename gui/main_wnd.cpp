@@ -19,6 +19,11 @@ CMainWnd::CMainWnd (HINSTANCE instance):
     cfg.cfgFile = path;
 
     parseCfgFile (cfg);
+
+    history = new dataHistory (db, cfg);
+
+    beginTimestamp = history->minTime ();
+    endTimestamp = history->maxTime ();
 }
 
 CMainWnd::~CMainWnd ()
@@ -30,6 +35,7 @@ CMainWnd::~CMainWnd ()
     delete timeSelector;
     delete bunkerList;
     delete bunkerInfo;
+    delete history;
 }
 
 void CMainWnd::OnCreate ()
@@ -38,7 +44,7 @@ void CMainWnd::OnCreate ()
 
     GetClientRect (& client);
 
-    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg);
+    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg, history);
 
     shipSchema->Create (0, 0, 0, SHIP_SCHEMA_WIDTH, client.bottom + 1, WS_VISIBLE | WS_CHILD);
     shipSchema->Show (SW_SHOW);
@@ -61,6 +67,8 @@ void CMainWnd::OnCreate ()
     timeSelector->CreateControl (SHIP_SCHEMA_WIDTH + 180, 75, client.right - (SHIP_SCHEMA_WIDTH + 180), 25, TBS_AUTOTICKS | WS_VISIBLE, 0);
     bunkerList->CreateControl (SHIP_SCHEMA_WIDTH + 1, 100, client.right - SHIP_SCHEMA_WIDTH, client.bottom - 100 - BUNK_INFO_HEIGHT, LVS_REPORT | WS_VISIBLE, 0);
     bunkerInfo->CreateControl (SHIP_SCHEMA_WIDTH + 1, client.bottom - BUNK_INFO_HEIGHT, client.right - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, WS_VISIBLE, 0);
+
+    timeSelector->SetRange (beginTimestamp, endTimestamp);
 
     for (auto iter = cfg.tanks.begin (); iter != cfg.tanks.end (); ++ iter) {
         tankSelector->AddString ((iter->name + " " + iter->type).c_str (), iter->id);
@@ -92,6 +100,15 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+        case WM_HSCROLL:
+            if ((HWND) lParam == timeSelector->GetHandle ())
+            {
+                time_t curTimestamp = timeSelector->GetPos ();
+
+                shipSchema->setTimestamp (curTimestamp);
+            }
+
+            break;
         case WM_DESTROY:
             DestroyMenu (menu);
             PostQuitMessage (0);

@@ -1,6 +1,7 @@
 #include "ship_schema.h"
 
-ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg) :
+ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHistory *hist) :
+    history (hist),
     cfg (_cfg),
     selectedTank (-1),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
@@ -13,6 +14,13 @@ ShipSchema::~ShipSchema () {
     DeleteObject (objects.filledArea);
     DeleteObject (objects.freeArea);
     DeleteObject (objects.selectionBorder);
+}
+
+void ShipSchema::setTimestamp (time_t ts)
+{
+    timestamp = ts;
+
+    InvalidateRect (m_hwndHandle, NULL, TRUE);
 }
 
 void ShipSchema::OnCreate () {
@@ -73,7 +81,7 @@ LRESULT ShipSchema::OnPaint () {
     for (auto tank = cfg.tanks.begin (); tank != cfg.tanks.end (); ++ tank) {
         tankDisplay tankDisp (*tank);
 
-        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, 50.0, tank->id, tank->type.c_str (), selectedTank == tank->id);
+        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
     }
 
     EndPaint (m_hwndHandle, & data);
