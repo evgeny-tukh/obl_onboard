@@ -4,6 +4,7 @@
 
 #define IDR_MENU                                101
 #define ID_EXIT                                 40000
+#define ID_NEW_BUNKERING                        40001
 
 #define ID_TANK_SELECTOR                        1000
 #define ID_BEGIN_DATE                           1001
