@@ -41,6 +41,13 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "thread": "cpp",
-        "*.rh": "cpp"
+        "*.rh": "cpp",
+        "chrono": "cpp",
+        "list": "cpp",
+        "unordered_map": "cpp",
+        "functional": "cpp",
+        "ratio": "cpp",
+        "xthread": "cpp",
+        "xhash": "cpp"
     }
 }

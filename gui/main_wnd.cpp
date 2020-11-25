@@ -1,11 +1,13 @@
-﻿#include <Shlwapi.h>
+﻿#include <stdlib.h>
+#include <Windows.h>
+#include <Shlwapi.h>
 #include "resource.h"
 #include "main_wnd.h"
 #include "../common/defs.h"
 #include "../common/tools.h"
+#include "bunkering.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
-#include "bunkering.h"
 
 CMainWnd::CMainWnd (HINSTANCE instance):
     CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))),
@@ -24,8 +26,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 
     history = new dataHistory (db, cfg);
 
-    beginTimestamp = history->minTime ();
-    endTimestamp = history->maxTime ();
+    beginTimestamp = 1605830400; //history->minTime ();
+    endTimestamp = time (0); //history->maxTime ();
 }
 
 CMainWnd::~CMainWnd ()
@@ -70,6 +72,11 @@ void CMainWnd::OnCreate ()
     timeSelector->CreateControl (SHIP_SCHEMA_WIDTH + 180, 75, client.right - (SHIP_SCHEMA_WIDTH + 180), 25, TBS_AUTOTICKS | WS_VISIBLE, 0);
     bunkerList->CreateControl (SHIP_SCHEMA_WIDTH + 1, 100, client.right - SHIP_SCHEMA_WIDTH, client.bottom - 100 - BUNK_INFO_HEIGHT, LVS_REPORT | WS_VISIBLE, 0);
     bunkerInfo->CreateControl (SHIP_SCHEMA_WIDTH + 1, client.bottom - BUNK_INFO_HEIGHT, client.right - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, WS_VISIBLE, 0);
+
+    beginDate->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
+    beginTime->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
+    endDate->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
+    endTime->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
 
     timeSelector->SetRange (beginTimestamp, endTimestamp);
 
@@ -134,23 +141,34 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
     {
         case ID_NEW_BUNKERING:
         {
-            bunkeringData data;
-            //new BunkeringEditor (m_hInstance, m_hwndHandle); break;
-            openBunkeringEditor (m_hInstance, m_hwndHandle, & data); break;
+            if (selectedTank > 0) {
+                bunkeringData data;
+                data.tank = selectedTank;
+                //new BunkeringEditor (m_hInstance, m_hwndHandle); break;
+                if (openBunkeringEditor (m_hInstance, m_hwndHandle, & data) == IDOK) {
+                    auto bunkeringID = db.createBunkering (data);
+                    loadBunkeringList ();
+                }
+            } else {
+                MessageBox ("Пожалуйста, выберите танк!", "Ошибка", MB_ICONEXCLAMATION);
+            }
+            
+            break;
         }
         case ID_TANK_SELECTOR:
         {
-            int selection = tankSelector->GetCurSel ();
+            if (HIWORD (wParam) == CBN_SELCHANGE ) {
+                int selection = tankSelector->GetCurSel ();
 
-            if (selection >= 0)
-            {
-                selectedTank = tankSelector->GetItemData (selection);
+                if (selection >= 0)
+                {
+                    selectedTank = tankSelector->GetItemData (selection);
 
-                shipSchema->selectTank (selectedTank);
-
-                InvalidateRect (shipSchema->GetHandle (), 0, TRUE);
+                    shipSchema->selectTank (selectedTank);
+                    InvalidateRect (shipSchema->GetHandle (), 0, TRUE);
+                    loadBunkeringList ();
+                }
             }
-
             break;
         }
         case ID_EXIT:
@@ -202,4 +220,22 @@ LRESULT CMainWnd::OnNotify (NMHDR *header)
 LRESULT CMainWnd::OnTimer (unsigned int timerID)
 {
     return CWindowWrapper::OnTimer (timerID);
+}
+
+void CMainWnd::loadBunkeringList ()
+{
+    bunkeringList list;
+
+    db.loadBunkeringList (selectedTank, list, beginTimestamp, endTimestamp);
+
+    bunkerList->DeleteAllItems ();
+
+    for (auto bunkering = list.begin (); bunkering != list.end (); ++ bunkering) {
+        char buffer [50];
+
+        auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering->id);
+
+        bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
+        bunkerList->SetItemText (item, 2, ftoa (bunkering->volume, buffer, "%.1f"));
+    }
 }

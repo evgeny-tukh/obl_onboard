@@ -51,11 +51,14 @@ void tankDisplay::draw (
     SelectObject (drawCtx, objects.freeArea);
     SelectObject (drawCtx, (HBRUSH) GetStockObject (BLACK_PEN));
     RoundRect (drawCtx, x, y, x + tankMetrics.width - 1, y + tankMetrics.height - 1, 20, 20);
-    SelectObject (drawCtx, objects.filledArea);
-    RoundRect (drawCtx, x, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 1, 20, 20);
-    SelectObject (drawCtx, (HPEN) GetStockObject (NULL_PEN));
-    Rectangle (drawCtx, x + 1, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 20);
 
+    if (volume > 1.0f) {
+        SelectObject (drawCtx, objects.filledArea);
+        RoundRect (drawCtx, x, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 1, 20, 20);
+        SelectObject (drawCtx, (HPEN) GetStockObject (NULL_PEN));
+        Rectangle (drawCtx, x + 1, y + tankMetrics.height - filledPartHeight, x + tankMetrics.width - 1, y + tankMetrics.height - 20);
+    }
+    
     SetTextColor (drawCtx, 0);
     SetBkMode (drawCtx, TRANSPARENT);
     TextOutA (drawCtx, x + 10, y + 10, idString, strlen (idString));

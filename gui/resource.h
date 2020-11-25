@@ -19,7 +19,7 @@
 #define IDC_DATE_TIME                           1008
 
 
-#define ID_DENSITY				1010
+#define ID_DENSITY				                1010
 #define ID_DENSITY_SPIN                         1011
 #define ID_VISCOSITY                            1012
 #define ID_VISCOSITY_SPIN                       1013
@@ -31,3 +31,6 @@
 #define ID_VOLUME_SPIN                          1019
 #define ID_QUANTITY                             1020
 #define ID_QUANTITY_SPIN                        1021
+
+#define ID_PORT                                 1026
+#define ID_BARGE                                1027

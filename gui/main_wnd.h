@@ -16,6 +16,7 @@
 #include "schema/ship_schema.h"
 #include "../common/defs.h"
 #include "../common/db.h"
+#include "bunkering.h"
 #include "data_history.h"
 
 class CMainWnd : public CWindowWrapper
@@ -52,4 +53,6 @@ class CMainWnd : public CWindowWrapper
         void RequestAppQuit ();
 
         virtual void OnCreate ();
+
+        void loadBunkeringList ();
 };

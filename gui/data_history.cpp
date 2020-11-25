@@ -42,13 +42,14 @@ float dataHistory::getData (uint16_t id, time_t timestamp) {
 
     if (history == histories.end ()) return 0.0;
 
-    for (auto state: history->second) {
-        if (state.first >= timestamp) return state.second;
+    for (auto state = history->second.rbegin (); state != history->second.rend (); ++ state) {
+        if (state->first < timestamp) return state->second;
     }
     
-    auto& last = history->second.rbegin ();
+    return 0.0f;
+    /*auto& last = history->second.rbegin ();
 
-    return last->second;
+    return last->second;*/
 }
 
 time_t dataHistory::minTime () {

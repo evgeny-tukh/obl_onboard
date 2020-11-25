@@ -1,7 +1,11 @@
 #pragma once
 
 #include <cstdint>
-#include "../common/sqlite3.h"
+#include <vector>
+#include "sqlite3.h"
+#include "defs.h"
+
+typedef std::vector<bunkeringData> bunkeringList;
 
 class database {
     public:
@@ -18,6 +22,9 @@ class database {
         };
 
         void addData (uint32_t object, time_t timestamp, dataValueType type, double value);
+
+        uint64_t createBunkering (bunkeringData& data);
+        size_t loadBunkeringList (uint8_t tank, bunkeringList& list, time_t begin = 0, time_t end = 3000000000);
 
         uint32_t addFuelOperation (
             uint32_t tank,

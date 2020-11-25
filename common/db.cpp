@@ -24,6 +24,22 @@ char *initialQueries [] {
     "create index idx_mtr1 on meters(meter,timestamp)",
     "create index idx_mtr2 on meters(timestamp,meter)",
 
+    "create table bunkerings("
+    "id integer not null primary key asc,"
+    "tank integer not null,"
+    "begin integer not null,"
+    "end integer not null,"
+    "port text,"
+    "barge text,"
+    "density real not null,"
+    "viscosity real not null,"
+    "sulphur real not null,"
+    "temp real not null,"
+    "volume real not null,"
+    "quantity real not null)",
+    "create index idx_bnk1 on bunkerings(tank,begin)",
+    "create index idx_bnk2 on bunkerings(begin,tank)",
+
     0,
 };
 
@@ -126,4 +142,56 @@ void database::addFuelParameter (
 
     sprintf (query, "insert into data(operation,parameter,column,value) values(%zd,%d,%d,%f)", operation, parameter, column, value);
     execute (query);
+}
+
+uint64_t database::createBunkering (bunkeringData& data) {
+    char query [300];
+    uint64_t result;
+
+    sprintf (
+        query, 
+        "insert into bunkerings(tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity) "
+        "values(%d,%zd,%zd,'%s','%s',%.1f,%.1f,%.1f,%.1f,%.1f,%.1f)",
+        data.tank, data.begin, data.end, data.port, data.barge, data.density, data.viscosity, data.sulphur, data.temp, data.volume, data.quantity
+    );
+    executeSimple (query, & result);
+
+    return result;
+}
+
+int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fields) {
+    bunkeringList *list = (bunkeringList *) param;
+
+    list->emplace_back (
+        (uint32_t) atol (values [0]),   //id (_id),
+        (uint32_t) atol (values [1]) ,  //tank (0),
+        (time_t) _atoi64 (values [2]),  //begin (time (0) - 5400),
+        (time_t) _atoi64 (values [3]),  //end (time (0) - 1800),
+        values [4],                     //port ("-"),
+        values [5],                     //barge ("-"),
+        (float) atof (values [6]),      //density (0.95f),
+        (float) atof (values [7]),      //viscosity (380.0f),
+        (float) atof (values [8]),      //sulphur (1.5f),
+        (float) atof (values [9]),      //temp (45.0f),
+        (float) atof (values [10]),     //volume (0.0f),
+        (float) atof (values [11])      //quantity (0.0f)
+    );
+
+    return 0;
+}
+
+size_t database::loadBunkeringList (uint8_t tank, bunkeringList& list, time_t begin, time_t end) {
+    list.clear ();
+
+    char query [300];
+    sprintf (
+        query,
+        "select id,tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity from bunkerings where tank=%d and begin>=%lld and end<=%lld order by begin",
+        tank,
+        begin,
+        end
+    );
+    executeAndGet (query, bunkeringListLoadCb, & list, 0);
+
+    return list.size ();
 }

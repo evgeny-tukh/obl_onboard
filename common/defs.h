@@ -77,24 +77,42 @@ struct param {
 };
 
 struct bunkeringData {
-    uint32_t id;
+    uint32_t id, tank;
     time_t begin, end;
     char port [50], barge [50];
     float density, viscosity, sulphur, temp, volume, quantity;
 
     bunkeringData (uint32_t _id = 0):
         id (_id),
-        begin (time (0)),
-        end (time (0)),
-        port (""),
-        barge (""),
-        density (0.0f),
-        viscosity (0.0f),
-        sulphur (0.0f),
-        temp (0.0f),
+        tank (0),
+        begin (time (0) - 5400),
+        end (time (0) - 1800),
+        port ("-"),
+        barge ("-"),
+        density (0.95f),
+        viscosity (380.0f),
+        sulphur (1.5f),
+        temp (45.0f),
         volume (0.0f),
         quantity (0.0f)
     {}
+    bunkeringData (
+        uint32_t _id,
+        uint32_t _tank,
+        time_t _begin,
+        time_t _end,
+        char *_port,
+        char *_barge,
+        float _density,
+        float _viscosity,
+        float _sulphur,
+        float _temp,
+        float _volume,
+        float _quantity
+    ): id (_id), tank (_tank), begin (_begin), end (_end), density (_density), viscosity (_viscosity), sulphur (_sulphur), temp (_temp), volume (_volume), quantity (_quantity) {
+        strcpy (port, _port);
+        strcpy (barge, _barge);
+    }
 };
 
 struct config {
