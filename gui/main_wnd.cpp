@@ -5,6 +5,7 @@
 #include "../common/tools.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
+#include "bunkering.h"
 
 CMainWnd::CMainWnd (HINSTANCE instance):
     CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))),
@@ -131,6 +132,10 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
 
     switch (LOWORD (wParam))
     {
+        case ID_NEW_BUNKERING:
+        {
+            new BunkeringEditor (m_hInstance, m_hwndHandle); break;
+        }
         case ID_TANK_SELECTOR:
         {
             int selection = tankSelector->GetCurSel ();

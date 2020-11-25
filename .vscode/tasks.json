@@ -30,6 +30,7 @@
           "bin/gui.exe",
           "gui/gui.cpp",
           "gui/main_wnd.cpp",
+          "gui/bunkering.cpp",
           "gui/data_history.cpp",
           "gui/schema/ship_schema.cpp",
           "gui/schema/tank.cpp",

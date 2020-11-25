@@ -6,6 +6,8 @@
 #define ID_EXIT                                 40000
 #define ID_NEW_BUNKERING                        40001
 
+#define IDD_BUNKERING                           20000
+
 #define ID_TANK_SELECTOR                        1000
 #define ID_BEGIN_DATE                           1001
 #define ID_END_DATE                             1002
