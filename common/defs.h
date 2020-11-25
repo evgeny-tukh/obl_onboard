@@ -76,6 +76,27 @@ struct param {
     ): id (_id), key (_key), name (_name), multiplier (_mult), isNumber (_isNum != 0), group (_grp) {}
 };
 
+struct bunkeringData {
+    uint32_t id;
+    time_t begin, end;
+    char port [50], barge [50];
+    float density, viscosity, sulphur, temp, volume, quantity;
+
+    bunkeringData (uint32_t _id = 0):
+        id (_id),
+        begin (time (0)),
+        end (time (0)),
+        port (""),
+        barge (""),
+        density (0.0f),
+        viscosity (0.0f),
+        sulphur (0.0f),
+        temp (0.0f),
+        volume (0.0f),
+        quantity (0.0f)
+    {}
+};
+
 struct config {
     std::string host, path;
     uint16_t port;

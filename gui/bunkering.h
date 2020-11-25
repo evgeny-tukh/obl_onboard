@@ -4,6 +4,9 @@
 #include "wui/WindowWrapper.h"
 #include "wui/ButtonWrapper.h"
 #include "wui/StaticWrapper.h"
+#include "../common/defs.h"
+
+void openBunkeringEditor (HINSTANCE instance, HWND parent, bunkeringData *data);
 
 class BunkeringEditor: public CWindowWrapper {
     public:

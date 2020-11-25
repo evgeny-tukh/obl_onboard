@@ -134,7 +134,9 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
     {
         case ID_NEW_BUNKERING:
         {
-            new BunkeringEditor (m_hInstance, m_hwndHandle); break;
+            bunkeringData data;
+            //new BunkeringEditor (m_hInstance, m_hwndHandle); break;
+            openBunkeringEditor (m_hInstance, m_hwndHandle, & data); break;
         }
         case ID_TANK_SELECTOR:
         {

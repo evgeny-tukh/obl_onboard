@@ -19,3 +19,15 @@
 #define IDC_DATE_TIME                           1008
 
 
+#define ID_DENSITY				1010
+#define ID_DENSITY_SPIN                         1011
+#define ID_VISCOSITY                            1012
+#define ID_VISCOSITY_SPIN                       1013
+#define ID_SULPHUR                              1014
+#define ID_SULPHUR_SPIN                         1015
+#define ID_TEMPERATURE                          1016
+#define ID_TEMPERATURE_SPIN                     1017
+#define ID_VOLUME                               1018
+#define ID_VOLUME_SPIN                          1019
+#define ID_QUANTITY                             1020
+#define ID_QUANTITY_SPIN                        1021
