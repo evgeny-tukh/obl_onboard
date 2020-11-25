@@ -30,7 +30,7 @@ class CMainWnd : public CWindowWrapper
         
         ShipSchema             *shipSchema;
         CComboBoxWrapper       *tankSelector;
-        CStaticWrapper         *tankLabel, *beginLabel, *endLabel;
+        CStaticWrapper         *tankLabel, *beginLabel, *endLabel, *dateTime;
         CDateTimePickerWrapper *beginDate, *endDate, *beginTime, *endTime;
         CTrackbarWrapper       *timeSelector;
         CListCtrlWrapper       *bunkerList;

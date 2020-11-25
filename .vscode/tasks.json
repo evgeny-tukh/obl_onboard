@@ -38,6 +38,7 @@
           "common/config.cpp",
           "common/json.cpp",
           "common/db.cpp",
+          "common/tools.cpp",
           "common/sqlite3.c",
           "User32.lib",
           "Gdi32.lib",

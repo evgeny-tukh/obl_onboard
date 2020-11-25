@@ -2,6 +2,7 @@
 #include "resource.h"
 #include "main_wnd.h"
 #include "../common/defs.h"
+#include "../common/tools.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
 
@@ -30,7 +31,7 @@ CMainWnd::~CMainWnd ()
 {
     delete shipSchema;
     delete tankSelector;
-    delete tankLabel, beginLabel, endLabel;
+    delete tankLabel, beginLabel, endLabel, dateTime;
     delete beginDate, endDate, beginTime, endTime;
     delete timeSelector;
     delete bunkerList;
@@ -41,6 +42,7 @@ CMainWnd::~CMainWnd ()
 void CMainWnd::OnCreate ()
 {
     RECT client;
+    char buffer [100];
 
     GetClientRect (& client);
 
@@ -81,10 +83,12 @@ void CMainWnd::OnCreate ()
     tankLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
     beginLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
     endLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
+    dateTime = new CStaticWrapper (m_hwndHandle, IDC_DATE_TIME);
 
     tankLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 0, 75, 25, SS_LEFT | WS_VISIBLE, "Танк");
     beginLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 25, 75, 25, SS_LEFT | WS_VISIBLE, "Начало");
     endLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 50, 75, 25, SS_LEFT | WS_VISIBLE, "Конец");
+    dateTime->CreateControl (SHIP_SCHEMA_WIDTH + 5, 75, 180, 25, SS_LEFT | WS_VISIBLE, formatTimestamp (beginTimestamp, buffer));
 
     bunkerList->AddColumn ("Начало", 150);
     bunkerList->AddColumn ("Конец", 150);
@@ -104,7 +108,9 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam)
             if ((HWND) lParam == timeSelector->GetHandle ())
             {
                 time_t curTimestamp = timeSelector->GetPos ();
+                char dateTimeString [100];
 
+                dateTime->SetText (formatTimestamp (curTimestamp, dateTimeString));
                 shipSchema->setTimestamp (curTimestamp);
             }
 

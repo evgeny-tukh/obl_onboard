@@ -6,7 +6,7 @@
 
 class fuelMeterDisplay {
     public:
-        static const int WIDTH = 60;
+        static const int WIDTH = 70;
         static const int HEIGHT = 25;
         static const int TOP = 20;
         static const int GAP = 20;

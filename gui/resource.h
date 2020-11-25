@@ -13,5 +13,6 @@
 #define ID_TIME_SELECTOR                        1005
 #define ID_BUNKER_LIST                          1006
 #define ID_BUNKER_INFO                          1007
+#define IDC_DATE_TIME                           1008
 
 
