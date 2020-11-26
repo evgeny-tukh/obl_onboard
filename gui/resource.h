@@ -5,6 +5,8 @@
 #define IDR_MENU                                101
 #define ID_EXIT                                 40000
 #define ID_NEW_BUNKERING                        40001
+#define ID_EDIT_BUNKERING                       40002
+#define ID_DELETE_BUNKERING                     40003
 
 #define IDD_BUNKERING                           20000
 

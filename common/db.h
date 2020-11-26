@@ -25,6 +25,9 @@ class database {
 
         uint64_t createBunkering (bunkeringData& data);
         size_t loadBunkeringList (uint8_t tank, bunkeringList& list, time_t begin = 0, time_t end = 3000000000);
+        bool getBunkering (uint32_t id, bunkeringData& data);
+        void saveBunkering (bunkeringData& data);
+        void deleteBunkering (uint32_t id);
 
         uint32_t addFuelOperation (
             uint32_t tank,

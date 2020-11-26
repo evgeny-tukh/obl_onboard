@@ -6,9 +6,9 @@
 #include "bunkering.h"
 #include "../common/TimeFunctions.h"
 
-void setData (HWND dialog, float data, uint32_t ctrlID) {
+void setData (HWND dialog, float data, uint32_t ctrlID, char *format = "%.1f") {
     char buffer [100];
-    sprintf (buffer, "%.1f", data);
+    sprintf (buffer, format, data);
     SetDlgItemText (dialog, ctrlID, buffer);
 }
 
@@ -22,14 +22,16 @@ void setDateTime (HWND dialog, time_t timestamp, uint32_t dateCtrlID, uint32_t t
 
 void initBunkeringEditor (HWND dialog, bunkeringData *data) {
     SetWindowLongPtr (dialog, GWLP_USERDATA, (LPARAM) data);
-    setData (dialog, data->density, ID_DENSITY);
-    setData (dialog, data->viscosity, ID_VISCOSITY);
-    setData (dialog, data->sulphur, ID_SULPHUR);
+    setData (dialog, data->density, ID_DENSITY, "%.4f");
+    setData (dialog, data->viscosity, ID_VISCOSITY, "%.2f");
+    setData (dialog, data->sulphur, ID_SULPHUR, "%.2f");
     setData (dialog, data->temp, ID_TEMPERATURE);
-    setData (dialog, data->volume, ID_VOLUME);
-    setData (dialog, data->quantity, ID_QUANTITY);
+    setData (dialog, data->volume, ID_VOLUME, "%.3f");
+    setData (dialog, data->quantity, ID_QUANTITY, "%.3f");
     setDateTime (dialog, data->begin, ID_BEGIN_DATE, ID_BEGIN_TIME);
     setDateTime (dialog, data->end, ID_END_DATE, ID_END_TIME);
+    SetDlgItemText (dialog, ID_PORT, data->port);
+    SetDlgItemText (dialog, ID_BARGE, data->barge);
 }
 
 float getData (HWND dialog, uint32_t ctrlID) {

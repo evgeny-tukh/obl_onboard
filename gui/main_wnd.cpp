@@ -26,7 +26,7 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 
     history = new dataHistory (db, cfg);
 
-    beginTimestamp = 1605830400; //history->minTime ();
+    beginTimestamp = history->minTime ();
     endTimestamp = time (0); //history->maxTime ();
 }
 
@@ -73,10 +73,10 @@ void CMainWnd::OnCreate ()
     bunkerList->CreateControl (SHIP_SCHEMA_WIDTH + 1, 100, client.right - SHIP_SCHEMA_WIDTH, client.bottom - 100 - BUNK_INFO_HEIGHT, LVS_REPORT | WS_VISIBLE, 0);
     bunkerInfo->CreateControl (SHIP_SCHEMA_WIDTH + 1, client.bottom - BUNK_INFO_HEIGHT, client.right - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, WS_VISIBLE, 0);
 
-    beginDate->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
-    beginTime->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
-    endDate->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
-    endTime->SendMessage (DTM_SETSYSTEMTIME, GDT_NONE, 0);
+    beginDate->SetTimestamp (beginTimestamp);
+    beginTime->SetTimestamp (beginTimestamp);
+    endDate->SetTimestamp (endTimestamp);
+    endTime->SetTimestamp (endTimestamp);
 
     timeSelector->SetRange (beginTimestamp, endTimestamp);
 
@@ -139,12 +139,42 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
 
     switch (LOWORD (wParam))
     {
+        case ID_DELETE_BUNKERING:
+        {
+            int selection = bunkerList->GetSelectedItem ();
+
+            if (selection >= 0)
+            {
+                uint32_t bunkeringID = bunkerList->GetItemData (selection);
+    
+                if (MessageBox ("Удалить информацию о бункеровке?", "Удаление", MB_ICONQUESTION | MB_YESNO) == IDYES)
+                {
+                    db.deleteBunkering (bunkeringID);
+                    loadBunkeringList ();
+                }
+            }
+            break;
+        }
+        case ID_EDIT_BUNKERING:
+        {
+            int selection = bunkerList->GetSelectedItem ();
+
+            if (selection >= 0)
+            {
+                uint32_t bunkeringID = bunkerList->GetItemData (selection);
+                bunkeringData data;
+                if (db.getBunkering (bunkeringID, data) && openBunkeringEditor (m_hInstance, m_hwndHandle, & data) == IDOK) {
+                    db.saveBunkering (data);
+                    loadBunkeringList ();
+                }
+            }
+            break;
+        }
         case ID_NEW_BUNKERING:
         {
             if (selectedTank > 0) {
                 bunkeringData data;
                 data.tank = selectedTank;
-                //new BunkeringEditor (m_hInstance, m_hwndHandle); break;
                 if (openBunkeringEditor (m_hInstance, m_hwndHandle, & data) == IDOK) {
                     auto bunkeringID = db.createBunkering (data);
                     loadBunkeringList ();

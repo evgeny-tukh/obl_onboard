@@ -142,9 +142,11 @@ IDR_MENU MENU
     {
         MENUITEM "Выход\tAlt-F4", ID_EXIT
     }
-    POPUP "&Бункировка"
+    POPUP "&Бункеровка"
     {
-        MENUITEM "Новая", ID_NEW_BUNKERING
+        MENUITEM "Новая...", ID_NEW_BUNKERING
+        MENUITEM "Изменить...", ID_EDIT_BUNKERING
+        MENUITEM "Удалить", ID_DELETE_BUNKERING
     }
 }
 

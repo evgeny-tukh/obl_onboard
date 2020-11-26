@@ -151,7 +151,7 @@ uint64_t database::createBunkering (bunkeringData& data) {
     sprintf (
         query, 
         "insert into bunkerings(tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity) "
-        "values(%d,%zd,%zd,'%s','%s',%.1f,%.1f,%.1f,%.1f,%.1f,%.1f)",
+        "values(%d,%zd,%zd,'%s','%s',%.4f,%.2f,%.2f,%.1f,%.3f,%.3f)",
         data.tank, data.begin, data.end, data.port, data.barge, data.density, data.viscosity, data.sulphur, data.temp, data.volume, data.quantity
     );
     executeSimple (query, & result);
@@ -194,4 +194,34 @@ size_t database::loadBunkeringList (uint8_t tank, bunkeringList& list, time_t be
     executeAndGet (query, bunkeringListLoadCb, & list, 0);
 
     return list.size ();
+}
+
+bool database::getBunkering (uint32_t id, bunkeringData& data) {
+    bunkeringList list;
+    char query [300];
+    sprintf (query, "select id,tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity from bunkerings where id=%d", id);
+    executeAndGet (query, bunkeringListLoadCb, & list, 0);
+
+    bool result = list.size () > 0;
+
+    if (result) memcpy (& data, & list.front (), sizeof (data));
+
+    return result;
+}
+
+void database::saveBunkering (bunkeringData& data) {
+    char query [300];
+
+    sprintf (
+        query, 
+        "update bunkerings set begin=%I64d,end=%I64d,port='%s',barge='%s',density=%.4f,viscosity=%.2f,sulphur=%.2f,temp=%.1f,volume=%.3f,quantity=%3f where id=%d",
+        data.begin, data.end, data.port, data.barge, data.density, data.viscosity, data.sulphur, data.temp, data.volume, data.quantity, data.id
+    );
+    executeSimple (query);
+}
+
+void database::deleteBunkering (uint32_t id) {
+    char query [100];
+    sprintf (query, "delete from bunkerings where id=%d", id);
+    executeSimple (query);
 }
