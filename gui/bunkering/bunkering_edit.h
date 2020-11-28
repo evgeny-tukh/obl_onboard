@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Windows.h>
-#include "wui/WindowWrapper.h"
-#include "wui/ButtonWrapper.h"
-#include "wui/StaticWrapper.h"
-#include "../common/defs.h"
+#include "../wui/WindowWrapper.h"
+#include "../wui/ButtonWrapper.h"
+#include "../wui/StaticWrapper.h"
+#include "../../common/defs.h"
 
 int openBunkeringEditor (HINSTANCE instance, HWND parent, bunkeringData *data);
 

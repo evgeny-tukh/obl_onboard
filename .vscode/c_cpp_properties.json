@@ -3,7 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\include\\"
+                "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\include\\",
+                "C:\\Users\\jecat\\source\\repos\\libxl-3.9.2.4\\include_cpp\\",
             ],
             "forcedInclude": [],
             "intelliSenseMode": "msvc-x64",
@@ -15,6 +16,7 @@
             "name": "Win64",
             "includePath": [
                 "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\include\\"
+                "C:\\Users\\jecat\\source\\repos\\libxl-3.9.2.4\\include_cpp\\",
             ],
             "forcedInclude": [],
             "intelliSenseMode": "msvc-x64",
@@ -25,6 +27,7 @@
             "browse": {
                 "path": [
                     "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\14.16.27023\\include\\",
+                    "C:\\Users\\jecat\\source\\repos\\libxl-3.9.2.4\\include_cpp\\",
                     "${workspaceFolder}"
                 ],
                 "limitSymbolsToIncludedHeaders": true

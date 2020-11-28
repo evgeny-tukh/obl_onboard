@@ -5,14 +5,15 @@
 #include "main_wnd.h"
 #include "../common/defs.h"
 #include "../common/tools.h"
-#include "bunkering.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
 
 CMainWnd::CMainWnd (HINSTANCE instance):
     CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))),
     shipSchema (0),
-    selectedTank (-1)
+    bunkerings (0),
+    selectedTank (-1),
+    viewMode (mode::SCHEMA)
 {
     char path [MAX_PATH];
 
@@ -32,14 +33,25 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 
 CMainWnd::~CMainWnd ()
 {
-    delete shipSchema;
+    delete modeSwitch;
+    delete bunkerings;
+    /*delete shipSchema;
     delete tankSelector;
     delete tankLabel, beginLabel, endLabel, dateTime;
     delete beginDate, endDate, beginTime, endTime;
     delete timeSelector;
     delete bunkerList;
     delete bunkerInfo;
-    delete history;
+    delete history;*/
+}
+
+void CMainWnd::switchToMode (mode newMode) {
+    viewMode = newMode;
+
+    shipSchema->Show (viewMode == mode::SCHEMA ? SW_SHOW : SW_HIDE);
+    shipSchema->Update ();
+    bunkerings->Show (viewMode == mode::BUNKERINGS ? SW_SHOW : SW_HIDE);
+    bunkerings->Update ();
 }
 
 void CMainWnd::OnCreate ()
@@ -49,10 +61,20 @@ void CMainWnd::OnCreate ()
 
     GetClientRect (& client);
 
-    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg, history);
+    modeSwitch = new CTabCtrlWrapper (m_hwndHandle, ID_MODE_SWITCH);
 
-    shipSchema->Create (0, 0, 0, SHIP_SCHEMA_WIDTH, client.bottom + 1, WS_VISIBLE | WS_CHILD);
-    shipSchema->Show (SW_SHOW);
+    modeSwitch->CreateControl (0, 0, client.right + 1, 50, WS_VISIBLE | TCS_BUTTONS, 0);
+    modeSwitch->AddItem ("Мнемосхема", mode::SCHEMA);
+    modeSwitch->AddItem ("Бункировки", mode::BUNKERINGS);
+
+    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg, history);
+    bunkerings = new BunkeringWindow (m_hInstance, m_hwndHandle, cfg, db);
+
+    shipSchema->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
+    bunkerings->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
+    
+    switchToMode (mode::SCHEMA);
+    /*shipSchema->Show (SW_SHOW);
     shipSchema->Update ();
 
     tankSelector = new CComboBoxWrapper (m_hwndHandle, ID_TANK_SELECTOR);
@@ -100,7 +122,7 @@ void CMainWnd::OnCreate ()
 
     bunkerList->AddColumn ("Начало", 150);
     bunkerList->AddColumn ("Конец", 150);
-    bunkerList->AddColumn ("Объем по БР, м.куб.", 130);
+    bunkerList->AddColumn ("Объем по БР, м.куб.", 130);*/
 }
 
 void CMainWnd::RequestAppQuit ()
@@ -139,7 +161,7 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
 
     switch (LOWORD (wParam))
     {
-        case ID_DELETE_BUNKERING:
+        /*case ID_DELETE_BUNKERING:
         {
             int selection = bunkerList->GetSelectedItem ();
 
@@ -184,7 +206,7 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
             }
             
             break;
-        }
+        }*/
         case ID_TANK_SELECTOR:
         {
             if (HIWORD (wParam) == CBN_SELCHANGE ) {
@@ -196,7 +218,7 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
 
                     shipSchema->selectTank (selectedTank);
                     InvalidateRect (shipSchema->GetHandle (), 0, TRUE);
-                    loadBunkeringList ();
+                    //loadBunkeringList ();
                 }
             }
             break;
@@ -234,16 +256,26 @@ LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam)
 
 LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD height)
 {
-    shipSchema->Move (0, 0, SHIP_SCHEMA_WIDTH, height, TRUE);
+    /*shipSchema->Move (0, 0, SHIP_SCHEMA_WIDTH, height, TRUE);
     timeSelector->Move (SHIP_SCHEMA_WIDTH + 180, 75, width - (SHIP_SCHEMA_WIDTH + 180), 25, TRUE);
     bunkerList->Move (SHIP_SCHEMA_WIDTH + 1, 100, width - SHIP_SCHEMA_WIDTH, height - 100 - BUNK_INFO_HEIGHT, TRUE);
-    bunkerInfo->Move (SHIP_SCHEMA_WIDTH + 1, height - BUNK_INFO_HEIGHT, width - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, TRUE);
+    bunkerInfo->Move (SHIP_SCHEMA_WIDTH + 1, height - BUNK_INFO_HEIGHT, width - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, TRUE);*/
+    modeSwitch->Move (0, 0, width, 50, TRUE);
+    shipSchema->Move (0, 50, width, height - 49, TRUE);
+    bunkerings->Move (0, 50, width, height - 49, TRUE);
 
     return FALSE;
 }
 
 LRESULT CMainWnd::OnNotify (NMHDR *header)
 {
+    switch (header->idFrom) {
+        case ID_MODE_SWITCH: {
+            auto selection = modeSwitch->GetCurSel ();
+
+            switchToMode ((mode) modeSwitch->GetItemData (selection)); break;
+        }
+    }
     return FALSE;
 }
 
@@ -252,7 +284,7 @@ LRESULT CMainWnd::OnTimer (unsigned int timerID)
     return CWindowWrapper::OnTimer (timerID);
 }
 
-void CMainWnd::loadBunkeringList ()
+/*void CMainWnd::loadBunkeringList ()
 {
     bunkeringList list;
 
@@ -268,4 +300,4 @@ void CMainWnd::loadBunkeringList ()
         bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
         bunkerList->SetItemText (item, 2, ftoa (bunkering->volume, buffer, "%.1f"));
     }
-}
+}*/

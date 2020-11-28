@@ -97,7 +97,7 @@ void parseCfgFile (config& cfg) {
                     json::stringNode *side = (json::stringNode *) (*tank) ["side"];
 
                     if (id && name && type && volume) {
-                        cfg.tanks.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue (), volume->getValue (), side->getValue ());
+                        cfg.tanks.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue (), (float) volume->getValue (), side->getValue ());
                     }
                 }
             }

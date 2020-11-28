@@ -10,3 +10,7 @@
 R???????
 *._db
 gui/res
+*.xl*
+*.*db
+*.bin
+build/

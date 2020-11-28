@@ -11,7 +11,7 @@ int CALLBACK WinMain (HINSTANCE instance, HINSTANCE prevInstance, char *cmdLine,
 
     InitCommonControlsEx (& ctlInitData);
     
-    if (mainWindow.Create ("Fuel Control Utility", 100, 100, 800, 600))
+    if (mainWindow.Create ("Fuel Control Utility", 100, 100, 800, 700))
     {
         mainWindow.Show (SW_SHOW);
         mainWindow.Update ();

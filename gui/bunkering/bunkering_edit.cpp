@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <Windows.h>
-#include "resource.h"
-#include "wui/WindowWrapper.h"
-#include "wui/ButtonWrapper.h"
-#include "bunkering.h"
-#include "../common/TimeFunctions.h"
+#include "../resource.h"
+#include "../wui/WindowWrapper.h"
+#include "../wui/ButtonWrapper.h"
+#include "bunkering_edit.h"
+#include "../../common/TimeFunctions.h"
 
 void setData (HWND dialog, float data, uint32_t ctrlID, char *format = "%.1f") {
     char buffer [100];

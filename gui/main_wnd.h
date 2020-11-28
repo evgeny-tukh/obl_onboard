@@ -16,7 +16,8 @@
 #include "schema/ship_schema.h"
 #include "../common/defs.h"
 #include "../common/db.h"
-#include "bunkering.h"
+#include "bunkering/bunkering_wnd.h"
+#include "bunkering/bunkering_edit.h"
 #include "data_history.h"
 
 class CMainWnd : public CWindowWrapper
@@ -26,15 +27,25 @@ class CMainWnd : public CWindowWrapper
         virtual ~CMainWnd ();
 
     protected:
+        enum mode {
+            SCHEMA = 1,
+            BUNKERINGS,
+        };
+
         static const int SHIP_SCHEMA_WIDTH = 300;
         static const int BUNK_INFO_HEIGHT = 200;
         
-        ShipSchema             *shipSchema;
+        mode             viewMode;
+        CTabCtrlWrapper *modeSwitch;
+
+        ShipSchema      *shipSchema;
+        BunkeringWindow *bunkerings;
+
         CComboBoxWrapper       *tankSelector;
         CStaticWrapper         *tankLabel, *beginLabel, *endLabel, *dateTime;
         CDateTimePickerWrapper *beginDate, *endDate, *beginTime, *endTime;
         CTrackbarWrapper       *timeSelector;
-        CListCtrlWrapper       *bunkerList;
+        //CListCtrlWrapper       *bunkerList;
         CTabCtrlWrapper        *bunkerInfo;
         HMENU                   menu;
         config                  cfg;
@@ -54,5 +65,6 @@ class CMainWnd : public CWindowWrapper
 
         virtual void OnCreate ();
 
-        void loadBunkeringList ();
+        //void loadBunkeringList ();
+        void switchToMode (mode newMode);
 };

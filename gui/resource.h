@@ -36,3 +36,16 @@
 
 #define ID_PORT                                 1026
 #define ID_BARGE                                1027
+
+#define ID_MODE_SWITCH                          1028
+
+#define ID_BUNK_HDR_FUEL_STATE                  1029
+#define ID_TANK_INFO_BEFORE                     1030
+#define ID_TANK_INFO_AFTER                      1031
+
+#define ID_DRAFT_FORE_BEFORE                    1032
+#define ID_DRAFT_FORE_AFTER                     1033
+#define ID_DRAFT_AFT_BEFORE                     1034
+#define ID_DRAFT_AFT_AFTER                      1035
+
+#define ID_BUNKERING_TABS                       1036
