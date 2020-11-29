@@ -65,7 +65,7 @@ void CMainWnd::OnCreate ()
 
     modeSwitch->CreateControl (0, 0, client.right + 1, 50, WS_VISIBLE | TCS_BUTTONS, 0);
     modeSwitch->AddItem ("Мнемосхема", mode::SCHEMA);
-    modeSwitch->AddItem ("Бункировки", mode::BUNKERINGS);
+    modeSwitch->AddItem ("Бункеровки", mode::BUNKERINGS);
 
     shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg, history);
     bunkerings = new BunkeringWindow (m_hInstance, m_hwndHandle, cfg, db);

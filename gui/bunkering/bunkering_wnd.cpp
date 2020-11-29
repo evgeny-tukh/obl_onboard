@@ -260,6 +260,27 @@ void BunkeringWindow::showControlGroup (int groupToShow) {
 LRESULT BunkeringWindow::OnNotify (NMHDR *header)
 {
     switch (header->idFrom) {
+        case ID_TANK_INFO_BEFORE: {
+            if (header->code == NM_DBLCLK) {
+                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+                tankInfoBefore->editValue (info->iItem);
+            }
+            break;
+        }
+        case ID_TANK_INFO_AFTER: {
+            if (header->code == NM_DBLCLK) {
+                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+                tankInfoAfter->editValue (info->iItem);
+            }
+            break;
+        }
+        case ID_BUNK_HDR_FUEL_STATE: {
+            if (header->code == NM_DBLCLK) {
+                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+                bunkerLoadInfo->editValue (info->iItem);
+            }
+            break;
+        }
         case ID_BUNKERING_TABS: {
             auto selection = tabSwitch->GetCurSel ();
 

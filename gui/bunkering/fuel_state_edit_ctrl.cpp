@@ -1,5 +1,6 @@
 ﻿#include "fuel_state_edit_ctrl.h"
 #include "../../common/tools.h"
+#include "../wui/InputBox.h"
 
 FuelStateEditCtrl::FuelStateEditCtrl (HWND parent, UINT ctrlID): CListCtrlWrapper (parent, ctrlID) {
 }
@@ -7,16 +8,30 @@ FuelStateEditCtrl::FuelStateEditCtrl (HWND parent, UINT ctrlID): CListCtrlWrappe
 FuelStateEditCtrl::~FuelStateEditCtrl () {
 }
 
+char *FuelStateEditCtrl::getFormat (int item) {
+    switch (item) {
+        case 0: return "%.4f";
+        case 1: return "%.2f";
+        case 2: return "%.2f";
+        case 3: return "%.1f";
+        case 4: return "%.4f";
+        case 5: return "%.3f";
+        case 6: return "%.3f";
+        case 7: return "%.3f";
+        default: return "%.f";
+    }
+}
+
 void FuelStateEditCtrl::showState (fuelState& state) {
     char buffer [100];
-    SetItemText (0, 1, ftoa (state.density, buffer, "%.4f"));
-    SetItemText (1, 1, ftoa (state.viscosity, buffer, "%.2f"));
-    SetItemText (2, 1, ftoa (state.sulphur, buffer, "%.2f"));
-    SetItemText (3, 1, ftoa (state.temp, buffer, "%.1f"));
-    SetItemText (4, 1, ftoa (state.vcf, buffer, "%.4f"));
-    SetItemText (5, 1, ftoa (state.volume, buffer, "%.3f"));
-    SetItemText (6, 1, ftoa (state.quantity, buffer, "%.3f"));
-    SetItemText (7, 1, ftoa (state.fuelMeter, buffer, "%.3f"));
+    SetItemText (0, 1, ftoa (state.density, buffer, getFormat (0)));
+    SetItemText (1, 1, ftoa (state.viscosity, buffer, getFormat (1)));
+    SetItemText (2, 1, ftoa (state.sulphur, buffer, getFormat (2)));
+    SetItemText (3, 1, ftoa (state.temp, buffer, getFormat (3)));
+    SetItemText (4, 1, ftoa (state.vcf, buffer, getFormat (4)));
+    SetItemText (5, 1, ftoa (state.volume, buffer, getFormat (5)));
+    SetItemText (6, 1, ftoa (state.quantity, buffer, getFormat (6)));
+    SetItemText (7, 1, ftoa (state.fuelMeter, buffer, getFormat (7)));
 }
 
 void FuelStateEditCtrl::readState (fuelState& state) {
@@ -39,7 +54,7 @@ void FuelStateEditCtrl::readState (fuelState& state) {
 
 void FuelStateEditCtrl::init () {
     SendMessage (LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
-    
+
     AddColumn ("Параметер", 180);
     AddColumn ("Значение", 80);
 
@@ -51,4 +66,21 @@ void FuelStateEditCtrl::init () {
     AddItem ("Объем, м.куб.");
     AddItem ("Количество, т");
     AddItem ("По расходомеру");
+}
+
+bool FuelStateEditCtrl::editValue (int item) {
+    char buffer [100];
+    char label [50];
+    GetItemText (item, 1, buffer, sizeof (buffer));
+    GetItemText (item, 0, label, sizeof (label));
+
+    CInputBox inputBox (m_hInstance, m_hwndHandle, "Редактирование параметра", label, buffer, sizeof (buffer));
+
+    bool result = inputBox.Execute () == IDOK;
+
+    if (result) {
+        SetItemText (item, 1, ftoa (atof (buffer), buffer, getFormat (item)));
+    }
+
+    return result;
 }

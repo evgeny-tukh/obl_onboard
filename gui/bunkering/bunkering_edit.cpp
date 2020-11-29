@@ -112,7 +112,7 @@ int openBunkeringEditor (HINSTANCE instance, HWND parent, bunkeringData *data) {
 }
 
 BunkeringEditor::BunkeringEditor (HINSTANCE instance, HWND parent): CWindowWrapper (instance, parent, "obl_be") {
-    Create ("Бункировка", 100, 100, 600, 500, WS_VISIBLE | WS_POPUP | WS_DLGFRAME | WS_CAPTION | WS_SYSMENU);
+    Create ("Бункеровка", 100, 100, 600, 500, WS_VISIBLE | WS_POPUP | WS_DLGFRAME | WS_CAPTION | WS_SYSMENU);
 }
 
 BunkeringEditor::~BunkeringEditor () {

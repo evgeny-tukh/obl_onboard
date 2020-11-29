@@ -11,4 +11,7 @@ class FuelStateEditCtrl: public CListCtrlWrapper {
         void init ();
         void showState (fuelState& state);
         void readState (fuelState& state);
+        bool editValue (int item);
+
+        char *getFormat (int item);
 };
