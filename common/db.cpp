@@ -72,7 +72,7 @@ char *initialQueries [] {
     0,
 };
 
-database::database () {
+database::database (config& _cfg): cfg (_cfg) {
     if (sqlite3_open_v2 (dbPath, & db, SQLITE_OPEN_READWRITE, 0) == SQLITE_OK) {
         return;
     } else if (sqlite3_open (dbPath, & db) == SQLITE_OK) {
@@ -174,16 +174,20 @@ void database::addFuelParameter (
 }
 
 uint64_t database::createBunkering (bunkeringData& data) {
-    char query [300];
+    char query [500];
     uint64_t bunkeringID, stateID;
 
     sprintf (
         query, 
         "insert into bunkerings"
-        "(begin,end,port,barge,draft_fore_before,draft_aft_before,fm_in_value_before,fm_out_value_before,density,viscosity,sulphur,temp,volume,quantity,vcf) "
-        "values(%zd,%zd,'%s','%s',$.1f,$.1f,$.1f,$.1f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f)",
+        "(begin,end,port,barge,"
+        "draft_fore_before,draft_aft_before,fm_in_value_before,fm_out_value_before,"
+        "draft_fore_after,draft_aft_after,fm_in_value_after,fm_out_value_after,"
+        "density,viscosity,sulphur,temp,volume,quantity,vcf) "
+        "values(%zd,%zd,'%s','%s',%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,%.3f,%.3f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f)",
         data.begin, data.end, data.port.c_str (), data.barge.c_str (),
         data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
+        data.draftAfter.fore, data.draftAfter.aft, data.pmAfter.in, data.pmAfter.out,
         data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp, data.loaded.volume, data.loaded.quantity, data.loaded.vcf
     );
     executeSimple (query, & bunkeringID);
@@ -197,7 +201,7 @@ uint64_t database::createBunkering (bunkeringData& data) {
             "(bunkering,tank,"
             "density_before,viscosity_before,sulphur_before,temp_before,volume_before,quantity_before,vcf_before,"
             "density_after,viscosity_after,sulphur_after,temp_after,volume_after,quantity_after,vcf_after) "
-            "values(%I64d,%d,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f)",
+            "values(%I64d,%d,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f)",
             bunkeringID, tankState.tank,
             tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp, tankState.before.volume, tankState.before.quantity, tankState.before.vcf,
             tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp, tankState.after.volume, tankState.after.quantity, tankState.after.vcf
@@ -211,53 +215,81 @@ uint64_t database::createBunkering (bunkeringData& data) {
 }
 
 int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fields) {
-    /*bunkeringList *list = (bunkeringList *) param;
+    bunkeringContext *ctx = (bunkeringContext *) param;
+    bunkeringData *bunkData = ctx->list.size () > 0 ? & ctx->list.back () : 0;
+    uint32_t lastBunkeringID = ctx->list.size () > 0 ? ctx->list.back ().id : 0;
 
-    list->emplace_back (
-        (uint32_t) atol (values [0]),   //id (_id),
-        (uint32_t) atol (values [1]) ,  //tank (0),
-        (time_t) _atoi64 (values [2]),  //begin (time (0) - 5400),
-        (time_t) _atoi64 (values [3]),  //end (time (0) - 1800),
-        values [4],                     //port ("-"),
-        values [5],                     //barge ("-"),
-        (float) atof (values [6]),      //density (0.95f),
-        (float) atof (values [7]),      //viscosity (380.0f),
-        (float) atof (values [8]),      //sulphur (1.5f),
-        (float) atof (values [9]),      //temp (45.0f),
-        (float) atof (values [10]),     //volume (0.0f),
-        (float) atof (values [11])      //quantity (0.0f)
-    );*/
+    auto atoF = [] (char *strValue) {
+        return strValue ? (float) atof (strValue) : 0.0f;
+    };
+    auto loadFuelState = [values, atoF] (fuelState& state, int start) {
+        state.density = atoF (values [start]);
+        state.viscosity = atoF (values [start+1]);
+        state.sulphur = atoF (values [start+2]);
+        state.temp = atoF (values [start+3]);
+        state.volume = atoF (values [start+4]);
+        state.quantity = atoF (values [start+5]);
+        state.vcf = atoF (values [start+6]);
+    };
+
+    uint32_t bunkeringID = atoi (values [0]);
+
+    if (lastBunkeringID != bunkeringID) {
+        ctx->list.emplace_back (ctx->cfg, bunkeringID, values [3], values [4]);
+        bunkData = & ctx->list.back ();
+
+        bunkData->begin = atol (values [1]);
+        bunkData->end = atol (values [2]);
+        bunkData->draftBefore.fore = atoF (values [5]);
+        bunkData->draftBefore.aft = atoF (values [6]);
+        bunkData->pmBefore.in = atoF (values [7]);
+        bunkData->pmBefore.out = atoF (values [8]);
+        bunkData->draftAfter.fore = atoF (values [9]);
+        bunkData->draftAfter.aft = atoF (values [10]);
+        bunkData->pmAfter.in = atoF (values [11]);
+        bunkData->pmAfter.out = atoF (values [12]);
+        
+        loadFuelState (bunkData->loaded, 13);
+        bunkData->tankStates.clear ();
+    }
+
+    bunkData->tankStates.emplace_back (atol (values [20]), atol (values [22]));
+
+    tankState& tank = bunkData->tankStates.back ();
+
+    loadFuelState (tank.before, 23);
+    loadFuelState (tank.after, 30);
 
     return 0;
 }
 
 size_t database::loadBunkeringList (uint8_t tank, bunkeringList& list, time_t begin, time_t end) {
+    bunkeringContext ctx = { list, cfg };
     list.clear ();
 
-    /*char query [300];
+    char query [500];
     sprintf (
         query,
-        "select id,tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity from bunkerings where tank=%d and begin>=%lld and end<=%lld order by begin",
-        tank,
+        "select * from bunkerings b left join tank_state s on b.id=s.bunkering where begin>=%lld and end<=%lld order by begin,tank",
         begin,
         end
     );
-    executeAndGet (query, bunkeringListLoadCb, & list, 0);*/
+    executeAndGet (query, bunkeringListLoadCb, & ctx, 0);
 
     return list.size ();
 }
 
 bool database::getBunkering (uint32_t id, bunkeringData& data) {
-    /*bunkeringList list;
+    bunkeringList list;
     char query [300];
-    sprintf (query, "select id,tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity from bunkerings where id=%d", id);
+    sprintf (query, "select * from bunkerings b left join tank_state s on b.id=s.bunkering where b.id=%d", id);
     executeAndGet (query, bunkeringListLoadCb, & list, 0);
 
     bool result = list.size () > 0;
 
-    if (result) memcpy (& data, & list.front (), sizeof (data));
+    if (result) data.copyFrom (list [0]);
 
-    return result;*/return false;
+    return result;
 }
 
 void database::saveBunkering (bunkeringData& data) {

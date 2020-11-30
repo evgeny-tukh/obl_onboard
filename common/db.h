@@ -7,9 +7,14 @@
 
 typedef std::vector<bunkeringData> bunkeringList;
 
+struct bunkeringContext {
+    bunkeringList& list;
+    config& cfg;
+};
+
 class database {
     public:
-        database ();
+        database (config&);
         virtual ~database ();
 
         bool execute (char *query, uint64_t *insertID = 0);
@@ -42,6 +47,7 @@ class database {
             double value
         );
     protected:
+        config& cfg;
         static const char *dbPath;
         sqlite3 *db;
 

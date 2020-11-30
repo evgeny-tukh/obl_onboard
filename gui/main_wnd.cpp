@@ -13,7 +13,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
     shipSchema (0),
     bunkerings (0),
     selectedTank (-1),
-    viewMode (mode::SCHEMA)
+    viewMode (mode::SCHEMA),
+    db (cfg)
 {
     char path [MAX_PATH];
 

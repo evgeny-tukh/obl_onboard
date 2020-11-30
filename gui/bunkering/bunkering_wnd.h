@@ -19,7 +19,7 @@ class BunkeringWindow: public CWindowWrapper {
         BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db);
         virtual ~BunkeringWindow ();
 
-        inline void setBunkeringData (bunkeringData& _data) { bunkerData = & _data; }
+        void setBunkeringData (bunkeringData& _data);
         
     private:
         static const int BUNK_LIST_HEIGHT = 320;
@@ -54,7 +54,7 @@ class BunkeringWindow: public CWindowWrapper {
         CDateTimePickerWrapper *beginDate, *beginTime, *endDate, *endTime;
         config& cfg;
         database& db;
-        bunkeringData *bunkerData;
+        bunkeringList list;
 
         virtual void OnCreate ();
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);
@@ -64,4 +64,6 @@ class BunkeringWindow: public CWindowWrapper {
         void loadBunkeringList ();
 
         void showOnlySelectedTank (bool before);
+        void showEditButtons (bool show);
+        bool checkData (bunkeringData&);
 };

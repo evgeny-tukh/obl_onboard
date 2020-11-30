@@ -34,11 +34,13 @@ void FuelStateEditCtrl::showState (fuelState& state) {
     SetItemText (7, 1, ftoa (state.fuelMeter, buffer, getFormat (7)));
 }
 
-void FuelStateEditCtrl::readState (fuelState& state) {
+bool FuelStateEditCtrl::readState (fuelState& state) {
+    bool result = true;
     char buffer [100];
     for (auto i = 0; i < 7; ++ i) {
         GetItemText (i, 1, buffer, sizeof (buffer));
         float value = (float) atof (buffer);
+        if (value < 0.01f) result = false;
         switch (i) {
             case 0: state.density = value; break;
             case 1: state.viscosity = value; break;
@@ -50,6 +52,8 @@ void FuelStateEditCtrl::readState (fuelState& state) {
             case 7: state.fuelMeter = value; break;
         }
     }
+
+    return result;
 }
 
 void FuelStateEditCtrl::init () {

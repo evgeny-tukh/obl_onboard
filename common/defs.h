@@ -85,10 +85,21 @@ struct fuelState {
         viscosity (380.0f),
         sulphur (1.5f),
         temp (45.0f),
-        volume (0.0f),
-        quantity (0.0f),
-        fuelMeter (0.0f),
+        volume (500.0f),
+        quantity (490.0f),
+        fuelMeter (505.0f),
         vcf (0.95f) {}
+
+    void copyFrom (fuelState& from) {
+        density = from.density;
+        viscosity = from.viscosity;
+        sulphur = from.sulphur;
+        temp = from.temp;
+        volume = from.volume;
+        quantity = from.quantity;
+        fuelMeter = from.fuelMeter;
+        vcf = from.vcf;
+    }
 };
 
 struct tankState {
@@ -96,12 +107,25 @@ struct tankState {
     fuelState before, after;
 
     tankState (uint32_t _tank, uint32_t _id = 0): tank (_tank), id (_id), before (), after () {}
+
+    void copyFrom (tankState& from) {
+        id = from.id;
+        tank = from.tank;
+
+        before.copyFrom (from.before);
+        after.copyFrom (from.after);
+    }
 };
 
 struct pipeMeters {
     float in, out;
 
     pipeMeters (): in (0.0f), out (0.0f) {}
+
+    void copyFrom (pipeMeters& from) {
+        in = from.in;
+        out = from.out;
+    }
 };
 
 struct draftData {
@@ -109,6 +133,11 @@ struct draftData {
 
     draftData (): fore (0.0f), aft (0.0) {}
     draftData (float _fore, float _aft): fore (_fore), aft (_aft) {}
+
+    void copyFrom (draftData& from) {
+        fore = from.fore;
+        aft = from.aft;
+    }
 };
 
 struct config {
@@ -175,10 +204,29 @@ struct bunkeringData {
         id (_id),
         begin (time (0) - 5400),
         end (time (0) - 1800),
-        port (_port ? _port : ""),
-        barge (_barge ? _barge : "") {
+        port (_port ? _port : "*"),
+        barge (_barge ? _barge : "*") {
         for (auto& tank: cfg.tanks) {
             tankStates.emplace_back (tank.id);
+        }
+    }
+
+    void copyFrom (bunkeringData& from) {
+        id = from.id;
+        begin = from.begin;
+        end = from.end;
+        port = from.port.c_str ();
+        barge = from.barge.c_str ();
+
+        loaded.copyFrom (from.loaded);
+        pmBefore.copyFrom (from.pmBefore);
+        pmAfter.copyFrom (from.pmAfter);
+        draftBefore.copyFrom (from.draftBefore);
+        draftAfter.copyFrom (from.draftAfter);
+
+        for (auto& tank: from.tankStates) {
+            tankStates.emplace_back (0);
+            tankStates.back ().copyFrom (tank);
         }
     }
 };

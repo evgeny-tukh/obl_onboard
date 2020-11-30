@@ -8,8 +8,9 @@
 
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
-    bunkerList (0), addBunker (0), removeBunker (0), bunkerLoadInfo (0), bunkerData (0), bunkeringLabel (0),
+    bunkerList (0), addBunker (0), removeBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
     beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
+    save (0), discard (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
     draftForeBefore (0), draftForeAfter (0), draftAftBefore (0), draftAftAfter (0) {}
 
@@ -18,6 +19,7 @@ BunkeringWindow::~BunkeringWindow () {
     delete addBunker, removeBunker;
     delete tabSwitch;
     delete tanksBefore, tanksAfter;
+    delete save, discard;
 
     for (auto& ctrl: tankInfoBefore) delete ctrl;
     for (auto& ctrl: tankInfoAfter) delete ctrl;
@@ -25,7 +27,6 @@ BunkeringWindow::~BunkeringWindow () {
     delete bunkerLoadInfo, tankInfoBefore, tankInfoAfter;
     delete bunkeringLabel, beginLabel, endLabel, portLabel, bargeLabel, beforeLabel, afterLabel;
     delete beginDate, beginTime, endDate, endTime;
-    delete save, discard;
     delete tankList;
     delete port, barge;
     delete draftForeAfterLabel, draftForeBeforeLabel, draftAftAfterLabel, draftAftBeforeLabel;
@@ -48,12 +49,19 @@ void BunkeringWindow::OnCreate () {
     bunkerList->AddColumn ("Конец закачки", 110);
     bunkerList->AddColumn ("Закачано по ОБР, т", 120);
     bunkerList->AddColumn ("Закачано по УМ, т", 120);
+    bunkerList->SendMessage (LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT, LVS_EX_FULLROWSELECT);
 
     addBunker = new CButtonWrapper (m_hwndHandle, ID_NEW_BUNKERING);
     removeBunker = new CButtonWrapper (m_hwndHandle, ID_DELETE_BUNKERING);
+    save = new CButtonWrapper (m_hwndHandle, IDOK);
+    discard = new CButtonWrapper (m_hwndHandle, IDCANCEL);
 
     addBunker->CreateControl (client.right - buttonWidth, 0, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Новая бункеровка");
     removeBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Удалить бункеровку");
+    save->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 2, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сохранить");
+    discard->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сбросить");
+    save->Enable (FALSE);
+    discard->Enable (FALSE);
 
     tabSwitch = new CTabCtrlWrapper (m_hwndHandle, ID_BUNKERING_TABS);
 
@@ -69,8 +77,8 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (0, endLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 205, 55, 20, SS_LEFT, "Конец");
     addControlToGroup (0, portLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 225, 55, 20, SS_LEFT, "Порт");
     addControlToGroup (0, bargeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 245, 55, 20, SS_LEFT, "Баржа");
-    addControlToGroup (0, port = new CEditWrapper (switchHandle, ID_PORT))->CreateControl (60, 225, 180, 20, SS_EDITCONTROL | WS_BORDER);
-    addControlToGroup (0, barge = new CEditWrapper (switchHandle, ID_BARGE))->CreateControl (60, 245, 180, 20, SS_EDITCONTROL | WS_BORDER);
+    addControlToGroup (0, port = new CEditWrapper (switchHandle, ID_PORT))->CreateControl (60, 225, 180, 20, WS_BORDER);
+    addControlToGroup (0, barge = new CEditWrapper (switchHandle, ID_BARGE))->CreateControl (60, 245, 180, 20, WS_BORDER);
     addControlToGroup (0, beginDate = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_DATE))->CreateControl (60, 185, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
     addControlToGroup (0, beginTime = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_TIME))->CreateControl (160, 185, 80, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
     addControlToGroup (0, endDate = new CDateTimePickerWrapper (switchHandle, ID_END_DATE))->CreateControl (60, 205, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
@@ -119,6 +127,7 @@ void BunkeringWindow::OnCreate () {
     }
 
     showControlGroup (0);
+    loadBunkeringList ();
     #if 0
     bunkeringLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
     beginLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
@@ -208,10 +217,18 @@ LRESULT BunkeringWindow::OnSize (const DWORD requestType, const WORD width, cons
 LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = TRUE;
 
-    #if 0
     switch (LOWORD (wParam)) {
+        case IDOK: {
+            bunkeringData bunkData (cfg);
+            if (checkData (bunkData)) {
+                db.createBunkering (bunkData);
+                showEditButtons (false);
+                loadBunkeringList ();
+            }
+            break;
+        }
         case ID_DELETE_BUNKERING: {
-            int selection = bunkerList->GetSelectedItem ();
+            /*int selection = bunkerList->GetSelectedItem ();
 
             if (selection >= 0) {
                 uint32_t bunkeringID = bunkerList->GetItemData (selection);
@@ -220,11 +237,11 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
                     db.deleteBunkering (bunkeringID);
                     loadBunkeringList ();
                 }
-            }
+            }*/
             break;
         }
         case ID_EDIT_BUNKERING: {
-            int selection = bunkerList->GetSelectedItem ();
+            /*int selection = bunkerList->GetSelectedItem ();
 
             if (selection >= 0) {
                 uint32_t bunkeringID = bunkerList->GetItemData (selection);
@@ -233,21 +250,13 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
                     db.saveBunkering (data);
                     loadBunkeringList ();
                 }
-            }
+            }*/
             break;
         }
         case ID_NEW_BUNKERING: {
-            /*if (selectedTank > 0) {
-                bunkeringData data;
-                data.tank = selectedTank;
-                if (openBunkeringEditor (m_hInstance, m_hwndHandle, & data) == IDOK) {
-                    auto bunkeringID = db.createBunkering (data);
-                    loadBunkeringList ();
-                }
-            } else {
-                MessageBox ("Пожалуйста, выберите танк!", "Ошибка", MB_ICONEXCLAMATION);
-            }*/
-            
+            bunkeringData data (cfg);
+            setBunkeringData (data);
+            showEditButtons (true);
             break;
         }
         default:
@@ -255,14 +264,13 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
             result = TRUE;
         }
     }
-    #endif
 
     return result;
 }
 
 void BunkeringWindow::loadBunkeringList ()
 {
-    bunkeringList list;
+    list.clear ();
 
     db.loadBunkeringList (-1, list, 0, time (0));
 
@@ -271,11 +279,11 @@ void BunkeringWindow::loadBunkeringList ()
     for (auto bunkering = list.begin (); bunkering != list.end (); ++ bunkering) {
         char buffer [50];
 
-        auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering->id);
+        auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering - list.begin ());
 
         bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
-        bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.volume, buffer, "%.13"));
-        bunkerList->SetItemText (item,3, ftoa (bunkering->loaded.fuelMeter, buffer, "%.13"));
+        bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.volume, buffer, "%.3f"));
+        bunkerList->SetItemText (item,3, ftoa (bunkering->loaded.fuelMeter, buffer, "%.3f"));
     }
 }
 
@@ -292,13 +300,12 @@ void BunkeringWindow::showOnlySelectedTank (bool before) {
     int selection = switchCtrl->GetCurSel ();
 
     for (int i = 0; i < (int) cfg.tanks.size (); ++ i) {
-        tankInfoBefore [i]->Show (i == (before && selection) ? SW_SHOW : SW_HIDE);
-        tankInfoAfter [i]->Show (i == (!before && selection) ? SW_SHOW : SW_HIDE);
+        tankInfoBefore [i]->Show ((before && i == selection) ? SW_SHOW : SW_HIDE);
+        tankInfoAfter [i]->Show ((!before && i == selection) ? SW_SHOW : SW_HIDE);
     }
 }
 
-LRESULT BunkeringWindow::OnNotify (NMHDR *header)
-{
+LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
     if (header->code == NM_DBLCLK) {
         NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
         if (header->idFrom >= ID_TANK_INFO_BEFORE_FIRST && header->idFrom < (ID_TANK_INFO_BEFORE_FIRST + cfg.tanks.size ())) {
@@ -308,6 +315,17 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header)
         }
     }
     switch (header->idFrom) {
+        case ID_BUNKER_LIST: {
+            if (header->code == LVN_ITEMCHANGED) {
+                NMLISTVIEW *data = (NMLISTVIEW *) header;
+
+                if (data->uOldState != data->uNewState && (data->uNewState & LVIS_SELECTED)) {
+                    int index = bunkerList->GetItemData (data->iItem);
+                    setBunkeringData (list [index]);
+                }
+            }
+            break;
+        }
         case ID_TANKS_AFTER:
         case ID_TANKS_BEFORE: {
             if (header->code == TCN_SELCHANGE) {
@@ -347,3 +365,131 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header)
     return FALSE;
 }
 
+void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
+    char buffer [100];
+
+    // Loaded page
+    bunkerLoadInfo->showState (_data.loaded);
+    beginDate->SetTimestamp (_data.begin);
+    beginTime->SetTimestamp (_data.begin);
+    endDate->SetTimestamp (_data.end);
+    endTime->SetTimestamp (_data.end);
+    port->SetText (_data.port.c_str ());
+    barge->SetText (_data.barge.c_str ());
+
+    // Before page
+    draftForeBefore->SetText (ftoa (_data.draftBefore.fore, buffer, "%.1f"));
+    draftAftBefore->SetText (ftoa (_data.draftBefore.aft, buffer, "%.1f"));
+
+    for (auto i = 0; i < _data.tankStates.size (); ++ i) {
+        tankInfoBefore [i]->showState (_data.tankStates [i].before);
+    }
+
+    // After page
+    draftForeAfter->SetText (ftoa (_data.draftAfter.fore, buffer, "%.1f"));
+    draftAftAfter->SetText (ftoa (_data.draftAfter.aft, buffer, "%.1f"));
+
+    for (auto i = 0; i < _data.tankStates.size (); ++ i) {
+        tankInfoAfter [i]->showState (_data.tankStates [i].after);
+    }
+}
+
+void BunkeringWindow::showEditButtons (bool show) {
+    save->Enable (show);
+    discard->Enable (show);
+}
+
+bool BunkeringWindow::checkData (bunkeringData& data) {
+    static const char *ERROR_TITLE = "Ошибка";
+
+    auto showError = [this] (const char *text) {
+        MessageBox (text, ERROR_TITLE, MB_ICONSTOP);
+    };
+
+    if (port->GetTextLength () == 0) {
+        showError ("Порт не указан");
+        tabSwitch->SetCurSel (0);
+        showControlGroup (0);
+        port->SetFocus (); return false;
+    }
+    
+    if (barge->GetTextLength () == 0) {
+        showError ("Баржа-бункеровщик не указана");
+        tabSwitch->SetCurSel (0);
+        showControlGroup (0);
+        barge->SetFocus (); return false;
+    }
+
+    if (!bunkerLoadInfo->readState (data.loaded)) {
+        tabSwitch->SetCurSel (0);
+        showError ("Информация о загруженном топливе неполная");
+        return false;
+    }
+
+    auto getText = [] (CEditWrapper *edit, std::string& str) {
+        char buffer [100];
+        edit->GetText (buffer, sizeof (buffer));
+        str = buffer;
+    };
+    auto getFloat = [] (CEditWrapper *edit) {
+        char buffer [100];
+        edit->GetText (buffer, sizeof (buffer));
+        return (float) atof (buffer);
+    };
+
+    data.begin = composeDateAndTime (beginDate->GetTimestamp (), beginTime->GetTimestamp ());
+    data.end = composeDateAndTime (endDate->GetTimestamp (), endTime->GetTimestamp ());
+    
+    getText (port, data.port);
+    getText (barge, data.barge);
+
+    if ((data.draftBefore.fore = getFloat (draftForeBefore)) < 0.01f) {
+        tabSwitch->SetCurSel (1);
+        showControlGroup (1);
+        draftForeBefore->SetFocus ();
+        showError ("Отсутствует информация об осадке в носу до закачки");
+        return false;
+    }
+    if ((data.draftBefore.aft = getFloat (draftAftBefore)) < 0.01f) {
+        tabSwitch->SetCurSel (1);
+        showControlGroup (1);
+        draftAftBefore->SetFocus ();
+        showError ("Отсутствует информация об осадке в корме до закачки");
+        return false;
+    }
+    if ((data.draftAfter.fore = getFloat (draftForeAfter)) < 0.01f) {
+        tabSwitch->SetCurSel (2);
+        showControlGroup (2);
+        draftForeAfter->SetFocus ();
+        showError ("Отсутствует информация об осадке в носу после закачки");
+        return false;
+    }
+    if ((data.draftAfter.aft = getFloat (draftAftAfter)) < 0.01f) {
+        tabSwitch->SetCurSel (2);
+        showControlGroup (2);
+        draftAftAfter->SetFocus ();
+        showError ("Отсутствует информация об осадке в корме после закачки");
+        return false;
+    }
+
+    for (auto i = 0; i < cfg.tanks.size (); ++ i) {
+        if (!tankInfoBefore [i]->readState (data.tankStates [i].before)) {
+            showError ((cfg.tanks [i].name + ": данные до загрузки неполные").c_str ());
+            tabSwitch->SetCurSel (1);
+            tanksBefore->SetCurSel (i);
+            showControlGroup (1);
+            showOnlySelectedTank (true);
+            return false;
+        }
+        if (!tankInfoAfter [i]->readState (data.tankStates [i].after)) {
+            showError ((cfg.tanks [i].name + ": данные после загрузки неполные").c_str ());
+            tabSwitch->SetCurSel (2);
+            tanksAfter->SetCurSel (i);
+            showControlGroup (2);
+            showOnlySelectedTank (false);
+            return false;
+        }
+    }
+
+    return true;
+}

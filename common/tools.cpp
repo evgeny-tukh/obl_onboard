@@ -9,3 +9,14 @@ char *formatTimestamp (time_t timestamp, char *buffer) {
 
     return buffer;
 }
+
+time_t composeDateAndTime (time_t dateTS, time_t timeTS) {
+    tm *date = localtime (& dateTS);
+    tm *time = localtime (& timeTS);
+
+    time->tm_year = date->tm_year;
+    time->tm_mon = date->tm_mon;
+    time->tm_mday = date->tm_mday;
+
+    return mktime (time);
+}
