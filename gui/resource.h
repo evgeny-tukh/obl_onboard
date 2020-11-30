@@ -49,3 +49,10 @@
 #define ID_DRAFT_AFT_AFTER                      1035
 
 #define ID_BUNKERING_TABS                       1036
+
+#define ID_TANKS_BEFORE                         1037
+#define ID_TANKS_AFTER                          1038
+
+#define ID_TANK_INFO_BEFORE_FIRST               2000
+#define ID_TANK_INFO_AFTER_FIRST                2100
+

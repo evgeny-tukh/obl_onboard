@@ -104,6 +104,13 @@ struct pipeMeters {
     pipeMeters (): in (0.0f), out (0.0f) {}
 };
 
+struct draftData {
+    float fore, aft;
+
+    draftData (): fore (0.0f), aft (0.0) {}
+    draftData (float _fore, float _aft): fore (_fore), aft (_aft) {}
+};
+
 struct config {
     std::string host, path;
     uint16_t port;
@@ -161,6 +168,7 @@ struct bunkeringData {
     std::string port, barge;
     fuelState loaded;
     pipeMeters pmBefore, pmAfter;
+    draftData draftBefore, draftAfter;
     std::vector<tankState> tankStates;
 
     bunkeringData (config& cfg, uint32_t _id = 0, char *_port = 0, char *_barge = 0):

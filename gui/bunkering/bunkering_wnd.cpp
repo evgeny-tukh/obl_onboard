@@ -9,7 +9,7 @@
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
     bunkerList (0), addBunker (0), removeBunker (0), bunkerLoadInfo (0), bunkerData (0), bunkeringLabel (0),
-    beforeLabel (0), afterLabel (0), tankInfoBefore (0), tankInfoAfter (0),
+    beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
     draftForeBefore (0), draftForeAfter (0), draftAftBefore (0), draftAftAfter (0) {}
 
@@ -17,6 +17,10 @@ BunkeringWindow::~BunkeringWindow () {
     delete bunkerList;
     delete addBunker, removeBunker;
     delete tabSwitch;
+    delete tanksBefore, tanksAfter;
+
+    for (auto& ctrl: tankInfoBefore) delete ctrl;
+    for (auto& ctrl: tankInfoAfter) delete ctrl;
     #if 0
     delete bunkerLoadInfo, tankInfoBefore, tankInfoAfter;
     delete bunkeringLabel, beginLabel, endLabel, portLabel, bargeLabel, beforeLabel, afterLabel;
@@ -76,17 +80,43 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (1, draftAftBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
     addControlToGroup (1, draftForeBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_BEFORE))->CreateControl (125, 30, 80, 20, WS_BORDER);
     addControlToGroup (1, draftAftBefore = new CEditWrapper (switchHandle, ID_DRAFT_AFT_BEFORE))->CreateControl (125, 50, 80, 20, WS_BORDER);
-    addControlToGroup (1, tankInfoBefore = new FuelStateEditCtrl (switchHandle, ID_TANK_INFO_BEFORE))->CreateControl (0, 70, 260, 150, WS_BORDER | LVS_REPORT);
 
     addControlToGroup (2, draftForeAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 30, 120, 20, SS_LEFT, "Осадка в носу");
     addControlToGroup (2, draftAftAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
     addControlToGroup (2, draftForeAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (125, 30, 80, 20, WS_BORDER);
     addControlToGroup (2, draftAftAfter = new CEditWrapper (switchHandle, ID_DRAFT_AFT_AFTER))->CreateControl (125, 50, 80, 20, WS_BORDER);
-    addControlToGroup (2, tankInfoAfter = new FuelStateEditCtrl (switchHandle, ID_TANK_INFO_AFTER))->CreateControl (0, 70, 260, 150, WS_BORDER | LVS_REPORT);
+
+    tanksBefore = new CTabCtrlWrapper (switchHandle, ID_TANKS_BEFORE);
+    tanksAfter = new CTabCtrlWrapper (switchHandle, ID_TANKS_AFTER);
+
+    addControlToGroup (1, tanksBefore->CreateControl (0, 80, bunkerListWidth, client.bottom - 80, TCS_BUTTONS));
+    addControlToGroup (2, tanksAfter->CreateControl (0, 80, bunkerListWidth, client.bottom - 80, TCS_BUTTONS));
 
     bunkerLoadInfo->init ();
-    tankInfoBefore->init ();
-    tankInfoAfter->init ();
+
+    auto count = 0;
+    FuelStateEditCtrl *tankInfoCtrl;
+
+    for (auto& tankInfo: cfg.tanks) {
+        tanksBefore->AddItem ((char *) tankInfo.name.c_str (), tankInfo.id);
+        tanksAfter->AddItem ((char *) tankInfo.name.c_str (), tankInfo.id);
+
+        tankInfoCtrl = new FuelStateEditCtrl (tanksBefore->GetHandle (), ID_TANK_INFO_BEFORE_FIRST + count);
+        
+        tankInfoCtrl->CreateControl (10, 30, 262, 150, WS_BORDER | LVS_REPORT);
+        tankInfoCtrl->init ();
+
+        tankInfoBefore.push_back (tankInfoCtrl);
+
+        tankInfoCtrl = new FuelStateEditCtrl (tanksAfter->GetHandle (), ID_TANK_INFO_AFTER_FIRST + count);
+        
+        tankInfoCtrl->CreateControl (10, 30, 262, 150, WS_BORDER | LVS_REPORT);
+        tankInfoCtrl->init ();
+
+        tankInfoAfter.push_back (tankInfoCtrl);
+
+        ++ count;
+    }
 
     showControlGroup (0);
     #if 0
@@ -257,23 +287,48 @@ void BunkeringWindow::showControlGroup (int groupToShow) {
     }
 }
 
+void BunkeringWindow::showOnlySelectedTank (bool before) {
+    CTabCtrlWrapper *switchCtrl = before ? tanksBefore : tanksAfter;
+    int selection = switchCtrl->GetCurSel ();
+
+    for (int i = 0; i < (int) cfg.tanks.size (); ++ i) {
+        tankInfoBefore [i]->Show (i == (before && selection) ? SW_SHOW : SW_HIDE);
+        tankInfoAfter [i]->Show (i == (!before && selection) ? SW_SHOW : SW_HIDE);
+    }
+}
+
 LRESULT BunkeringWindow::OnNotify (NMHDR *header)
 {
+    if (header->code == NM_DBLCLK) {
+        NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+        if (header->idFrom >= ID_TANK_INFO_BEFORE_FIRST && header->idFrom < (ID_TANK_INFO_BEFORE_FIRST + cfg.tanks.size ())) {
+            tankInfoBefore [header->idFrom-ID_TANK_INFO_BEFORE_FIRST]->editValue (info->iItem); return FALSE;
+        } else if (header->idFrom >= ID_TANK_INFO_AFTER_FIRST && header->idFrom < (ID_TANK_INFO_AFTER_FIRST + cfg.tanks.size ())) {
+            tankInfoAfter [header->idFrom-ID_TANK_INFO_AFTER_FIRST]->editValue (info->iItem); return FALSE;
+        }
+    }
     switch (header->idFrom) {
-        case ID_TANK_INFO_BEFORE: {
+        case ID_TANKS_AFTER:
+        case ID_TANKS_BEFORE: {
+            if (header->code == TCN_SELCHANGE) {
+                showOnlySelectedTank (header->idFrom == ID_TANKS_BEFORE);
+            }
+            break;
+        }
+        /*case ID_TANK_INFO_BEFORE: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                tankInfoBefore->editValue (info->iItem);
+                tankInfoBefore [0]->editValue (info->iItem);
             }
             break;
         }
         case ID_TANK_INFO_AFTER: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                tankInfoAfter->editValue (info->iItem);
+                tankInfoAfter [0]->editValue (info->iItem);
             }
             break;
-        }
+        }*/
         case ID_BUNK_HDR_FUEL_STATE: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
@@ -284,7 +339,9 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header)
         case ID_BUNKERING_TABS: {
             auto selection = tabSwitch->GetCurSel ();
 
-            showControlGroup (selection); break;
+            showControlGroup (selection);
+            if (selection > 0) showOnlySelectedTank (selection == 1);
+            break;
         }
     }
     return FALSE;

@@ -29,8 +29,9 @@ class BunkeringWindow: public CWindowWrapper {
         typedef std::vector<CGenericControlWrapper *> controlGroup;
 
         //BunkeringHeaderWindow *bunkerHeader;
-        CTabCtrlWrapper *tabSwitch;
-        FuelStateEditCtrl *bunkerLoadInfo, *tankInfoBefore, *tankInfoAfter;
+        CTabCtrlWrapper *tabSwitch, *tanksBefore, *tanksAfter;
+        FuelStateEditCtrl *bunkerLoadInfo;
+        std::vector <FuelStateEditCtrl *> tankInfoBefore, tankInfoAfter;
 
         // Page controls
         std::vector<controlGroup> controlGroups;
@@ -61,4 +62,6 @@ class BunkeringWindow: public CWindowWrapper {
         virtual LRESULT OnNotify (NMHDR *pHeader);
 
         void loadBunkeringList ();
+
+        void showOnlySelectedTank (bool before);
 };

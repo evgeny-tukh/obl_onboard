@@ -37,7 +37,14 @@ char *initialQueries [] {
     "draft_fore_after real,"
     "draft_aft_after real,"
     "fm_in_value_after real,"
-    "fm_out_value_after real)",
+    "fm_out_value_after real,"
+    "density real not null,"
+    "viscosity real not null,"
+    "sulphur real not null,"
+    "temp real not null,"
+    "volume real not null,"
+    "quantity real not null,"
+    "vcf real not null)",
     "create index idx_bunk1 on bunkerings(begin)",
     "create index idx_bunk2 on bunkerings(end)",
 
@@ -167,18 +174,40 @@ void database::addFuelParameter (
 }
 
 uint64_t database::createBunkering (bunkeringData& data) {
-    /*char query [300];
-    uint64_t result;
+    char query [300];
+    uint64_t bunkeringID, stateID;
 
     sprintf (
         query, 
-        "insert into bunkerings(tank,begin,end,port,barge,density,viscosity,sulphur,temp,volume,quantity) "
-        "values(%d,%zd,%zd,'%s','%s',%.4f,%.2f,%.2f,%.1f,%.3f,%.3f)",
-        data.tank, data.begin, data.end, data.port, data.barge, data.density, data.viscosity, data.sulphur, data.temp, data.volume, data.quantity
+        "insert into bunkerings"
+        "(begin,end,port,barge,draft_fore_before,draft_aft_before,fm_in_value_before,fm_out_value_before,density,viscosity,sulphur,temp,volume,quantity,vcf) "
+        "values(%zd,%zd,'%s','%s',$.1f,$.1f,$.1f,$.1f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f)",
+        data.begin, data.end, data.port.c_str (), data.barge.c_str (),
+        data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
+        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp, data.loaded.volume, data.loaded.quantity, data.loaded.vcf
     );
-    executeSimple (query, & result);
+    executeSimple (query, & bunkeringID);
 
-    return result;*/return 0;
+    data.id = bunkering;
+
+    for (auto& tankState: data.tankStates) {
+        sprintf (
+            query, 
+            "insert into tank_state"
+            "(bunkering,tank,"
+            "density_before,viscosity_before,sulphur_before,temp_before,volume_before,quantity_before,vcf_before,"
+            "density_after,viscosity_after,sulphur_after,temp_after,volume_after,quantity_after,vcf_after) "
+            "values(%I64d,%d,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f)",
+            bunkeringID, tankState.tank,
+            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp, tankState.before.volume, tankState.before.quantity, tankState.before.vcf,
+            tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp, tankState.after.volume, tankState.after.quantity, tankState.after.vcf
+        );
+        executeSimple (query, & stateID);
+
+        tankState.id = stateID;
+    }
+
+    return bunkeringID;
 }
 
 int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fields) {
