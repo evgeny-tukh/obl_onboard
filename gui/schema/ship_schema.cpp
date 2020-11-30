@@ -1,15 +1,18 @@
 #include <Windows.h>
 #include "ship_schema.h"
+#include "../resource.h"
 
 ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHistory *hist) :
     history (hist),
     objects (),
     cfg (_cfg),
     selectedTank (-1),
+    timeline (0),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
 }
 
 ShipSchema::~ShipSchema () {
+    delete timeline;
 }
 
 void ShipSchema::setTimestamp (time_t ts)
@@ -20,10 +23,16 @@ void ShipSchema::setTimestamp (time_t ts)
 }
 
 void ShipSchema::OnCreate () {
-    RECT parent;
+    RECT parent, client;
 
     ::GetClientRect (m_hwndParent, & parent);
+    GetClientRect (& client);
     ::MoveWindow (m_hwndHandle, 0, 0, 100, parent.bottom, TRUE);
+
+    timeline = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
+
+    timeline->CreateControl (0, client.bottom - 30, client.right, 30, TBS_AUTOTICKS);
+    timeline->SetRange (history->minTime (), history->maxTime ());
 }
 
 LRESULT ShipSchema::OnPaint () {
@@ -125,4 +134,22 @@ void ShipSchema::recalc (tankDisplay::metrics& tankMetrics) {
 
     tankMetrics.width = (client.right - tankDisplay::HOR_EDGE * 6) / 3;
     tankMetrics.height = (client.bottom - (maxCount - 1) * tankDisplay::HOR_EDGE - 2 * tankDisplay::VER_EDGE) / maxCount;
+}
+
+LRESULT ShipSchema::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
+        case WM_HSCROLL: {
+            if ((HWND) lParam == timeline->GetHandle ()) {
+                time_t curTimestamp = timeline->GetPos ();
+                char dateTimeString [100];
+
+                //dateTime->SetText (formatTimestamp (curTimestamp, dateTimeString));
+                setTimestamp (curTimestamp);
+            }
+
+            break;
+        }
+    }
+
+    return CWindowWrapper::OnMessage (message, wParam, lParam);
 }

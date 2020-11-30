@@ -103,7 +103,7 @@ void parseParams (int argCount, char *args [], config& cfg) {
 
 int main (int argCount, char *args []) {
     config cfg;
-    database db;
+    database db (cfg);
 
     printf ("OBL Daemon v1.0\n");
 

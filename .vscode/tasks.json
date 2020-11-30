@@ -31,6 +31,40 @@
           "isDefault": true
         }
       },
+
+      {
+        "type": "shell",
+        "label": "GUI resource compile - x86",
+        "command": "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17134.0/x86/rc.exe",
+        "args": [
+          "-fo",
+          "gui/build-x86/gui.res",
+          "gui/gui.rc",
+        ],
+        "problemMatcher": ["$msCompile"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      {
+        "type": "shell",
+        "label": "WUI resource compile - x86",
+        "command": "C:/Program Files (x86)/Windows Kits/10/bin/10.0.17134.0/x86/rc.exe",
+        "args": [
+          "-fo",
+          "gui/build-x86/wui.res",
+          "gui/wui/wui.rc",
+        ],
+        "problemMatcher": ["$msCompile"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+
+
+
       {
         "type": "shell",
         "label": "cl.exe build GUI - x64",
@@ -87,6 +121,80 @@
           "isDefault": true
         }
       },
+
+      {
+        "type": "shell",
+        "label": "cl.exe build GUI - x86",
+        "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe",
+        "args": [
+          "/MTd",
+          "/EHsc",
+          "/Zi",
+          "/Fo:",
+          "gui/build-x86/",
+          "/Fe:",
+          "bin/gui-x86.exe",
+          "gui/gui.cpp",
+          "gui/main_wnd.cpp",
+          "gui/data_history.cpp",
+          "gui/schema/ship_schema.cpp",
+          "gui/bunkering/bunkering_wnd.cpp",
+          "gui/bunkering/fuel_state_edit_ctrl.cpp",
+          "gui/bunkering/bunkering_header.cpp",
+          "gui/schema/tank.cpp",
+          "gui/schema/fuelmeter.cpp",
+          "gui/wui/ButtonWrapper.cpp",
+          "gui/wui/ComboBoxWrapper.cpp",
+          "gui/wui/DialogWrapper.cpp",
+          "gui/wui/EditWrapper.cpp",
+          "gui/wui/GenericControlWrapper.cpp",
+          "gui/wui/InputBox.cpp",
+          "gui/wui/ListBoxWrapper.cpp",
+          "gui/wui/ListCtrlWrapper.cpp",
+          "gui/wui/StaticWrapper.cpp",
+          "gui/wui/time_functions.c",
+          "gui/wui/TreeCtrlWrapper.cpp",
+          "gui/wui/TabCtrlWrapper.cpp",
+          "gui/wui/DateTimePickerWrapper.cpp",
+          "gui/wui/TrackbarWrapper.cpp",
+          "gui/wui/UpDownWrapper.cpp",
+          "gui/wui/WindowWrapper.cpp",
+          "common/config.cpp",
+          "common/json.cpp",
+          "common/db.cpp",
+          "common/tools.cpp",
+          "common/sqlite3.c",
+          "common/TimeFunctions.cpp",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/User32.lib",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Gdi32.lib",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/shlwapi.lib",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Comctl32.lib",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/kernel32.lib",
+          "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcpmtd.lib",
+          "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcmtd.lib",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/ucrt/x86/libucrtd.lib",
+          "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libvcruntimed.lib",
+          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Uuid.Lib",
+          "gui/build/gui.res",
+          "gui/build/wui.res",
+          "/link",
+          "/MACHINE:X86"
+        ],
+        "problemMatcher": ["$msCompile"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+
+
+
+
+
+
+
+
+
       {
         "type": "shell",
         "label": "cl.exe build daemon - x64",

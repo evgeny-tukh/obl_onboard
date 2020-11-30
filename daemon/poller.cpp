@@ -113,7 +113,7 @@ void poll (reqManager& reqMgr, config& cfg, database& db) {
 }
 
 void pollerProc (pollerContext *ctx, config& cfg) {
-    database db;
+    database db (cfg);
     reqManager reqMgr (cfg.port, (char *) cfg.host.c_str (), (char *) cfg.path.c_str ());
 
     while (ctx->keepRunning) {

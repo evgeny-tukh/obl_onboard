@@ -2,6 +2,7 @@
 
 #include "../../common/defs.h"
 #include "../wui/WindowWrapper.h"
+#include "../wui/TrackbarWrapper.h"
 #include "gdiobjects.h"
 #include "tank.h"
 #include "fuelmeter.h"
@@ -17,6 +18,7 @@ class ShipSchema: public CWindowWrapper {
         
     private:
         config& cfg;
+        CTrackbarWrapper *timeline;
         gdiObjects objects;
         int selectedTank;
         dataHistory *history;
@@ -26,4 +28,5 @@ class ShipSchema: public CWindowWrapper {
 
         virtual void OnCreate ();
         virtual LRESULT OnPaint ();
+        virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
 };

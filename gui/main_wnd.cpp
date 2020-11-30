@@ -135,17 +135,6 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-        case WM_HSCROLL:
-            if ((HWND) lParam == timeSelector->GetHandle ())
-            {
-                time_t curTimestamp = timeSelector->GetPos ();
-                char dateTimeString [100];
-
-                dateTime->SetText (formatTimestamp (curTimestamp, dateTimeString));
-                shipSchema->setTimestamp (curTimestamp);
-            }
-
-            break;
         case WM_DESTROY:
             DestroyMenu (menu);
             PostQuitMessage (0);

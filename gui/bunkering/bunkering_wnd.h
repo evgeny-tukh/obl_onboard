@@ -10,6 +10,7 @@
 #include "../wui/TabCtrlWrapper.h"
 #include "../wui/ButtonWrapper.h"
 #include "../wui/EditWrapper.h"
+#include "../wui/TrackbarWrapper.h"
 #include "../wui/DateTimePickerWrapper.h"
 #include "../wui/ListBoxWrapper.h"
 #include "bunkering_header.h"
