@@ -12,6 +12,8 @@ BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg,
     beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
     save (0), discard (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
+    fmInBeforeLabel (0), fmOutBeforeLabel (0), fmInAfterLabel (0), fmOutAfterLabel (0),
+    fmInBefore (0), fmOutBefore (0), fmInAfter (0), fmOutAfter (0),
     draftForeBefore (0), draftForeAfter (0), draftAftBefore (0), draftAftAfter (0) {}
 
 BunkeringWindow::~BunkeringWindow () {
@@ -20,6 +22,8 @@ BunkeringWindow::~BunkeringWindow () {
     delete tabSwitch;
     delete tanksBefore, tanksAfter;
     delete save, discard;
+    delete fmInBeforeLabel, fmOutBeforeLabel, fmInAfterLabel, fmOutAfterLabel;
+    delete fmInBefore, fmOutBefore, fmInAfter, fmOutAfter;
 
     for (auto& ctrl: tankInfoBefore) delete ctrl;
     for (auto& ctrl: tankInfoAfter) delete ctrl;
@@ -88,11 +92,19 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (1, draftAftBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
     addControlToGroup (1, draftForeBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_BEFORE))->CreateControl (125, 30, 80, 20, WS_BORDER);
     addControlToGroup (1, draftAftBefore = new CEditWrapper (switchHandle, ID_DRAFT_AFT_BEFORE))->CreateControl (125, 50, 80, 20, WS_BORDER);
+    addControlToGroup (1, fmInBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 30, 150, 20, SS_LEFT, "Р/м входящий до");
+    addControlToGroup (1, fmOutBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 50, 150, 20, SS_LEFT, "Р/м исходящий до");
+    addControlToGroup (1, fmInBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 30, 80, 20, WS_BORDER);
+    addControlToGroup (1, fmOutBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 50, 80, 20, WS_BORDER);
 
     addControlToGroup (2, draftForeAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 30, 120, 20, SS_LEFT, "Осадка в носу");
     addControlToGroup (2, draftAftAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
     addControlToGroup (2, draftForeAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (125, 30, 80, 20, WS_BORDER);
     addControlToGroup (2, draftAftAfter = new CEditWrapper (switchHandle, ID_DRAFT_AFT_AFTER))->CreateControl (125, 50, 80, 20, WS_BORDER);
+    addControlToGroup (2, fmInAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 30, 150, 20, SS_LEFT, "Р/м входящий после");
+    addControlToGroup (2, fmOutAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 50, 150, 20, SS_LEFT, "Р/м исходящий после");
+    addControlToGroup (2, fmInAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 30, 80, 20, WS_BORDER);
+    addControlToGroup (2, fmOutAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 50, 80, 20, WS_BORDER);
 
     tanksBefore = new CTabCtrlWrapper (switchHandle, ID_TANKS_BEFORE);
     tanksAfter = new CTabCtrlWrapper (switchHandle, ID_TANKS_AFTER);
@@ -380,6 +392,8 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
     // Before page
     draftForeBefore->SetText (ftoa (_data.draftBefore.fore, buffer, "%.1f"));
     draftAftBefore->SetText (ftoa (_data.draftBefore.aft, buffer, "%.1f"));
+    fmInBefore->SetText (ftoa (_data.pmBefore.in, buffer, "%.3f"));
+    fmOutBefore->SetText (ftoa (_data.pmBefore.out, buffer, "%.3f"));
 
     for (auto i = 0; i < _data.tankStates.size (); ++ i) {
         tankInfoBefore [i]->showState (_data.tankStates [i].before);
@@ -388,6 +402,8 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
     // After page
     draftForeAfter->SetText (ftoa (_data.draftAfter.fore, buffer, "%.1f"));
     draftAftAfter->SetText (ftoa (_data.draftAfter.aft, buffer, "%.1f"));
+    fmInAfter->SetText (ftoa (_data.pmAfter.in, buffer, "%.3f"));
+    fmOutAfter->SetText (ftoa (_data.pmAfter.out, buffer, "%.3f"));
 
     for (auto i = 0; i < _data.tankStates.size (); ++ i) {
         tankInfoAfter [i]->showState (_data.tankStates [i].after);
@@ -442,6 +458,38 @@ bool BunkeringWindow::checkData (bunkeringData& data) {
     
     getText (port, data.port);
     getText (barge, data.barge);
+
+    if ((data.pmBefore.in = getFloat (fmInBefore)) < 0.01f) {
+        tabSwitch->SetCurSel (1);
+        showControlGroup (1);
+        fmInBefore->SetFocus ();
+        showError ("Отсутствует информация о показаниях входящего расходомера до закачки");
+        return false;
+    }
+
+    if ((data.pmBefore.out = getFloat (fmOutBefore)) < 0.01f) {
+        tabSwitch->SetCurSel (1);
+        showControlGroup (1);
+        fmOutBefore->SetFocus ();
+        showError ("Отсутствует информация о показаниях исходящего расходомера до закачки");
+        return false;
+    }
+
+    if ((data.pmAfter.in = getFloat (fmInAfter)) < 0.01f) {
+        tabSwitch->SetCurSel (2);
+        showControlGroup (2);
+        fmInAfter->SetFocus ();
+        showError ("Отсутствует информация о показаниях входящего расходомера после закачки");
+        return false;
+    }
+
+    if ((data.pmAfter.out = getFloat (fmOutAfter)) < 0.01f) {
+        tabSwitch->SetCurSel (2);
+        showControlGroup (2);
+        fmOutAfter->SetFocus ();
+        showError ("Отсутствует информация о показаниях исходящего расходомера после закачки");
+        return false;
+    }
 
     if ((data.draftBefore.fore = getFloat (draftForeBefore)) < 0.01f) {
         tabSwitch->SetCurSel (1);

@@ -47,6 +47,8 @@ class BunkeringWindow: public CWindowWrapper {
         CStaticWrapper *bunkeringLabel, *beginLabel, *endLabel, *portLabel, *bargeLabel, *beforeLabel, *afterLabel;
         CStaticWrapper *draftForeBeforeLabel, *draftForeAfterLabel;
         CStaticWrapper *draftAftBeforeLabel, *draftAftAfterLabel;
+        CStaticWrapper *fmInBeforeLabel, *fmOutBeforeLabel, *fmInAfterLabel, *fmOutAfterLabel;
+        CEditWrapper *fmInBefore, *fmOutBefore, *fmInAfter, *fmOutAfter;
         CListCtrlWrapper *bunkerList;
         CListBoxWrapper *tankList;
         CEditWrapper *port, *barge, *draftForeBefore, *draftForeAfter, *draftAftBefore, *draftAftAfter;
