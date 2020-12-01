@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include "ship_schema.h"
 #include "../resource.h"
+#include "../../common/tools.h"
 
 ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHistory *hist) :
     history (hist),
@@ -8,6 +9,7 @@ ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHisto
     cfg (_cfg),
     selectedTank (-1),
     timeline (0),
+    dateTime (0),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
 }
 
@@ -22,8 +24,16 @@ void ShipSchema::setTimestamp (time_t ts)
     InvalidateRect (m_hwndHandle, NULL, TRUE);
 }
 
+LRESULT ShipSchema::OnSize (const DWORD requestType, const WORD width, const WORD height) {
+    if (timeline) timeline->Move (0, height - 30, width - DATE_TIME_WIDTH, 30, TRUE);
+    if (dateTime) dateTime->Move (width - DATE_TIME_WIDTH, height - 30, DATE_TIME_WIDTH, 30, TRUE);
+
+    return FALSE;
+}
+
 void ShipSchema::OnCreate () {
     RECT parent, client;
+    char dateTimeString [100];
 
     ::GetClientRect (m_hwndParent, & parent);
     GetClientRect (& client);
@@ -31,8 +41,16 @@ void ShipSchema::OnCreate () {
 
     timeline = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
 
-    timeline->CreateControl (0, client.bottom - 30, client.right, 30, TBS_AUTOTICKS);
+    timeline->CreateControl (0, client.bottom - 30, client.right - DATE_TIME_WIDTH, 30, TBS_AUTOTICKS);
     timeline->SetRange (history->minTime (), history->maxTime ());
+    timeline->SetValue (history->maxTime ());
+
+    dateTime = new CStaticWrapper (m_hwndHandle, IDC_DATE_TIME);
+
+    dateTime->CreateControl (client.right - DATE_TIME_WIDTH, client.bottom - 30, DATE_TIME_WIDTH, 30, SS_CENTER);
+    dateTime->SetText (formatTimestamp (history->maxTime (), dateTimeString));
+
+    InvalidateRect (m_hwndHandle, 0, TRUE);
 }
 
 LRESULT ShipSchema::OnPaint () {
@@ -143,7 +161,7 @@ LRESULT ShipSchema::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
                 time_t curTimestamp = timeline->GetPos ();
                 char dateTimeString [100];
 
-                //dateTime->SetText (formatTimestamp (curTimestamp, dateTimeString));
+                dateTime->SetText (formatTimestamp (curTimestamp, dateTimeString));
                 setTimestamp (curTimestamp);
             }
 

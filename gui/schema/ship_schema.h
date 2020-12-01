@@ -2,6 +2,7 @@
 
 #include "../../common/defs.h"
 #include "../wui/WindowWrapper.h"
+#include "../wui/StaticWrapper.h"
 #include "../wui/TrackbarWrapper.h"
 #include "gdiobjects.h"
 #include "tank.h"
@@ -17,8 +18,11 @@ class ShipSchema: public CWindowWrapper {
         void setTimestamp (time_t ts);
         
     private:
+        static const int DATE_TIME_WIDTH = 200;
+        
         config& cfg;
         CTrackbarWrapper *timeline;
+        CStaticWrapper *dateTime;
         gdiObjects objects;
         int selectedTank;
         dataHistory *history;
@@ -29,4 +33,5 @@ class ShipSchema: public CWindowWrapper {
         virtual void OnCreate ();
         virtual LRESULT OnPaint ();
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
+        virtual LRESULT OnSize (const DWORD requestType, const WORD width, const WORD height);
 };

@@ -3,11 +3,12 @@
 #include <Windows.h>
 
 struct gdiObjects {
-    HBRUSH freeArea, filledArea, display;
+    HBRUSH freeArea, filledArea, display, shadow;
     HPEN selectionBorder, displayEdge;
 
     gdiObjects () {
         filledArea = CreateSolidBrush (RGB (200, 160, 255));
+        shadow = CreateSolidBrush (RGB (90, 90, 90));
         freeArea = CreateSolidBrush (RGB (255, 200, 255));
         selectionBorder = CreatePen (PS_SOLID, 5, RGB (255, 0, 0));
         display = CreateSolidBrush (RGB (50, 50, 50));
@@ -20,6 +21,7 @@ struct gdiObjects {
         DeleteObject (selectionBorder);
         DeleteObject (display);
         DeleteObject (displayEdge);
+        DeleteObject (shadow);
     }
 };
 
