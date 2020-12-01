@@ -35,12 +35,32 @@ void tankDisplay::draw (
             return;
     }
 
-    int filledPartHeight = (int) ((volume / tankCfg.volume) * (double) tankMetrics.height);
+    int filledPartHeight = (int) ((volume / tankCfg.volume) * (double) (tankMetrics.height - 35));
     char idString [10], volString [50];
 
     sprintf (idString, "#%d", id);
     sprintf (volString, "%.1f/%.f", volume, tankCfg.volume);
 
+    #if 1
+    SelectObject (drawCtx, objects.tankBrush);
+    Ellipse (drawCtx, x, y + tankMetrics.height - 20, x + tankMetrics.width - 1, y + tankMetrics.height - 1);
+    Rectangle (drawCtx, x, y + 10, x + tankMetrics.width - 1, y + tankMetrics.height - 10);
+    SelectObject (drawCtx, GetStockObject (BLACK_BRUSH));
+    Ellipse (drawCtx, x, y, x + tankMetrics.width - 1, y + 19);
+    SelectObject (drawCtx, objects.tankPen);
+    MoveToEx (drawCtx, x + 1, y + tankMetrics.height - 11, 0);
+    LineTo (drawCtx, x + tankMetrics.width - 2, y + tankMetrics.height - 11);
+    SelectObject (drawCtx, GetStockObject (BLACK_PEN));
+    SelectObject (drawCtx, GetStockObject (WHITE_BRUSH));
+    Rectangle (drawCtx, x + tankMetrics.width / 2 - 10, y + 25, x + tankMetrics.width / 2 + 10, y + tankMetrics.height - 10);
+    SelectObject (drawCtx, objects.shadow);
+    Rectangle (drawCtx, x + tankMetrics.width / 2 - 10, y + tankMetrics.height - 10 - filledPartHeight, x + tankMetrics.width / 2 + 10, y + tankMetrics.height - 10);
+    SetTextColor (drawCtx, 0);
+    SetBkMode (drawCtx, TRANSPARENT);
+    TextOutA (drawCtx, x + 10, y + 30, idString, strlen (idString));
+    TextOutA (drawCtx, x + 10, y + 45, type, strlen (type));
+    TextOutA (drawCtx, x + 10, y + 60, volString, strlen (volString));
+    #else
     if (selected)
     {
         SelectObject (drawCtx, (HBRUSH) GetStockObject (NULL_BRUSH));
@@ -64,4 +84,5 @@ void tankDisplay::draw (
     TextOutA (drawCtx, x + 10, y + 10, idString, strlen (idString));
     TextOutA (drawCtx, x + 10, y + 25, type, strlen (type));
     TextOutA (drawCtx, x + 10, y + 40, volString, strlen (volString));
+    #endif
 }
