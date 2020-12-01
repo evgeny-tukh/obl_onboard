@@ -49,8 +49,6 @@ void ShipSchema::OnCreate () {
 
     dateTime->CreateControl (client.right - DATE_TIME_WIDTH, client.bottom - 30, DATE_TIME_WIDTH, 30, SS_CENTER);
     dateTime->SetText (formatTimestamp (history->maxTime (), dateTimeString));
-
-    InvalidateRect (m_hwndHandle, 0, TRUE);
 }
 
 LRESULT ShipSchema::OnPaint () {
