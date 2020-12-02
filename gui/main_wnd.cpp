@@ -29,21 +29,12 @@ CMainWnd::CMainWnd (HINSTANCE instance):
     history = new dataHistory (db, cfg);
 
     beginTimestamp = history->minTime ();
-    endTimestamp = time (0); //history->maxTime ();
+    endTimestamp = time (0);
 }
 
-CMainWnd::~CMainWnd ()
-{
+CMainWnd::~CMainWnd () {
     delete modeSwitch;
     delete bunkerings;
-    /*delete shipSchema;
-    delete tankSelector;
-    delete tankLabel, beginLabel, endLabel, dateTime;
-    delete beginDate, endDate, beginTime, endTime;
-    delete timeSelector;
-    delete bunkerList;
-    delete bunkerInfo;
-    delete history;*/
 }
 
 void CMainWnd::switchToMode (mode newMode) {
@@ -55,8 +46,7 @@ void CMainWnd::switchToMode (mode newMode) {
     bunkerings->Update ();
 }
 
-void CMainWnd::OnCreate ()
-{
+void CMainWnd::OnCreate () {
     RECT client;
     char buffer [100];
 
@@ -75,66 +65,14 @@ void CMainWnd::OnCreate ()
     bunkerings->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
     
     switchToMode (mode::SCHEMA);
-    /*shipSchema->Show (SW_SHOW);
-    shipSchema->Update ();
-
-    tankSelector = new CComboBoxWrapper (m_hwndHandle, ID_TANK_SELECTOR);
-    beginDate = new CDateTimePickerWrapper (m_hwndHandle, ID_BEGIN_DATE);
-    endDate = new CDateTimePickerWrapper (m_hwndHandle, ID_END_DATE);
-    beginTime = new CDateTimePickerWrapper (m_hwndHandle, ID_BEGIN_TIME);
-    endTime = new CDateTimePickerWrapper (m_hwndHandle, ID_END_TIME);
-    timeSelector = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
-    bunkerList = new CListCtrlWrapper (m_hwndHandle, ID_BUNKER_LIST);
-    bunkerInfo = new CTabCtrlWrapper (m_hwndHandle, ID_BUNKER_INFO);
-
-    tankSelector->CreateControl (SHIP_SCHEMA_WIDTH + 80, 0, 200, 100, CBS_AUTOHSCROLL | CBS_DROPDOWNLIST | WS_VISIBLE);
-    beginDate->CreateControl (SHIP_SCHEMA_WIDTH + 80, 25, 100, 25, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
-    endDate->CreateControl (SHIP_SCHEMA_WIDTH + 80, 50, 100, 25, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
-    beginTime->CreateControl (SHIP_SCHEMA_WIDTH + 180, 25, 100, 25, DTS_TIMEFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
-    endTime->CreateControl (SHIP_SCHEMA_WIDTH + 180, 50, 100, 25, DTS_TIMEFORMAT | DTS_UPDOWN | WS_VISIBLE, 0);
-    timeSelector->CreateControl (SHIP_SCHEMA_WIDTH + 180, 75, client.right - (SHIP_SCHEMA_WIDTH + 180), 25, TBS_AUTOTICKS | WS_VISIBLE, 0);
-    bunkerList->CreateControl (SHIP_SCHEMA_WIDTH + 1, 100, client.right - SHIP_SCHEMA_WIDTH, client.bottom - 100 - BUNK_INFO_HEIGHT, LVS_REPORT | WS_VISIBLE, 0);
-    bunkerInfo->CreateControl (SHIP_SCHEMA_WIDTH + 1, client.bottom - BUNK_INFO_HEIGHT, client.right - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, WS_VISIBLE, 0);
-
-    beginDate->SetTimestamp (beginTimestamp);
-    beginTime->SetTimestamp (beginTimestamp);
-    endDate->SetTimestamp (endTimestamp);
-    endTime->SetTimestamp (endTimestamp);
-
-    timeSelector->SetRange (beginTimestamp, endTimestamp);
-
-    for (auto iter = cfg.tanks.begin (); iter != cfg.tanks.end (); ++ iter) {
-        tankSelector->AddString ((iter->name + " " + iter->type).c_str (), iter->id);
-    }
-
-    bunkerInfo->AddItem ("До закачки", 1);
-    bunkerInfo->AddItem ("После закачки", 2);
-    bunkerInfo->AddItem ("Закачано", 3);
-
-    tankLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
-    beginLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
-    endLabel = new CStaticWrapper (m_hwndHandle, IDC_STATIC);
-    dateTime = new CStaticWrapper (m_hwndHandle, IDC_DATE_TIME);
-
-    tankLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 0, 75, 25, SS_LEFT | WS_VISIBLE, "Танк");
-    beginLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 25, 75, 25, SS_LEFT | WS_VISIBLE, "Начало");
-    endLabel->CreateControl (SHIP_SCHEMA_WIDTH + 5, 50, 75, 25, SS_LEFT | WS_VISIBLE, "Конец");
-    dateTime->CreateControl (SHIP_SCHEMA_WIDTH + 5, 75, 180, 25, SS_LEFT | WS_VISIBLE, formatTimestamp (beginTimestamp, buffer));
-
-    bunkerList->AddColumn ("Начало", 150);
-    bunkerList->AddColumn ("Конец", 150);
-    bunkerList->AddColumn ("Объем по БР, м.куб.", 130);*/
 }
 
-void CMainWnd::RequestAppQuit ()
-{
+void CMainWnd::RequestAppQuit () {
     if (MessageBox ("Выйти из приложения?", "Нужно подтверждение", MB_YESNO | MB_ICONQUESTION) == IDYES) Destroy ();
 }
 
-LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
+LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
+    switch (message) {
         case WM_DESTROY:
             DestroyMenu (menu);
             PostQuitMessage (0);
@@ -145,60 +83,11 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam)
     return CWindowWrapper::OnMessage (message, wParam, lParam);
 }
 
-LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
-{
+LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = FALSE;
 
-    switch (LOWORD (wParam))
-    {
-        /*case ID_DELETE_BUNKERING:
-        {
-            int selection = bunkerList->GetSelectedItem ();
-
-            if (selection >= 0)
-            {
-                uint32_t bunkeringID = bunkerList->GetItemData (selection);
-    
-                if (MessageBox ("Удалить информацию о бункеровке?", "Удаление", MB_ICONQUESTION | MB_YESNO) == IDYES)
-                {
-                    db.deleteBunkering (bunkeringID);
-                    loadBunkeringList ();
-                }
-            }
-            break;
-        }
-        case ID_EDIT_BUNKERING:
-        {
-            int selection = bunkerList->GetSelectedItem ();
-
-            if (selection >= 0)
-            {
-                uint32_t bunkeringID = bunkerList->GetItemData (selection);
-                bunkeringData data;
-                if (db.getBunkering (bunkeringID, data) && openBunkeringEditor (m_hInstance, m_hwndHandle, & data) == IDOK) {
-                    db.saveBunkering (data);
-                    loadBunkeringList ();
-                }
-            }
-            break;
-        }
-        case ID_NEW_BUNKERING:
-        {
-            if (selectedTank > 0) {
-                bunkeringData data;
-                data.tank = selectedTank;
-                if (openBunkeringEditor (m_hInstance, m_hwndHandle, & data) == IDOK) {
-                    auto bunkeringID = db.createBunkering (data);
-                    loadBunkeringList ();
-                }
-            } else {
-                MessageBox ("Пожалуйста, выберите танк!", "Ошибка", MB_ICONEXCLAMATION);
-            }
-            
-            break;
-        }*/
-        case ID_TANK_SELECTOR:
-        {
+    switch (LOWORD (wParam)) {
+        case ID_TANK_SELECTOR: {
             if (HIWORD (wParam) == CBN_SELCHANGE ) {
                 int selection = tankSelector->GetCurSel ();
 
@@ -213,12 +102,10 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
             }
             break;
         }
-        case ID_EXIT:
-        {
+        case ID_EXIT: {
             RequestAppQuit (); break;
         }
-        default:
-        {
+        default: {
             result = TRUE;
         }
     }
@@ -226,12 +113,10 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam)
     return result;
 }
 
-LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam)
-{
+LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result;
 
-    switch (wParam)
-    {
+    switch (wParam) {
         case SC_CLOSE:
             RequestAppQuit();
 
@@ -244,12 +129,7 @@ LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam)
     return result;
 }
 
-LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD height)
-{
-    /*shipSchema->Move (0, 0, SHIP_SCHEMA_WIDTH, height, TRUE);
-    timeSelector->Move (SHIP_SCHEMA_WIDTH + 180, 75, width - (SHIP_SCHEMA_WIDTH + 180), 25, TRUE);
-    bunkerList->Move (SHIP_SCHEMA_WIDTH + 1, 100, width - SHIP_SCHEMA_WIDTH, height - 100 - BUNK_INFO_HEIGHT, TRUE);
-    bunkerInfo->Move (SHIP_SCHEMA_WIDTH + 1, height - BUNK_INFO_HEIGHT, width - SHIP_SCHEMA_WIDTH, BUNK_INFO_HEIGHT, TRUE);*/
+LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD height) {
     modeSwitch->Move (0, 0, width, 50, TRUE);
     shipSchema->Move (0, 50, width, height - 49, TRUE);
     bunkerings->Move (0, 50, width, height - 49, TRUE);
@@ -257,8 +137,7 @@ LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD 
     return FALSE;
 }
 
-LRESULT CMainWnd::OnNotify (NMHDR *header)
-{
+LRESULT CMainWnd::OnNotify (NMHDR *header) {
     switch (header->idFrom) {
         case ID_MODE_SWITCH: {
             auto selection = modeSwitch->GetCurSel ();
@@ -269,25 +148,6 @@ LRESULT CMainWnd::OnNotify (NMHDR *header)
     return FALSE;
 }
 
-LRESULT CMainWnd::OnTimer (unsigned int timerID)
-{
+LRESULT CMainWnd::OnTimer (unsigned int timerID) {
     return CWindowWrapper::OnTimer (timerID);
 }
-
-/*void CMainWnd::loadBunkeringList ()
-{
-    bunkeringList list;
-
-    db.loadBunkeringList (selectedTank, list, beginTimestamp, endTimestamp);
-
-    bunkerList->DeleteAllItems ();
-
-    for (auto bunkering = list.begin (); bunkering != list.end (); ++ bunkering) {
-        char buffer [50];
-
-        auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering->id);
-
-        bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
-        bunkerList->SetItemText (item, 2, ftoa (bunkering->volume, buffer, "%.1f"));
-    }
-}*/

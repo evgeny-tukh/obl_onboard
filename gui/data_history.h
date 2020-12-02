@@ -22,7 +22,8 @@ class dataHistory {
         std::map<uint16_t, history> histories;
         database& db;
         config& cfg;
+        time_t lastMax;
 
         static int loadCb (void *instance, int numOfFields, char **fields, char **values);
-        int loadCb (int numOfFields, char **fields, char **values);
+        int loadCbInt (int numOfFields, char **fields, char **values);
 };

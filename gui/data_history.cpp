@@ -1,6 +1,6 @@
 #include "data_history.h"
 
-dataHistory::dataHistory (database& _db, config& _cfg): db (_db), cfg (_cfg) {
+dataHistory::dataHistory (database& _db, config& _cfg): db (_db), cfg (_cfg), lastMax (0) {
     for (auto& tank: cfg.tanks) {
         histories.emplace (tank.id, dataHistory::history ());
     }
@@ -12,29 +12,39 @@ dataHistory::dataHistory (database& _db, config& _cfg): db (_db), cfg (_cfg) {
 }
 
 int dataHistory::loadCb (void *instance, int numOfFields, char **values, char **fields) {
-    return ((dataHistory *) instance)->loadCb (numOfFields, fields, values);
+    return ((dataHistory *) instance)->loadCbInt (numOfFields, fields, values);
 }
 
-int dataHistory::loadCb (int numOfFields, char **fields, char **values) {
+int dataHistory::loadCbInt (int numOfFields, char **fields, char **values) {
     auto object = atoi (values [0]);
     auto history = histories.find (object);
 
     if (history != histories.end ()) {
-        history->second.emplace (_atoi64 (values [1]), (float) atof (values [2]));
+        time_t timestamp = _atoi64 (values [1]);
+
+        // remember last processed time
+        if (timestamp > lastMax) lastMax = timestamp;
+
+        history->second.emplace (timestamp, (float) atof (values [2]));
     }
 
     return 0;
 }
 
 void dataHistory::load () {
-    char *errorMsg;
+    char *errorMsg, query [200];
 
     // cleanup first
-    for (auto& history: histories) history.second.clear ();
+    //for (auto& history: histories) history.second.clear ();
 
     // now load data
-    db.executeAndGet ("select tank,timestamp,value from volumes", loadCb, this, 0);
-    db.executeAndGet ("select meter,timestamp,value from meters", loadCb, this, 0);
+    auto max = lastMax;
+
+    sprintf (query, "select tank,timestamp,value from volumes where timestamp>%zd", max);
+    db.executeAndGet (query, loadCb, this, 0);
+
+    sprintf (query, "select meter,timestamp,value from meters where timestamp>%zd", max);
+    db.executeAndGet (query, loadCb, this, 0);
 }
 
 float dataHistory::getData (uint16_t id, time_t timestamp) {

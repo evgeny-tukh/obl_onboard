@@ -27,6 +27,7 @@ class ShipSchema: public CWindowWrapper {
         int selectedTank;
         dataHistory *history;
         time_t timestamp;
+        uint32_t updateTimer;
 
         void recalc (tankDisplay::metrics&);
 
@@ -34,4 +35,5 @@ class ShipSchema: public CWindowWrapper {
         virtual LRESULT OnPaint ();
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnSize (const DWORD requestType, const WORD width, const WORD height);
+        virtual LRESULT OnTimer (UINT uiTimerID);
 };

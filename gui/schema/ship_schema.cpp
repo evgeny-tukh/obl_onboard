@@ -40,15 +40,18 @@ void ShipSchema::OnCreate () {
     ::MoveWindow (m_hwndHandle, 0, 0, 100, parent.bottom, TRUE);
 
     timeline = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
+    timestamp = history->maxTime ();
 
     timeline->CreateControl (0, client.bottom - 30, client.right - DATE_TIME_WIDTH, 30, TBS_AUTOTICKS);
-    timeline->SetRange (history->minTime (), history->maxTime ());
-    timeline->SetValue (history->maxTime ());
+    timeline->SetRange (history->minTime (), timestamp);
+    timeline->SetValue (timestamp);
 
     dateTime = new CStaticWrapper (m_hwndHandle, IDC_DATE_TIME);
 
     dateTime->CreateControl (client.right - DATE_TIME_WIDTH, client.bottom - 30, DATE_TIME_WIDTH, 30, SS_CENTER);
-    dateTime->SetText (formatTimestamp (history->maxTime (), dateTimeString));
+    dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
+
+    updateTimer = SetTimer (1000, 60000);
 }
 
 LRESULT ShipSchema::OnPaint () {
@@ -168,4 +171,18 @@ LRESULT ShipSchema::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
     }
 
     return CWindowWrapper::OnMessage (message, wParam, lParam);
+}
+
+LRESULT ShipSchema::OnTimer (UINT timerID) {
+    if (timerID == 1000) {
+        history->load ();
+
+        timestamp = history->maxTime ();
+
+        timeline->SetRange (history->minTime (), timestamp);
+        timeline->SetValue (timestamp);
+        InvalidateRect (m_hwndHandle, 0, TRUE);
+    }
+
+    return 0;
 }
