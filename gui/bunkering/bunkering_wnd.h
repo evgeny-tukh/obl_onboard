@@ -28,6 +28,7 @@ class BunkeringWindow: public CWindowWrapper {
         };
 
         _mode mode;
+        int editingItem;
 
         static const int BUNK_LIST_HEIGHT = 320;
         static const int BUTTON_WIDTH = 200;

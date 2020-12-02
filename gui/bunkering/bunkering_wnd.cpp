@@ -8,7 +8,7 @@
 
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
-    mode (_mode::browseList),
+    mode (_mode::browseList), editingItem (-1),
     bunkerList (0), addBunker (0), removeBunker (0), editBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
     beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
     save (0), discard (0), tabSwitch (0), editMode (false),
@@ -197,6 +197,7 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
                     addBunker->Enable (TRUE);
                     loadBunkeringList ();
                     mode = _mode::browseList;
+                    editingItem = -1;
                 }
             } else {
                 MessageBox ("Выберите бункеровку", "Внимание", MB_ICONEXCLAMATION);
@@ -252,6 +253,8 @@ void BunkeringWindow::loadBunkeringList ()
         bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.volume, buffer, "%.3f"));
         bunkerList->SetItemText (item,3, ftoa (bunkering->loaded.fuelMeter, buffer, "%.3f"));
     }
+
+    editingItem = -1;
 }
 
 void BunkeringWindow::showControlGroup (int groupToShow) {
@@ -300,6 +303,26 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
                     enableButtons (true, false);
                     enableEditor (false);
                     mode = _mode::view;
+                    editingItem = data->iItem;
+                }
+            } else if (header->code == LVN_ITEMCHANGING && (mode == _mode::add || mode == _mode::edit)) {
+                NMLISTVIEW *data = (NMLISTVIEW *) header;
+
+                if (data->uOldState != data->uNewState && (data->uNewState & LVIS_SELECTED) && data->iItem != editingItem) {
+                    static int count = 0;
+                    
+                    if (((++count) & 1) || MessageBox ("Изменения будут потеряны. Продолжать?", "Внимание", MB_ICONQUESTION | MB_YESNO) != IDYES) return TRUE;
+                }
+            } else if (header->code == NM_DBLCLK) {
+                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+                if (MessageBox ("Редактировать бункеровку?", "Подтверждение", MB_YESNO | MB_ICONQUESTION) == IDYES) {
+                    auto& data = list [info->iItem];
+                    editingItem = info->iItem;
+                    setBunkeringData (data);
+                    enableButtons (false, true);
+                    enableEditor (true);
+                    addBunker->Enable (FALSE);
+                    mode = _mode::edit;
                 }
             }
             break;
@@ -311,20 +334,6 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
             }
             break;
         }
-        /*case ID_TANK_INFO_BEFORE: {
-            if (header->code == NM_DBLCLK) {
-                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                tankInfoBefore [0]->editValue (info->iItem);
-            }
-            break;
-        }
-        case ID_TANK_INFO_AFTER: {
-            if (header->code == NM_DBLCLK) {
-                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                tankInfoAfter [0]->editValue (info->iItem);
-            }
-            break;
-        }*/
         case ID_BUNK_HDR_FUEL_STATE: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
