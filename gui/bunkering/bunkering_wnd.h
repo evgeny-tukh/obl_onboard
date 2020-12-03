@@ -60,7 +60,7 @@ class BunkeringWindow: public CWindowWrapper {
         CListCtrlWrapper *bunkerList;
         CListBoxWrapper *tankList;
         CEditWrapper *port, *barge, *draftForeBefore, *draftForeAfter, *draftAftBefore, *draftAftAfter;
-        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard;
+        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport;
         CDateTimePickerWrapper *beginDate, *beginTime, *endDate, *endTime;
         config& cfg;
         database& db;

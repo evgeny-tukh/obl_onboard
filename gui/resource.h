@@ -7,6 +7,7 @@
 #define ID_NEW_BUNKERING                        40001
 #define ID_EDIT_BUNKERING                       40002
 #define ID_DELETE_BUNKERING                     40003
+#define ID_CREATE_REPORT                        40004
 
 #define IDD_BUNKERING                           20000
 

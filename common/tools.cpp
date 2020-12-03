@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <cstdint>
+#include <Windows.h>
 
 char *formatTimestamp (time_t timestamp, char *buffer) {
     tm *dateTime = localtime (& timestamp);
@@ -19,4 +21,34 @@ time_t composeDateAndTime (time_t dateTS, time_t timeTS) {
     time->tm_mday = date->tm_mday;
 
     return mktime (time);
+}
+
+void paintRectangleGradient (HDC paintCtx, int x1, int y1, int x2, int y2, uint32_t beginColor, uint32_t endColor, bool horizontal) {
+    TRIVERTEX vertices [2];
+
+    vertices [0].x = x1;
+    vertices [0].y = y1;
+    vertices [0].Red = GetRValue (beginColor) << 8;
+    vertices [0].Green = GetGValue (beginColor) << 8;
+    vertices [0].Blue = GetBValue (beginColor) << 8;
+    vertices [0].Alpha = 0;
+    vertices [1].x = x2;
+    vertices [1].y = y2;
+    vertices [1].Red = GetRValue (endColor) << 8;
+    vertices [1].Green = GetGValue (endColor) << 8;
+    vertices [1].Blue = GetBValue (endColor) << 8;
+    vertices [1].Alpha = 0;
+
+    GRADIENT_RECT rect { 0, 1 };
+
+    GradientFill (paintCtx, vertices, 2, & rect, 1, horizontal ? GRADIENT_FILL_RECT_H : GRADIENT_FILL_RECT_V);
+}
+
+void paintEllipseGradient (HDC paintCtx, int x1, int y1, int x2, int y2, uint32_t beginColor, uint32_t endColor, bool horizontal) {
+    HRGN clipper = CreateEllipticRgn (x1, y1, x2, y2);
+
+    SelectClipRgn (paintCtx, clipper);
+    paintRectangleGradient (paintCtx, x1, y1, x2, y2, beginColor, endColor, horizontal);
+    SelectClipRgn (paintCtx, 0);
+    DeleteObject (clipper);
 }

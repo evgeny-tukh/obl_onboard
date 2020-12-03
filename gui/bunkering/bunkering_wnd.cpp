@@ -6,12 +6,14 @@
 #include "../../common/tools.h"
 #include "fuel_state_edit_ctrl.h"
 
+void generateReport (bunkeringData& data);
+
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
     mode (_mode::browseList), editingItem (-1),
     bunkerList (0), addBunker (0), removeBunker (0), editBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
     beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
-    save (0), discard (0), tabSwitch (0), editMode (false),
+    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
     fmInBeforeLabel (0), fmOutBeforeLabel (0), fmInAfterLabel (0), fmOutAfterLabel (0),
     fmInBefore (0), fmOutBefore (0), fmInAfter (0), fmOutAfter (0),
@@ -22,7 +24,7 @@ BunkeringWindow::~BunkeringWindow () {
     delete addBunker, removeBunker, editBunker;
     delete tabSwitch;
     delete tanksBefore, tanksAfter;
-    delete save, discard;
+    delete save, discard, createReport;
     delete fmInBeforeLabel, fmOutBeforeLabel, fmInAfterLabel, fmOutAfterLabel;
     delete fmInBefore, fmOutBefore, fmInAfter, fmOutAfter;
 
@@ -49,15 +51,17 @@ void BunkeringWindow::OnCreate () {
 
     addBunker = new CButtonWrapper (m_hwndHandle, ID_NEW_BUNKERING);
     removeBunker = new CButtonWrapper (m_hwndHandle, ID_DELETE_BUNKERING);
+    createReport = new CButtonWrapper (m_hwndHandle, ID_CREATE_REPORT);
     editBunker = new CButtonWrapper (m_hwndHandle, ID_EDIT_BUNKERING);
     save = new CButtonWrapper (m_hwndHandle, IDOK);
     discard = new CButtonWrapper (m_hwndHandle, IDCANCEL);
-
+    
     addBunker->CreateControl (client.right - buttonWidth, 0, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Новая бункеровка");
     removeBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Удалить бункеровку");
-    editBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 2, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Изменить бункеровку");
-    save->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сохранить");
-    discard->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сбросить");
+    createReport->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 2, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сгенерировать расписку");
+    editBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Изменить бункеровку");
+    save->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сохранить");
+    discard->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 5, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сбросить");
     enableButtons (false, false);
 
     tabSwitch = new CTabCtrlWrapper (m_hwndHandle, ID_BUNKERING_TABS);
@@ -144,6 +148,10 @@ LRESULT BunkeringWindow::OnSize (const DWORD requestType, const WORD width, cons
     bunkerList->Move (0, 0, bunkerListWidth, BUNK_LIST_HEIGHT, TRUE);
     addBunker->Move (width - buttonWidth, 0, buttonWidth, BUTTON_HEIGHT, TRUE);
     removeBunker->Move (width - buttonWidth, BUTTON_HEIGHT, buttonWidth, BUTTON_HEIGHT, TRUE);
+    createReport->Move (width - buttonWidth, BUTTON_HEIGHT * 2, buttonWidth, BUTTON_HEIGHT, TRUE);
+    editBunker->Move (width - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, TRUE);
+    save->Move (width - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, TRUE);
+    discard->Move (width - buttonWidth, BUTTON_HEIGHT * 5, buttonWidth, BUTTON_HEIGHT, TRUE);
 
     return FALSE;
 }
@@ -152,6 +160,13 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = TRUE;
 
     switch (LOWORD (wParam)) {
+        case ID_CREATE_REPORT: {
+            int index = bunkerList->GetSelectedItem ();
+            if (index >= 0) {
+                generateReport (list [index]);
+            }
+            break;
+        }
         case IDCANCEL: {
             int index = bunkerList->GetSelectedItem ();
             bool selected = index >= 0;
@@ -278,6 +293,7 @@ void BunkeringWindow::showOnlySelectedTank (bool before) {
 void BunkeringWindow::enableButtons (bool enableAction, bool enableSave) {
     if (editBunker) editBunker->Enable (enableAction);
     if (removeBunker) removeBunker->Enable (enableAction);
+    if (createReport) createReport->Enable (enableAction);
     if (save) save->Enable (enableSave);
     if (discard) discard->Enable (enableSave);
     if (tabSwitch) tabSwitch->Show ((enableAction || enableSave) ? SW_SHOW : SW_HIDE);

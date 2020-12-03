@@ -1,4 +1,5 @@
 #include "tank.h"
+#include "../../common/tools.h"
 
 tankDisplay::tankDisplay (tank& cfg): tankCfg (cfg) {
 }
@@ -42,19 +43,22 @@ void tankDisplay::draw (
     sprintf (volString, "%.1f/%.f", volume, tankCfg.volume);
 
     #if 1
-    SelectObject (drawCtx, objects.tankBrush);
-    Ellipse (drawCtx, x, y + tankMetrics.height - 20, x + tankMetrics.width - 1, y + tankMetrics.height - 1);
-    Rectangle (drawCtx, x, y + 10, x + tankMetrics.width - 1, y + tankMetrics.height - 10);
-    SelectObject (drawCtx, GetStockObject (BLACK_BRUSH));
-    Ellipse (drawCtx, x, y, x + tankMetrics.width - 1, y + 19);
-    SelectObject (drawCtx, objects.tankPen);
-    MoveToEx (drawCtx, x + 1, y + tankMetrics.height - 11, 0);
-    LineTo (drawCtx, x + tankMetrics.width - 2, y + tankMetrics.height - 11);
+    //SelectObject (drawCtx, objects.tankBrush);
+    //Ellipse (drawCtx, x, y + tankMetrics.height - 20, x + tankMetrics.width - 1, y + tankMetrics.height - 1);
+    //Rectangle (drawCtx, x, y + 10, x + tankMetrics.width - 1, y + tankMetrics.height - 10);
+    paintRectangleGradient (drawCtx, x, y + 10, x + tankMetrics.width - 1, y + tankMetrics.height - 9, RGB (100, 100, 100), RGB (200, 200, 200), true);
+    paintEllipseGradient (drawCtx, x, y + tankMetrics.height - 20, x + tankMetrics.width - 1, y + tankMetrics.height - 1, RGB (100, 100, 100), RGB (200, 200, 200), true);
+    //SelectObject (drawCtx, GetStockObject (BLACK_BRUSH));
+    //Ellipse (drawCtx, x, y, x + tankMetrics.width - 1, y + 19);
+    paintEllipseGradient (drawCtx, x, y, x + tankMetrics.width - 1, y + 19, RGB (30, 30, 30), RGB (120, 120, 120), true);
+    //SelectObject (drawCtx, objects.tankPen);
+    //MoveToEx (drawCtx, x + 1, y + tankMetrics.height - 11, 0);
+    //LineTo (drawCtx, x + tankMetrics.width - 2, y + tankMetrics.height - 11);
     SelectObject (drawCtx, GetStockObject (BLACK_PEN));
     SelectObject (drawCtx, GetStockObject (WHITE_BRUSH));
-    Rectangle (drawCtx, x + tankMetrics.width / 2 - 10, y + 25, x + tankMetrics.width / 2 + 10, y + tankMetrics.height - 10);
+    Rectangle (drawCtx, x + tankMetrics.width / 2 - 5, y + 25, x + tankMetrics.width / 2 + 5, y + tankMetrics.height - 10);
     SelectObject (drawCtx, objects.shadow);
-    Rectangle (drawCtx, x + tankMetrics.width / 2 - 10, y + tankMetrics.height - 10 - filledPartHeight, x + tankMetrics.width / 2 + 10, y + tankMetrics.height - 10);
+    Rectangle (drawCtx, x + tankMetrics.width / 2 - 5, y + tankMetrics.height - 10 - filledPartHeight, x + tankMetrics.width / 2 + 5, y + tankMetrics.height - 10);
     SetTextColor (drawCtx, 0);
     SetBkMode (drawCtx, TRANSPARENT);
     TextOutA (drawCtx, x + 10, y + 30, idString, strlen (idString));

@@ -14,3 +14,7 @@ gui/res
 *.*db
 *.bin
 build/
+doc/
+*.lib
+*.dll
+*.zip
