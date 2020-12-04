@@ -6,7 +6,7 @@
 #include "../../common/tools.h"
 #include "fuel_state_edit_ctrl.h"
 
-void generateReport (bunkeringData& data);
+void generateReport (config& cfg, bunkeringData& data);
 
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
@@ -163,7 +163,7 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
         case ID_CREATE_REPORT: {
             int index = bunkerList->GetSelectedItem ();
             if (index >= 0) {
-                generateReport (list [index]);
+                generateReport (cfg, list [index]);
             }
             break;
         }

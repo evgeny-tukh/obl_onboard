@@ -49,6 +49,10 @@ struct ship {
     uint32_t mmsi, imo, mtID;
 };
 
+struct reporting {
+    std::string templatePath;
+};
+
 struct paramGroup {
     uint8_t id;
     std::string key, name;
@@ -154,6 +158,7 @@ struct config {
     std::map<uint8_t, param> params;
     std::map<uint8_t, paramGroup> paramGroups;
     std::map<char *, uint8_t> columnMap;
+    reporting repCfg;
 
     tank *findTank (char *name) {
         for (auto& tank: tanks) {

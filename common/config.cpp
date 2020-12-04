@@ -65,10 +65,16 @@ void parseCfgFile (config& cfg) {
         json::arrayNode *params = (json::arrayNode *) (*root) ["params"];
         json::arrayNode *paramGroups = (json::arrayNode *) (*root) ["paramGroups"];
         json::hashNode *columnMap = (json::hashNode *) (*root) ["columnMap"];
+        json::hashNode *repCfg = (json::hashNode *) (*root) ["report"];
 
         if (host) cfg.host = host->getValue ();
         if (path) cfg.path = path->getValue ();
         if (port) cfg.port = (uint16_t) port->getValue ();
+        if (repCfg) {
+            json::stringNode *templ = (json::stringNode *) (*repCfg) ["template"];
+
+            if (templ) cfg.repCfg.templatePath = templ->getValue ();
+        }
         if (shipInfo) {
             auto& ship = (*shipInfo);
             json::stringNode *master = (json::stringNode *) ship ["master"];

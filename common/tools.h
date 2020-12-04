@@ -3,7 +3,14 @@
 #include <time.h>
 #include <Windows.h>
 
+enum timiestampFormatFlags {
+    showDate = 1,
+    showTime = 2,
+    showSeconds = 4,
+};
+
 char *formatTimestamp (time_t timestamp, char *buffer);
+char *formatTimestampEx (time_t timestamp, char *buffer, uint8_t flags);
 
 inline char *ftoa (double value, char *buffer, char *format) {
     sprintf (buffer, format, value);

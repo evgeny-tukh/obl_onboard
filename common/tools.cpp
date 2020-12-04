@@ -4,10 +4,39 @@
 #include <cstdint>
 #include <Windows.h>
 
+#include "tools.h"
+
 char *formatTimestamp (time_t timestamp, char *buffer) {
     tm *dateTime = localtime (& timestamp);
 
     sprintf (buffer, "%02d.%02d.%04d %02d:%02d", dateTime->tm_mday, dateTime->tm_mon + 1, dateTime->tm_year + 1900, dateTime->tm_hour, dateTime->tm_min);
+
+    return buffer;
+}
+
+char *formatTimestampEx (time_t timestamp, char *buffer, uint8_t flags) {
+    tm *dateTime = localtime (& timestamp);
+
+    *buffer = '\0';
+
+    if (flags & timiestampFormatFlags::showDate) {
+        char date [50];
+        sprintf (date, "%02d.%02d.%04d", dateTime->tm_mday, dateTime->tm_mon + 1, dateTime->tm_year + 1900);
+        strcat (buffer, date);
+    }
+
+    if (flags & timiestampFormatFlags::showTime) {
+        char time [50];
+
+        if (flags & timiestampFormatFlags::showSeconds)
+            sprintf (time, "%02d:%02d:%02d", dateTime->tm_hour, dateTime->tm_min, dateTime->tm_sec);
+        else
+            sprintf (time, "%02d:%02d", dateTime->tm_hour, dateTime->tm_min);
+
+        if (*buffer) strcat (buffer, " ");
+
+        strcat (buffer, time);
+    }
 
     return buffer;
 }
