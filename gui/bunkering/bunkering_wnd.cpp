@@ -5,8 +5,7 @@
 #include "../resource.h"
 #include "../../common/tools.h"
 #include "fuel_state_edit_ctrl.h"
-
-void generateReport (config& cfg, bunkeringData& data);
+#include "../../repgen/excel.h"
 
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),

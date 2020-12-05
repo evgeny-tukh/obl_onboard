@@ -3,6 +3,7 @@
 #include <time.h>
 #include <cstdint>
 #include <Windows.h>
+#include <Shlwapi.h>
 
 #include "tools.h"
 
@@ -80,4 +81,36 @@ void paintEllipseGradient (HDC paintCtx, int x1, int y1, int x2, int y2, uint32_
     paintRectangleGradient (paintCtx, x1, y1, x2, y2, beginColor, endColor, horizontal);
     SelectClipRgn (paintCtx, 0);
     DeleteObject (clipper);
+}
+
+void replaceSlashes (char *path) {
+    for (auto chr = path; *chr; ++ chr) {
+        if ((*chr) == '/') *chr = '\\';
+    }
+}
+
+void walkThroughFolder (char *path, walkCb cb, void *param) {
+    WIN32_FIND_DATAA data;
+    char pattern [MAX_PATH];
+    
+    PathCombineA (pattern, path, "*.*");
+
+    auto search = FindFirstFileA (pattern, & data);
+
+    if (search != INVALID_HANDLE_VALUE) {
+        do {
+            char filePath [MAX_PATH];
+            
+            PathCombineA (filePath, path, data.cFileName);
+
+            if (strcmp (data.cFileName, ".") == 0 || strcmp (data.cFileName, "..") == 0)
+                continue;
+            else if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                walkThroughFolder (filePath, cb, param);
+            else
+                cb (filePath, param, & data);
+        } while (FindNextFileA (search, & data));
+
+        FindClose (search);
+    }
 }

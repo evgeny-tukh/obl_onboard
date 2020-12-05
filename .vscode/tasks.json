@@ -110,6 +110,7 @@
           "zip/iowin32.c",
           "zip/ioapi.c",
           "zip/zip_tool.cpp",
+          "repgen/excel.cpp",
           "User32.lib",
           "Gdi32.lib",
           "shlwapi.lib",
