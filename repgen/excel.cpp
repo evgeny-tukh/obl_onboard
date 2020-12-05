@@ -71,7 +71,7 @@ size_t extractAndPopulateField (config& cfg, bunkeringData& data, char *source ,
                 case field::vessel:
                     result += cfg.shipInfo.name; break;
                 case field::imo:
-                    result += itoa (cfg.shipInfo.imo, buffer, 10); break;
+                    result += _itoa (cfg.shipInfo.imo, buffer, 10); break;
                 case field::beginTime:
                     result += formatTimestampEx (data.begin, buffer, timiestampFormatFlags::showTime); break;
                 case field::endTime:
@@ -154,7 +154,7 @@ void populateData (config& cfg, bunkeringData& data, char *docPath) {
 void generateReport (config& cfg, bunkeringData& data) {
     char templPath [MAX_PATH], docPath [MAX_PATH], tempPath [MAX_PATH], folder [100], reportPath [MAX_PATH];
 
-    sprintf (folder, "bd_%d_%zd", data.id, time (0));
+    sprintf (folder, "bd_%d_%I64d", data.id, time (0));
 
     GetModuleFileNameA (0, templPath, sizeof (templPath));
     PathRemoveFileSpecA (templPath);

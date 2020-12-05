@@ -40,10 +40,10 @@ void dataHistory::load () {
     // now load data
     auto max = lastMax;
 
-    sprintf (query, "select tank,timestamp,value from volumes where timestamp>%zd", max);
+    sprintf (query, "select tank,timestamp,value from volumes where timestamp>%I64d", max);
     db.executeAndGet (query, loadCb, this, 0);
 
-    sprintf (query, "select meter,timestamp,value from meters where timestamp>%zd", max);
+    sprintf (query, "select meter,timestamp,value from meters where timestamp>%I64d", max);
     db.executeAndGet (query, loadCb, this, 0);
 }
 

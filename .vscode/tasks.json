@@ -126,7 +126,6 @@
           "isDefault": true
         }
       },
-
       {
         "type": "shell",
         "label": "cl.exe build GUI - x86",
@@ -170,6 +169,13 @@
           "common/tools.cpp",
           "common/sqlite3.c",
           "common/TimeFunctions.cpp",
+          "zip86/zip_tool.cpp",
+          "zip86/zip.c",
+          "zip86/unzip.c",
+          "zip86/iowin32.c",
+          "zip86/ioapi.c",
+          "repgen/excel.cpp",
+          "zip86/zdll.lib",
           "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/User32.lib",
           "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Gdi32.lib",
           "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/shlwapi.lib",
@@ -177,6 +183,7 @@
           "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/kernel32.lib",
           "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/MSImg32.Lib",
           "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcpmtd.lib",
+          "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcmt.lib",
           "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcmtd.lib",
           "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/ucrt/x86/libucrtd.lib",
           "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libvcruntimed.lib",
@@ -192,15 +199,6 @@
           "isDefault": true
         }
       },
-
-
-
-
-
-
-
-
-
       {
         "type": "shell",
         "label": "cl.exe build daemon - x64",

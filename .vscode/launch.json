@@ -17,6 +17,18 @@
             "externalConsole": false
         },
         {
+            "name": "debug GUI - x86",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/gui-x86.exe",
+            "args": [
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
             "name": "debug reporter",
             "type": "cppvsdbg",
             "request": "launch",

@@ -159,7 +159,7 @@ uint32_t database::addFuelOperation (
     char query [100];
     uint64_t operation = 0;
 
-    sprintf (query, "insert into operations(type,tank,timestamp) values(%d,%d,%zd)", operationType, tank, timestamp);
+    sprintf (query, "insert into operations(type,tank,timestamp) values(%d,%d,%I64d)", operationType, tank, timestamp);
     
     return executeSimple (query, & operation) ? operation : 0;
 }
@@ -172,7 +172,7 @@ void database::addFuelParameter (
 ) {
     char query [100];
 
-    sprintf (query, "insert into data(operation,parameter,column,value) values(%zd,%d,%d,%f)", operation, parameter, column, value);
+    sprintf (query, "insert into data(operation,parameter,column,value) values(%I64d,%d,%d,%f)", operation, parameter, column, value);
     execute (query);
 }
 
@@ -182,7 +182,7 @@ void database::saveBunkering (bunkeringData& data) {
     sprintf (
         query, 
         "update bunkerings set "
-        "begin=%zd,end=%zd,port='%s',barge='%s',"
+        "begin=%I64d,end=%I64d,port='%s',barge='%s',"
         "draft_fore_before=%f,draft_aft_before=%f,fm_in_value_before=%f,fm_out_value_before=%f,"
         "draft_fore_after=%f,draft_aft_after=%f,fm_in_value_after=%f,fm_out_value_after=%f,"
         "density=%f,viscosity=%f,sulphur=%f,temp=%f,volume=%f,quantity=%f,vcf=%f,fuelmeter=%f "
@@ -221,7 +221,7 @@ uint64_t database::createBunkering (bunkeringData& data) {
         "draft_fore_before,draft_aft_before,fm_in_value_before,fm_out_value_before,"
         "draft_fore_after,draft_aft_after,fm_in_value_after,fm_out_value_after,"
         "density,viscosity,sulphur,temp,volume,quantity,vcf,fuelmeter) "
-        "values(%zd,%zd,'%s','%s',%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,%.3f,%.3f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,%.4f)",
+        "values(%I64d,%I64d,'%s','%s',%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,%.3f,%.3f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,%.4f)",
         data.begin, data.end, data.port.c_str (), data.barge.c_str (),
         data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
         data.draftAfter.fore, data.draftAfter.aft, data.pmAfter.in, data.pmAfter.out,
