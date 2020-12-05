@@ -18,3 +18,5 @@ doc/
 *.lib
 *.dll
 *.zip
+*.xml
+*.rels

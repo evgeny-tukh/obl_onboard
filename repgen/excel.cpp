@@ -152,7 +152,7 @@ void populateData (config& cfg, bunkeringData& data, char *docPath) {
 }
 
 void generateReport (config& cfg, bunkeringData& data) {
-    char templPath [MAX_PATH], docPath [MAX_PATH], folder [100], reportPath [MAX_PATH];
+    char templPath [MAX_PATH], docPath [MAX_PATH], tempPath [MAX_PATH], folder [100], reportPath [MAX_PATH];
 
     sprintf (folder, "bd_%d_%zd", data.id, time (0));
 
@@ -167,8 +167,14 @@ void generateReport (config& cfg, bunkeringData& data) {
     PathAppendA (docPath, folder);
     CreateDirectoryA (docPath, 0);
 
-    unzipAll (templPath, docPath);
-    populateData (cfg, data, docPath);
+    GetModuleFileNameA (0, tempPath, sizeof (tempPath));
+    PathRemoveFileSpecA (tempPath);
+    PathAppendA (tempPath, "../temp");
+    PathAppendA (tempPath, folder);
+    CreateDirectoryA (tempPath, 0);
+
+    unzipAll (templPath, tempPath);
+    populateData (cfg, data, tempPath);
     PathCombineA (reportPath, docPath, "report.xlsx");
-    zipFolder (docPath, docPath, reportPath);
+    zipFolder (tempPath, tempPath, reportPath);
 }
