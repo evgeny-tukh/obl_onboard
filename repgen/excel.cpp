@@ -151,30 +151,49 @@ void populateData (config& cfg, bunkeringData& data, char *docPath) {
     }
 }
 
-void generateReport (config& cfg, bunkeringData& data) {
-    char templPath [MAX_PATH], docPath [MAX_PATH], tempPath [MAX_PATH], folder [100], reportPath [MAX_PATH];
+void generateReport (config& cfg, bunkeringData& data, HINSTANCE instance, HWND parent) {
+    char templPath [MAX_PATH], docPath [MAX_PATH], tempPath [MAX_PATH], folder [100], reportPath [MAX_PATH], fileTitle [200];
+    OPENFILENAMEA fileInfo;
 
-    sprintf (folder, "bd_%d_%I64d", data.id, time (0));
+    memset (& fileInfo, 0, sizeof (fileInfo));
+    memset (reportPath, 0, sizeof (reportPath));
+    memset (fileTitle, 0, sizeof (fileTitle));
 
-    GetModuleFileNameA (0, templPath, sizeof (templPath));
-    PathRemoveFileSpecA (templPath);
-    PathAppendA (templPath, "..");
-    PathAppendA (templPath, cfg.repCfg.templatePath.c_str ());
+    fileInfo.hInstance = instance;
+    fileInfo.hwndOwner = parent;
+    fileInfo.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+    fileInfo.lpstrFile = reportPath;
+    fileInfo.lpstrFileTitle = fileTitle;
+    fileInfo.nMaxFile = sizeof (reportPath);
+    fileInfo.nMaxFileTitle = sizeof (fileTitle);
+    fileInfo.lpstrFilter = "Excel workbooks (*.xlsx)\0*.xlsx\0All files\0*.*\0\0";
+    fileInfo.lpstrTitle = "Select report workbook";
+    fileInfo.lpstrDefExt = ".xlsx";
+    fileInfo.lStructSize = sizeof (fileInfo);
 
-    GetModuleFileNameA (0, docPath, sizeof (docPath));
-    PathRemoveFileSpecA (docPath);
-    PathAppendA (docPath, "../doc");
-    PathAppendA (docPath, folder);
-    CreateDirectoryA (docPath, 0);
+    if (GetSaveFileNameA (& fileInfo)) {
+        sprintf (folder, "bd_%d_%I64d", data.id, time (0));
 
-    GetModuleFileNameA (0, tempPath, sizeof (tempPath));
-    PathRemoveFileSpecA (tempPath);
-    PathAppendA (tempPath, "../temp");
-    PathAppendA (tempPath, folder);
-    CreateDirectoryA (tempPath, 0);
+        GetModuleFileNameA (0, templPath, sizeof (templPath));
+        PathRemoveFileSpecA (templPath);
+        PathAppendA (templPath, "..");
+        PathAppendA (templPath, cfg.repCfg.templatePath.c_str ());
 
-    unzipAll (templPath, tempPath);
-    populateData (cfg, data, tempPath);
-    PathCombineA (reportPath, docPath, "report.xlsx");
-    zipFolder (tempPath, tempPath, reportPath);
+        GetModuleFileNameA (0, docPath, sizeof (docPath));
+        PathRemoveFileSpecA (docPath);
+        PathAppendA (docPath, "../doc");
+        PathAppendA (docPath, folder);
+        CreateDirectoryA (docPath, 0);
+
+        GetModuleFileNameA (0, tempPath, sizeof (tempPath));
+        PathRemoveFileSpecA (tempPath);
+        PathAppendA (tempPath, "../temp");
+        PathAppendA (tempPath, folder);
+        CreateDirectoryA (tempPath, 0);
+
+        unzipAll (templPath, tempPath);
+        populateData (cfg, data, tempPath);
+        //PathCombineA (reportPath, docPath, "report.xlsx");
+        zipFolder (tempPath, tempPath, reportPath);
+    }
 }

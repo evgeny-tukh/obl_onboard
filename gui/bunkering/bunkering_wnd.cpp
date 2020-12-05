@@ -162,7 +162,7 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
         case ID_CREATE_REPORT: {
             int index = bunkerList->GetSelectedItem ();
             if (index >= 0) {
-                generateReport (cfg, list [index]);
+                generateReport (cfg, list [index], m_hInstance, m_hwndHandle);
             }
             break;
         }
