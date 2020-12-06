@@ -55,6 +55,20 @@ namespace json {
         virtual std::string serialize () {
             char buffer [100];
             sprintf (buffer, "%f", value);
+            
+            // Remove trailing zeros (if any)
+            auto dotPos = strchr (buffer, '.');
+            if (dotPos) {
+                for (auto pos = buffer + strlen (buffer) - 1; pos > dotPos; -- pos) {
+                    if (*pos == '0')
+                        *pos = '\0';
+                    else
+                        break;
+                }
+                // if the value ended by "." so it is an integer
+                if (dotPos [1] == '\0') *dotPos = '\0';
+            }
+
             return std::string (buffer);
         }
     };
