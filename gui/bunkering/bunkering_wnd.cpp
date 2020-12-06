@@ -6,13 +6,14 @@
 #include "../../common/tools.h"
 #include "fuel_state_edit_ctrl.h"
 #include "../../repgen/excel.h"
+#include "../../common/json.h"
 
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
     mode (_mode::browseList), editingItem (-1),
     bunkerList (0), addBunker (0), removeBunker (0), editBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
     beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
-    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0),
+    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0), exportReport (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
     fmInBeforeLabel (0), fmOutBeforeLabel (0), fmInAfterLabel (0), fmOutAfterLabel (0),
     fmInBefore (0), fmOutBefore (0), fmInAfter (0), fmOutAfter (0),
@@ -23,7 +24,7 @@ BunkeringWindow::~BunkeringWindow () {
     delete addBunker, removeBunker, editBunker;
     delete tabSwitch;
     delete tanksBefore, tanksAfter;
-    delete save, discard, createReport;
+    delete save, discard, createReport, exportReport;
     delete fmInBeforeLabel, fmOutBeforeLabel, fmInAfterLabel, fmOutAfterLabel;
     delete fmInBefore, fmOutBefore, fmInAfter, fmOutAfter;
 
@@ -51,6 +52,7 @@ void BunkeringWindow::OnCreate () {
     addBunker = new CButtonWrapper (m_hwndHandle, ID_NEW_BUNKERING);
     removeBunker = new CButtonWrapper (m_hwndHandle, ID_DELETE_BUNKERING);
     createReport = new CButtonWrapper (m_hwndHandle, ID_CREATE_REPORT);
+    exportReport = new CButtonWrapper (m_hwndHandle, ID_EXPORT_REPORT);
     editBunker = new CButtonWrapper (m_hwndHandle, ID_EDIT_BUNKERING);
     save = new CButtonWrapper (m_hwndHandle, IDOK);
     discard = new CButtonWrapper (m_hwndHandle, IDCANCEL);
@@ -58,9 +60,10 @@ void BunkeringWindow::OnCreate () {
     addBunker->CreateControl (client.right - buttonWidth, 0, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Новая бункеровка");
     removeBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Удалить бункеровку");
     createReport->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 2, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сгенерировать расписку");
-    editBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Изменить бункеровку");
-    save->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сохранить");
-    discard->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 5, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сбросить");
+    exportReport->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Экспортировать расписку");
+    editBunker->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Изменить бункеровку");
+    save->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 5, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Сохранить");
+    discard->CreateControl (client.right - buttonWidth, BUTTON_HEIGHT * 6, buttonWidth, BUTTON_HEIGHT, WS_VISIBLE, "Отмена правки");
     enableButtons (false, false);
 
     tabSwitch = new CTabCtrlWrapper (m_hwndHandle, ID_BUNKERING_TABS);
@@ -148,11 +151,75 @@ LRESULT BunkeringWindow::OnSize (const DWORD requestType, const WORD width, cons
     addBunker->Move (width - buttonWidth, 0, buttonWidth, BUTTON_HEIGHT, TRUE);
     removeBunker->Move (width - buttonWidth, BUTTON_HEIGHT, buttonWidth, BUTTON_HEIGHT, TRUE);
     createReport->Move (width - buttonWidth, BUTTON_HEIGHT * 2, buttonWidth, BUTTON_HEIGHT, TRUE);
-    editBunker->Move (width - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, TRUE);
-    save->Move (width - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, TRUE);
-    discard->Move (width - buttonWidth, BUTTON_HEIGHT * 5, buttonWidth, BUTTON_HEIGHT, TRUE);
+    exportReport->Move (width - buttonWidth, BUTTON_HEIGHT * 3, buttonWidth, BUTTON_HEIGHT, TRUE);
+    editBunker->Move (width - buttonWidth, BUTTON_HEIGHT * 4, buttonWidth, BUTTON_HEIGHT, TRUE);
+    save->Move (width - buttonWidth, BUTTON_HEIGHT * 5, buttonWidth, BUTTON_HEIGHT, TRUE);
+    discard->Move (width - buttonWidth, BUTTON_HEIGHT * 6, buttonWidth, BUTTON_HEIGHT, TRUE);
 
     return FALSE;
+}
+
+void BunkeringWindow::exportReportData (bunkeringData& data) {
+    json::hashNode root, dataNode, fuelMeters, fuelMetersBefore, fuelMetersAfter, loaded, draft, draftBefore, draftAfter;
+    json::arrayNode tanks;
+
+    auto addFuelState = [] (fuelState& fs, json::hashNode& jsonNode) {
+        jsonNode.add ("density", new json::numberNode (fs.density));
+        jsonNode.add ("viscosity", new json::numberNode (fs.viscosity));
+        jsonNode.add ("sulphur", new json::numberNode (fs.sulphur));
+        jsonNode.add ("temp", new json::numberNode (fs.temp));
+        jsonNode.add ("volume", new json::numberNode (fs.volume));
+        jsonNode.add ("quantity", new json::numberNode (fs.quantity));
+        jsonNode.add ("fuelMeter", new json::numberNode (fs.fuelMeter));
+        jsonNode.add ("vcf", new json::numberNode (fs.vcf));
+    };
+
+    fuelMetersBefore.add ("in", new json::numberNode (data.pmBefore.in));
+    fuelMetersBefore.add ("out", new json::numberNode (data.pmBefore.out));
+    fuelMetersAfter.add ("in", new json::numberNode (data.pmAfter.in));
+    fuelMetersAfter.add ("out", new json::numberNode (data.pmAfter.out));
+
+    fuelMeters.add ("before", & fuelMetersBefore);
+    fuelMeters.add ("after", & fuelMetersAfter);
+
+    addFuelState (data.loaded, loaded);
+
+    draftBefore.add ("fore", new json::numberNode (data.draftBefore.fore));
+    draftBefore.add ("aft", new json::numberNode (data.draftBefore.aft));
+    draftAfter.add ("fore", new json::numberNode (data.draftAfter.fore));
+    draftAfter.add ("aft", new json::numberNode (data.draftAfter.aft));
+
+    draft.add ("before", & draftBefore);
+    draft.add ("after", & draftAfter);
+
+    for (auto& tankState: data.tankStates) {
+        json::hashNode *tank = new json::hashNode;
+        json::hashNode *before = new json::hashNode;
+        json::hashNode *after = new json::hashNode;
+
+        addFuelState (tankState.before, *before);
+        addFuelState (tankState.after, *after);
+
+        tank->add ("tank", new json::numberNode (tankState.tank));
+        tank->add ("before", before);
+        tank->add ("after", after);
+
+        tanks.add (tank);
+    }
+
+    dataNode.add ("id", new json::numberNode ((double) data.id));
+    dataNode.add ("begin", new json::numberNode (data.begin));
+    dataNode.add ("end", new json::numberNode (data.end));
+    dataNode.add ("port", new json::stringNode (data.port.c_str ()));
+    dataNode.add ("barge", new json::stringNode (data.barge.c_str ()));
+    dataNode.add ("fuelMeters", & fuelMeters);
+    dataNode.add ("draft", & draft);
+    dataNode.add ("tanks", & tanks);
+
+    root.add ("type", new json::stringNode ("bunkering"));
+    root.add ("data", & dataNode);
+
+    exportJson (root, cfg);
 }
 
 LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
@@ -163,6 +230,14 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
             int index = bunkerList->GetSelectedItem ();
             if (index >= 0) {
                 generateReport (cfg, list [index], m_hInstance, m_hwndHandle);
+            }
+            break;
+        }
+        case ID_EXPORT_REPORT: {
+            int index = bunkerList->GetSelectedItem ();
+            if (index >= 0) {
+                exportReportData (list [index]);
+                MessageBox ("Результаты букировки успешно экспортированы", "Информация", MB_ICONINFORMATION);
             }
             break;
         }
@@ -306,6 +381,7 @@ void BunkeringWindow::enableButtons (bool enableAction, bool enableSave) {
     if (editBunker) editBunker->Enable (enableAction);
     if (removeBunker) removeBunker->Enable (enableAction);
     if (createReport) createReport->Enable (enableAction);
+    if (exportReport) exportReport->Enable (enableAction);
     if (save) save->Enable (enableSave);
     if (discard) discard->Enable (enableSave);
     if (tabSwitch) tabSwitch->Show ((enableAction || enableSave) ? SW_SHOW : SW_HIDE);

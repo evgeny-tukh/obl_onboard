@@ -9,6 +9,7 @@
 #define ID_DELETE_BUNKERING                     40003
 #define ID_CREATE_REPORT                        40004
 #define ID_EXPORT_LEVELS                        40005
+#define ID_EXPORT_REPORT                        40006
 
 #define IDD_BUNKERING                           20000
 

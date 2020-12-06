@@ -3,6 +3,9 @@
 #include <time.h>
 #include <Windows.h>
 
+#include "defs.h"
+#include "json.h"
+
 enum timiestampFormatFlags {
     showDate = 1,
     showTime = 2,
@@ -26,3 +29,5 @@ void replaceSlashes (char *path);
 
 typedef void (*walkCb) (char *path, void *param, WIN32_FIND_DATAA *findData);
 void walkThroughFolder (char *path, walkCb cb, void *param);
+
+void exportJson (json::hashNode& root, config& cfg);

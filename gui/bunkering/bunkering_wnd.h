@@ -60,7 +60,7 @@ class BunkeringWindow: public CWindowWrapper {
         CListCtrlWrapper *bunkerList;
         CListBoxWrapper *tankList;
         CEditWrapper *port, *barge, *draftForeBefore, *draftForeAfter, *draftAftBefore, *draftAftAfter;
-        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport;
+        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport, *exportReport;
         CDateTimePickerWrapper *beginDate, *beginTime, *endDate, *endTime;
         config& cfg;
         database& db;
@@ -80,4 +80,5 @@ class BunkeringWindow: public CWindowWrapper {
         void enableEditor (bool enable);
 
         void preLoadData (bunkeringData& data);
+        void exportReportData (bunkeringData& data);
 };

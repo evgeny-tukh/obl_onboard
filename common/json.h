@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdlib.h>
 #include <string>
 #include <vector>
@@ -45,6 +47,7 @@ namespace json {
 
         numberNode (): node (nodeType::number) {}
         numberNode (const char *src): node (nodeType::number), value (atof (src)) {}
+        numberNode (const double src): node (nodeType::number), value (src) {}
 
         virtual void *get () { return (void *) & value; }
         inline double getValue () { return value; }

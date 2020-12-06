@@ -90,7 +90,7 @@ void CMainWnd::exportLevels () {
     db.collectCurrentVolumes (tankLevels);
     db.collectCurrentMeters (meterValues);
 
-    json::hashNode root, volumes, meters;
+    json::hashNode root, volumes, meters, data;
     char buffer [50];
 
     for (auto& tankLevel: tankLevels) {
@@ -103,21 +103,12 @@ void CMainWnd::exportLevels () {
         meters.add (_itoa (meterValue.first, buffer, 10), value);
     }
 
+    data.add ("volumes", & volumes);
+    data.add ("meters", & meters);
     root.add ("type", new json::stringNode ("values"));
-    root.add ("volumes", & volumes);
-    root.add ("meters", & meters);
+    root.add ("data", & data);
 
-    auto content = root.serialize ();
-    
-    char path [MAX_PATH];
-    PathCombineA (path, cfg.repCfg.exportPath.c_str (), _ltoa (time (0), buffer, 10));
-    PathRenameExtensionA (path, ".json");
-    replaceSlashes (path);
-
-    FILE *output = fopen (path, "wb");
-
-    fwrite (content.c_str (), 1, content.length (), output);
-    fclose (output);
+    exportJson (root, cfg);
 }
 
 LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam) {

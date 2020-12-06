@@ -6,6 +6,8 @@
 #include <Shlwapi.h>
 
 #include "tools.h"
+#include "json.h"
+#include "defs.h"
 
 char *formatTimestamp (time_t timestamp, char *buffer) {
     tm *dateTime = localtime (& timestamp);
@@ -113,4 +115,19 @@ void walkThroughFolder (char *path, walkCb cb, void *param) {
 
         FindClose (search);
     }
+}
+
+void exportJson (json::hashNode& root, config& cfg) {
+    char buffer [100];
+    auto content = root.serialize ();
+    
+    char path [MAX_PATH];
+    PathCombineA (path, cfg.repCfg.exportPath.c_str (), _ltoa (time (0), buffer, 10));
+    PathRenameExtensionA (path, ".json");
+    replaceSlashes (path);
+
+    FILE *output = fopen (path, "wb");
+
+    fwrite (content.c_str (), 1, content.length (), output);
+    fclose (output);
 }
