@@ -4,6 +4,7 @@
 #include "../wui/WindowWrapper.h"
 #include "../wui/StaticWrapper.h"
 #include "../wui/TrackbarWrapper.h"
+#include "../wui/ButtonWrapper.h"
 #include "gdiobjects.h"
 #include "tank.h"
 #include "fuelmeter.h"
@@ -23,11 +24,13 @@ class ShipSchema: public CWindowWrapper {
         config& cfg;
         CTrackbarWrapper *timeline;
         CStaticWrapper *dateTime;
+        CButtonWrapper *historyMode, *onlineMode;
         gdiObjects objects;
         int selectedTank;
         dataHistory *history;
         time_t timestamp;
         uint32_t updateTimer;
+        bool isHistoryMode;
 
         void recalc (tankDisplay::metrics&);
 
@@ -36,4 +39,5 @@ class ShipSchema: public CWindowWrapper {
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnSize (const DWORD requestType, const WORD width, const WORD height);
         virtual LRESULT OnTimer (UINT uiTimerID);
+        virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);
 };

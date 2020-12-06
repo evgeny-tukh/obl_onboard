@@ -1,4 +1,4 @@
-#include <Windows.h>
+﻿#include <Windows.h>
 #include "ship_schema.h"
 #include "../resource.h"
 #include "../../common/tools.h"
@@ -10,11 +10,14 @@ ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHisto
     selectedTank (-1),
     timeline (0),
     dateTime (0),
+    historyMode (0), onlineMode (0),
+    isHistoryMode (true),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
 }
 
 ShipSchema::~ShipSchema () {
     delete timeline;
+    delete historyMode, onlineMode;
 }
 
 void ShipSchema::setTimestamp (time_t ts)
@@ -25,8 +28,10 @@ void ShipSchema::setTimestamp (time_t ts)
 }
 
 LRESULT ShipSchema::OnSize (const DWORD requestType, const WORD width, const WORD height) {
-    if (timeline) timeline->Move (0, height - 30, width - DATE_TIME_WIDTH, 30, TRUE);
-    if (dateTime) dateTime->Move (width - DATE_TIME_WIDTH, height - 30, DATE_TIME_WIDTH, 30, TRUE);
+    if (timeline) timeline->Move (0, height - 25, width - DATE_TIME_WIDTH - 200, 25, TRUE);
+    if (dateTime) dateTime->Move (width - DATE_TIME_WIDTH - 200, height - 25, DATE_TIME_WIDTH, 25, TRUE);
+    if (historyMode) historyMode->Move (width - 200, height - 25, 100, 25, TRUE);
+    if (onlineMode) onlineMode->Move (width - 100, height - 25, 100, 25, TRUE);
 
     return FALSE;
 }
@@ -42,15 +47,22 @@ void ShipSchema::OnCreate () {
     timeline = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
     timestamp = history->maxTime ();
 
-    timeline->CreateControl (0, client.bottom - 30, client.right - DATE_TIME_WIDTH, 30, TBS_AUTOTICKS);
+    timeline->CreateControl (0, client.bottom - 25, client.right - DATE_TIME_WIDTH - 200, 25, TBS_AUTOTICKS);
     timeline->SetRange (history->minTime (), timestamp);
     timeline->SetValue (timestamp);
 
     dateTime = new CStaticWrapper (m_hwndHandle, IDC_DATE_TIME);
 
-    dateTime->CreateControl (client.right - DATE_TIME_WIDTH, client.bottom - 30, DATE_TIME_WIDTH, 30, SS_CENTER);
+    dateTime->CreateControl (client.right - DATE_TIME_WIDTH - 200, client.bottom - 25, DATE_TIME_WIDTH, 25, SS_CENTER);
     dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
 
+    historyMode = new CButtonWrapper (m_hwndHandle, ID_HISTORY_MODE);
+    onlineMode = new CButtonWrapper (m_hwndHandle, ID_ONLINE_MODE);
+
+    historyMode->CreateControl (client.right - 200, client.bottom - 25, 100, 25, BS_PUSHLIKE | BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP, "История");
+    onlineMode->CreateControl (client.right - 100, client.bottom - 25, 100, 25, BS_PUSHLIKE | BS_AUTORADIOBUTTON | WS_TABSTOP, "Online");
+    historyMode->SendMessage (BM_SETCHECK, BST_CHECKED);
+    
     updateTimer = SetTimer (1000, 60000);
 }
 
@@ -181,8 +193,28 @@ LRESULT ShipSchema::OnTimer (UINT timerID) {
 
         timeline->SetRange (history->minTime (), timestamp);
         timeline->SetValue (timestamp);
-        InvalidateRect (m_hwndHandle, 0, TRUE);
+        InvalidateRect (m_hwndHandle, 0, FALSE);
     }
 
     return 0;
+}
+
+LRESULT ShipSchema::OnCommand (WPARAM wParam, LPARAM lParam) {
+    switch (WORD id = LOWORD (wParam)) {
+        case ID_ONLINE_MODE:
+        case ID_HISTORY_MODE: {
+            isHistoryMode = id == ID_HISTORY_MODE;
+            timeline->Enable (isHistoryMode);
+            if (!isHistoryMode) {
+                char dateTimeString [100];
+                timestamp = history->maxTime ();
+                timeline->SetValue (timestamp);
+                dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
+                InvalidateRect (m_hwndHandle, 0, FALSE);
+            }
+            break;
+        }
+    }
+
+    return 1L;
 }

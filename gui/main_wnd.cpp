@@ -55,7 +55,7 @@ void CMainWnd::OnCreate () {
 
     modeSwitch = new CTabCtrlWrapper (m_hwndHandle, ID_MODE_SWITCH);
 
-    modeSwitch->CreateControl (0, 0, client.right + 1, 50, WS_VISIBLE | TCS_BUTTONS, 0);
+    modeSwitch->CreateControl (0, 0, client.right - 199, 50, WS_VISIBLE | TCS_BUTTONS, 0);
     modeSwitch->AddItem ("Мнемосхема", mode::SCHEMA);
     modeSwitch->AddItem ("Бункеровки", mode::BUNKERINGS);
 
@@ -64,7 +64,7 @@ void CMainWnd::OnCreate () {
 
     shipSchema->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
     bunkerings->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
-    
+
     switchToMode (mode::SCHEMA);
 }
 

@@ -37,7 +37,6 @@ class CMainWnd : public CWindowWrapper
         
         mode             viewMode;
         CTabCtrlWrapper *modeSwitch;
-
         ShipSchema      *shipSchema;
         BunkeringWindow *bunkerings;
 
