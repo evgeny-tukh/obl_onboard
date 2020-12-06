@@ -78,4 +78,6 @@ class BunkeringWindow: public CWindowWrapper {
         bool checkData (bunkeringData&);
         void enableButtons (bool enableAction, bool enableSave);
         void enableEditor (bool enable);
+
+        void preLoadData (bunkeringData& data);
 };

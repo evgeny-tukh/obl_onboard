@@ -28,11 +28,18 @@ class database {
 
         void addData (uint32_t object, time_t timestamp, dataValueType type, double value);
 
+        double getSingleValue (char *query);
+
+        typedef std::map<uint32_t, double> valueMap;
+        void collectCurrentVolumes (valueMap& volumes);
+        void collectCurrentMeters (valueMap& volumes);
+
         uint64_t createBunkering (bunkeringData& data);
         void saveBunkering (bunkeringData& data);
         size_t loadBunkeringList (uint8_t tank, bunkeringList& list, time_t begin = 0, time_t end = 3000000000);
         bool getBunkering (uint32_t id, bunkeringData& data);
         void deleteBunkering (uint32_t id);
+        double getLastMeterValue (uint32_t id);
 
         uint32_t addFuelOperation (
             uint32_t tank,

@@ -67,4 +67,6 @@ class CMainWnd : public CWindowWrapper
 
         //void loadBunkeringList ();
         void switchToMode (mode newMode);
+
+        void exportLevels ();
 };

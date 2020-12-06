@@ -7,6 +7,8 @@
 #include "json.h"
 #include "defs.h"
 
+draftData::draftData (config& cfg): fore (cfg.shipInfo.normalDraft), aft (cfg.shipInfo.normalDraft) {}
+
 auto showValue = [] (json::node *_node, json::nodeValue& nodeVal, json::valueKey& key, uint16_t level) {
     printf ("Level %d ", level);
 
@@ -72,8 +74,10 @@ void parseCfgFile (config& cfg) {
         if (port) cfg.port = (uint16_t) port->getValue ();
         if (repCfg) {
             json::stringNode *templ = (json::stringNode *) (*repCfg) ["template"];
+            json::stringNode *dataExport = (json::stringNode *) (*repCfg) ["export"];
 
             if (templ) cfg.repCfg.templatePath = templ->getValue ();
+            if (dataExport) cfg.repCfg.exportPath = dataExport->getValue ();
         }
         if (shipInfo) {
             auto& ship = (*shipInfo);
@@ -83,13 +87,14 @@ void parseCfgFile (config& cfg) {
             json::numberNode *mmsi = (json::numberNode *) ship ["mmsi"];
             json::numberNode *imo = (json::numberNode *) ship ["imo"];
             json::numberNode *mtID = (json::numberNode *) ship ["mt_id"];
+            json::numberNode *draft = (json::numberNode *) ship ["normalDraft"];
 
             if (master) cfg.shipInfo.master = master->getValue ();
             if (cheng) cfg.shipInfo.cheng = cheng->getValue ();
             if (name) cfg.shipInfo.name = name->getValue ();
             if (mmsi) cfg.shipInfo.mmsi = mmsi->getValue ();
             if (imo) cfg.shipInfo.imo = imo->getValue ();
-            if (mtID) cfg.shipInfo.mtID = mtID->getValue ();
+            if (draft) cfg.shipInfo.normalDraft = draft->getValue ();
         }
         if (tanks) {
             for (auto i = 0; i < tanks->size (); ++ i) {

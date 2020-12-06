@@ -140,6 +140,8 @@ IDR_MENU MENU
 {
     POPUP "&Файл"
     {
+        MENUITEM "Экспорт данных", ID_EXPORT_LEVELS
+        MENUITEM SEPARATOR
         MENUITEM "Выход\tAlt-F4", ID_EXIT
     }
     POPUP "&Бункеровка"

@@ -337,3 +337,62 @@ void database::deleteBunkering (uint32_t id) {
     sprintf (query, "delete from bunkerings where id=%d", id);
     executeSimple (query);
 }
+
+int singleValueGetCb (void *param, int numOfFields, char **values, char **fields) {
+    *((double *) param) = values [0] ? atof (values [0]) : 0.0;
+
+    // do not continue
+    return 1;
+}
+
+double database::getSingleValue (char *query) {
+    double result;
+
+    executeAndGet (query, singleValueGetCb, & result, 0);
+
+    return result;
+}
+
+double database::getLastMeterValue (uint32_t id) {
+    char query [100];
+
+    sprintf (query, "select value from meters where meter=%d order by timestamp desc", id);
+
+    return getSingleValue (query);
+}
+
+struct valueCollectCtx {
+    database::valueMap& map;
+    size_t numOfIDs;
+};
+
+int volumeCollectCb (void *param, int numOfFields, char **values, char **fields) {
+    valueCollectCtx *context = (valueCollectCtx *) param;
+
+    if (numOfFields > 1 && values [0] && values [1]) {
+        uint32_t tank = atol (values [0]);
+        double level = atof (values [1]);
+
+        auto pos = context->map.find (tank);
+
+        if (pos == context->map.end ()) {
+            context->map.insert (context->map.end (), std::pair<uint32_t, double> (tank, level));
+
+            if (context->map.size () >= context->numOfIDs) return 1;
+        }
+    }
+
+    return 0;
+}
+
+void database::collectCurrentVolumes (valueMap& volumes) {
+    valueCollectCtx context { volumes, cfg.tanks.size () };
+
+    executeAndGet ("select tank,value from volumes order by timestamp desc", volumeCollectCb, & context, 0);
+}
+
+void database::collectCurrentMeters (valueMap& volumes) {
+    valueCollectCtx context { volumes, cfg.tanks.size () };
+
+    executeAndGet ("select meter,value from meters order by timestamp desc", volumeCollectCb, & context, 0);
+}

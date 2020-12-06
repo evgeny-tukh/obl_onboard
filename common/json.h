@@ -52,13 +52,7 @@ namespace json {
         virtual std::string serialize () {
             char buffer [100];
             sprintf (buffer, "%f", value);
-
-            std::string result = "\"";
-
-            result += buffer;
-            result += '"';
-
-            return result;
+            return std::string (buffer);
         }
     };
 

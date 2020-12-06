@@ -47,10 +47,12 @@ struct tank {
 struct ship {
     std::string master, cheng, name;
     uint32_t mmsi, imo, mtID;
+    float normalDraft;
 };
 
 struct reporting {
     std::string templatePath;
+    std::string exportPath;
 };
 
 struct paramGroup {
@@ -137,6 +139,7 @@ struct draftData {
 
     draftData (): fore (0.0f), aft (0.0) {}
     draftData (float _fore, float _aft): fore (_fore), aft (_aft) {}
+    draftData (struct config&);
 
     void copyFrom (draftData& from) {
         fore = from.fore;
@@ -207,6 +210,7 @@ struct bunkeringData {
 
     bunkeringData (config& cfg, uint32_t _id = 0, char *_port = 0, char *_barge = 0):
         id (_id),
+        draftBefore (cfg), draftAfter (cfg),
         begin (time (0) - 5400),
         end (time (0) - 1800),
         port (_port ? _port : "*"),

@@ -235,6 +235,7 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
         }
         case ID_NEW_BUNKERING: {
             bunkeringData data (cfg);
+            preLoadData (data);
             setBunkeringData (data);
             enableButtons (false, true);
             enableEditor (true);
@@ -248,6 +249,18 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
     }
 
     return result;
+}
+
+void BunkeringWindow::preLoadData (bunkeringData& data) {
+    for (auto& meter: cfg.fuelMeters) {
+        if (meter.type.compare ("UPL") == 0) {
+            data.pmBefore.in = db.getLastMeterValue (meter.id);
+            data.pmAfter.in = data.pmBefore.in;
+        } else if (meter.type.compare ("CONS") == 0) {
+            data.pmBefore.out = db.getLastMeterValue (meter.id);
+            data.pmAfter.out = data.pmBefore.in;
+        }
+    }
 }
 
 void BunkeringWindow::loadBunkeringList ()
@@ -385,7 +398,7 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
     fmInBefore->SetText (ftoa (_data.pmBefore.in, buffer, "%.3f"));
     fmOutBefore->SetText (ftoa (_data.pmBefore.out, buffer, "%.3f"));
 
-    for (auto i = 0; i < _data.tankStates.size (); ++ i) {
+    for (auto i = 0; i < _data.tankStates.size () && i < cfg.tanks.size (); ++ i) {
         tankInfoBefore [i]->showState (_data.tankStates [i].before);
     }
 
@@ -395,7 +408,7 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
     fmInAfter->SetText (ftoa (_data.pmAfter.in, buffer, "%.3f"));
     fmOutAfter->SetText (ftoa (_data.pmAfter.out, buffer, "%.3f"));
 
-    for (auto i = 0; i < _data.tankStates.size (); ++ i) {
+    for (auto i = 0; i < _data.tankStates.size () && i < cfg.tanks.size (); ++ i) {
         tankInfoAfter [i]->showState (_data.tankStates [i].after);
     }
 }

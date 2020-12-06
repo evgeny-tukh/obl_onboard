@@ -5,6 +5,7 @@
 #include "main_wnd.h"
 #include "../common/defs.h"
 #include "../common/tools.h"
+#include "../common/json.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
 
@@ -83,10 +84,51 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
     return CWindowWrapper::OnMessage (message, wParam, lParam);
 }
 
+void CMainWnd::exportLevels () {
+    database::valueMap tankLevels, meterValues;
+
+    db.collectCurrentVolumes (tankLevels);
+    db.collectCurrentMeters (meterValues);
+
+    json::hashNode root, volumes, meters;
+    char buffer [50];
+
+    for (auto& tankLevel: tankLevels) {
+        auto value = new json::numberNode (ftoa (tankLevel.second, buffer, "%f"));
+        volumes.add (_itoa (tankLevel.first, buffer, 10), value);
+    }
+
+    for (auto& meterValue: meterValues) {
+        auto value = new json::numberNode (ftoa (meterValue.second, buffer, "%f"));
+        meters.add (_itoa (meterValue.first, buffer, 10), value);
+    }
+
+    root.add ("type", new json::stringNode ("values"));
+    root.add ("volumes", & volumes);
+    root.add ("meters", & meters);
+
+    auto content = root.serialize ();
+    
+    char path [MAX_PATH];
+    PathCombineA (path, cfg.repCfg.exportPath.c_str (), _ltoa (time (0), buffer, 10));
+    PathRenameExtensionA (path, ".json");
+    replaceSlashes (path);
+
+    FILE *output = fopen (path, "wb");
+
+    fwrite (content.c_str (), 1, content.length (), output);
+    fclose (output);
+}
+
 LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = FALSE;
 
     switch (LOWORD (wParam)) {
+        case ID_EXPORT_LEVELS: {
+            exportLevels ();
+            MessageBox ("Данные экспортированы", "Информация", MB_ICONINFORMATION);
+            break;
+        }
         case ID_TANK_SELECTOR: {
             if (HIWORD (wParam) == CBN_SELCHANGE ) {
                 int selection = tankSelector->GetCurSel ();
