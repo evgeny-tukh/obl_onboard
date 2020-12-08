@@ -59,7 +59,7 @@ void CMainWnd::OnCreate () {
     modeSwitch->AddItem ("Мнемосхема", mode::SCHEMA);
     modeSwitch->AddItem ("Бункеровки", mode::BUNKERINGS);
 
-    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, cfg, history);
+    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, db, cfg, history);
     bunkerings = new BunkeringWindow (m_hInstance, m_hwndHandle, cfg, db);
 
     shipSchema->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
@@ -79,6 +79,10 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
             PostQuitMessage (0);
 
             break;
+        default:
+            if (message == cfg.newDataMsg) {
+                shipSchema->onNewData ();
+            }
     }
 
     return CWindowWrapper::OnMessage (message, wParam, lParam);
@@ -94,12 +98,12 @@ void CMainWnd::exportLevels () {
     char buffer [50];
 
     for (auto& tankLevel: tankLevels) {
-        auto value = new json::numberNode (ftoa (tankLevel.second, buffer, "%f"));
+        auto value = new json::numberNode (ftoa (tankLevel.second.value, buffer, "%f"));
         volumes.add (_itoa (tankLevel.first, buffer, 10), value);
     }
 
     for (auto& meterValue: meterValues) {
-        auto value = new json::numberNode (ftoa (meterValue.second, buffer, "%f"));
+        auto value = new json::numberNode (ftoa (meterValue.second.value, buffer, "%f"));
         meters.add (_itoa (meterValue.first, buffer, 10), value);
     }
 

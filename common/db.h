@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <map>
 #include "sqlite3.h"
 #include "defs.h"
 
@@ -30,7 +31,14 @@ class database {
 
         double getSingleValue (char *query);
 
-        typedef std::map<uint32_t, double> valueMap;
+        struct timedValue {
+            double value;
+            time_t timestamp;
+
+            timedValue (double val, time_t ts): value (val), timestamp (ts) {}
+            timedValue (): value (0.0), timestamp (0) {}
+        };
+        typedef std::map<uint32_t, timedValue> valueMap;
         void collectCurrentVolumes (valueMap& volumes);
         void collectCurrentMeters (valueMap& volumes);
 
@@ -53,6 +61,7 @@ class database {
             uint8_t column,
             double value
         );
+
     protected:
         config& cfg;
         static const char *dbPath;

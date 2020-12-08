@@ -372,11 +372,12 @@ int volumeCollectCb (void *param, int numOfFields, char **values, char **fields)
     if (numOfFields > 1 && values [0] && values [1]) {
         uint32_t tank = atol (values [0]);
         double level = atof (values [1]);
+        time_t timestamp = _atoi64 (values [2]);
 
         auto pos = context->map.find (tank);
 
         if (pos == context->map.end ()) {
-            context->map.insert (context->map.end (), std::pair<uint32_t, double> (tank, level));
+            context->map.emplace (tank, database::timedValue (level, timestamp));
 
             if (context->map.size () >= context->numOfIDs) return 1;
         }
@@ -388,11 +389,11 @@ int volumeCollectCb (void *param, int numOfFields, char **values, char **fields)
 void database::collectCurrentVolumes (valueMap& volumes) {
     valueCollectCtx context { volumes, cfg.tanks.size () };
 
-    executeAndGet ("select tank,value from volumes order by timestamp desc", volumeCollectCb, & context, 0);
+    executeAndGet ("select tank,value,stimestamp from volumes order by timestamp desc", volumeCollectCb, & context, 0);
 }
 
 void database::collectCurrentMeters (valueMap& volumes) {
     valueCollectCtx context { volumes, cfg.tanks.size () };
 
-    executeAndGet ("select meter,value from meters order by timestamp desc", volumeCollectCb, & context, 0);
+    executeAndGet ("select meter,value,timestamp from meters order by timestamp desc", volumeCollectCb, & context, 0);
 }

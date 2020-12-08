@@ -157,7 +157,8 @@ struct config {
     std::vector<tank> tanks;
     std::vector<fuelMeter> fuelMeters;
     ship shipInfo;
-    time_t pollingInterval;
+    time_t pollingInterval, timeout;
+    uint32_t newDataMsg;
     std::map<uint8_t, param> params;
     std::map<uint8_t, paramGroup> paramGroups;
     std::map<char *, uint8_t> columnMap;

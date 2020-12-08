@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "json.h"
+#include <Windows.h>
 #include "defs.h"
 
 draftData::draftData (config& cfg): fore (cfg.shipInfo.normalDraft), aft (cfg.shipInfo.normalDraft) {}
@@ -130,10 +131,14 @@ void parseCfgFile (config& cfg) {
         }
         if (settings) {
             json::numberNode *pollingInterval = (json::numberNode *) (*settings) ["pollingInterval"];
+            json::numberNode *timeout = (json::numberNode *) (*settings) ["timeout"];
             json::numberNode *timezone = (json::numberNode *) (*settings) ["timezone"];
+            json::stringNode *newDataMsg = (json::stringNode *) (*settings) ["msg"];
 
             if (pollingInterval) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
             if (timezone) cfg.timezone = (float) timezone->getValue ();
+            if (timeout) cfg.timeout = (time_t) timeout->getValue ();
+            if (newDataMsg) cfg.newDataMsg = RegisterWindowMessageA (newDataMsg->getValue ());
         }
         if (params) {
             for (auto i = 0; i < params->size (); ++ i) {

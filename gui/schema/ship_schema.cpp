@@ -3,21 +3,23 @@
 #include "../resource.h"
 #include "../../common/tools.h"
 
-ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, config& _cfg, dataHistory *hist) :
+ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, database& _db, config& _cfg, dataHistory *hist) :
     history (hist),
     objects (),
     cfg (_cfg),
+    db (_db),
     selectedTank (-1),
     timeline (0),
     dateTime (0),
-    historyMode (0), onlineMode (0),
-    isHistoryMode (true),
+    historyMode (0), onlineMode (0), statusIndicator (0),
+    isHistoryMode (false),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
 }
 
 ShipSchema::~ShipSchema () {
     delete timeline;
     delete historyMode, onlineMode;
+    delete statusIndicator;
 }
 
 void ShipSchema::setTimestamp (time_t ts)
@@ -32,6 +34,7 @@ LRESULT ShipSchema::OnSize (const DWORD requestType, const WORD width, const WOR
     if (dateTime) dateTime->Move (width - DATE_TIME_WIDTH - 200, height - 25, DATE_TIME_WIDTH, 25, TRUE);
     if (historyMode) historyMode->Move (width - 200, height - 25, 100, 25, TRUE);
     if (onlineMode) onlineMode->Move (width - 100, height - 25, 100, 25, TRUE);
+    if (statusIndicator) statusIndicator->Create (width - 35, 5, 30, 30);
 
     return FALSE;
 }
@@ -43,6 +46,10 @@ void ShipSchema::OnCreate () {
     ::GetClientRect (m_hwndParent, & parent);
     GetClientRect (& client);
     ::MoveWindow (m_hwndHandle, 0, 0, 100, parent.bottom, TRUE);
+
+    statusIndicator = new StatusIndicator (m_hInstance, m_hwndHandle, ID_STATUS_INDICATOR);
+
+    statusIndicator->Create (client.right - 35, 5, 30, 30);
 
     timeline = new CTrackbarWrapper (m_hwndHandle, ID_TIME_SELECTOR);
     timestamp = history->maxTime ();
@@ -61,9 +68,11 @@ void ShipSchema::OnCreate () {
 
     historyMode->CreateControl (client.right - 200, client.bottom - 25, 100, 25, BS_PUSHLIKE | BS_AUTORADIOBUTTON | WS_TABSTOP | WS_GROUP, "История");
     onlineMode->CreateControl (client.right - 100, client.bottom - 25, 100, 25, BS_PUSHLIKE | BS_AUTORADIOBUTTON | WS_TABSTOP, "Online");
-    historyMode->SendMessage (BM_SETCHECK, BST_CHECKED);
+    onlineMode->SendMessage (BM_SETCHECK, BST_CHECKED);
     
     updateTimer = SetTimer (1000, 60000);
+
+    updateStatus ();
 }
 
 LRESULT ShipSchema::OnPaint () {
@@ -185,14 +194,50 @@ LRESULT ShipSchema::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
     return CWindowWrapper::OnMessage (message, wParam, lParam);
 }
 
+void ShipSchema::updateStatus () {
+    time_t now = time (0);
+
+    database::valueMap tankLevels, meterValues;
+
+    db.collectCurrentVolumes (tankLevels);
+    db.collectCurrentMeters (meterValues);
+
+    time_t minDelay = 2000000000, maxDelay = 0, maxTimestamp = 0;
+
+    auto checkValues = [&minDelay, &maxDelay, now, & maxTimestamp] (database::valueMap& values) {
+        for (auto& value: values) {
+            auto delay = now - value.second.timestamp;
+            if (delay > maxDelay) maxDelay = delay;
+            if (delay < minDelay) minDelay = delay;
+            if (value.second.timestamp > maxTimestamp) maxTimestamp = value.second.timestamp;
+        }
+    };
+
+    checkValues (tankLevels);
+    checkValues (meterValues);
+
+    timestamp = maxTimestamp;
+
+    if (maxDelay < cfg.timeout)
+        statusIndicator->setStatus (StatusIndicator::dataStatus::ok);
+    else if (maxDelay < cfg.timeout)
+        statusIndicator->setStatus (StatusIndicator::dataStatus::warning);
+    else
+        statusIndicator->setStatus (StatusIndicator::dataStatus::failure);
+
+    char dateTimeString [100];
+
+    dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
+    timeline->SetRange (history->minTime (), timestamp);
+    timeline->SetValue (timestamp);
+}
+
 LRESULT ShipSchema::OnTimer (UINT timerID) {
     if (timerID == 1000) {
         history->load ();
 
-        timestamp = history->maxTime ();
+        updateStatus ();
 
-        timeline->SetRange (history->minTime (), timestamp);
-        timeline->SetValue (timestamp);
         InvalidateRect (m_hwndHandle, 0, FALSE);
     }
 
@@ -217,4 +262,8 @@ LRESULT ShipSchema::OnCommand (WPARAM wParam, LPARAM lParam) {
     }
 
     return 1L;
+}
+
+void ShipSchema::onNewData () {
+    if (statusIndicator && statusIndicator->getStatus () != StatusIndicator::dataStatus::ok) updateStatus ();
 }

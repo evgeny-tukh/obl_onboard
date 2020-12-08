@@ -88,6 +88,8 @@ void parsePollResult (char *buffer, config& cfg, database& db) {
                 }
             }
         }
+
+        PostMessage (HWND_BROADCAST, cfg.newDataMsg, 0, 0);
     }
 }
 
