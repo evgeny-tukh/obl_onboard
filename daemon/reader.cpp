@@ -6,6 +6,7 @@
 
 #include "../common/defs.h"
 #include "../nmea/nmea.h"
+#include "../common/db.h"
 
 struct readerContext: pollerContext {
     SOCKET socket;
@@ -13,7 +14,7 @@ struct readerContext: pollerContext {
 
 std::vector<readerContext *> readerContexts;
 
-void readerProc (readerContext *ctx, config& cfg, sensorCfg& sensor) {
+void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& sensor) {
     WSAData data;
 
     WSAStartup (0x202, & data);
@@ -31,6 +32,8 @@ void readerProc (readerContext *ctx, config& cfg, sensorCfg& sensor) {
     addr.sin_port = htons (sensor.port);
 
     result = bind (ctx->socket, (const sockaddr *) & addr, sizeof (addr));
+
+    time_t lastAliveCheck = time (0), lastRecord = 0;
 
     while (ctx->keepRunning) {
         u_long available;
@@ -51,24 +54,44 @@ void readerProc (readerContext *ctx, config& cfg, sensorCfg& sensor) {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        time_t now = time (0);
+        if ((now - lastAliveCheck) >= 5) {
+            nmea::checkAlive (now);
+
+            lastAliveCheck = now;
+        }
+        if ((now - lastRecord) >= cfg.logbookPeriod ) {
+            db.addLogbookRecord (
+                nmea::getTimestamp (),
+                nmea::getLat (),
+                nmea::getLon (),
+                nmea::getCOG (),
+                nmea::getSOG (),
+                nmea::getHDG ()
+            );
+
+            lastRecord = now;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
 
     closesocket (ctx->socket);
 }
 
-readerContext *startReader (config& cfg, sensorCfg& sensor) {
+readerContext *startReader (config& cfg, database& db, sensorCfg& sensor) {
     readerContext *ctx = new readerContext;
 
     ctx->keepRunning = true;
-    ctx->runner = new std::thread (readerProc, ctx, cfg, sensor);
+    ctx->runner = new std::thread (readerProc, ctx, cfg, db, sensor);
 
     return ctx;
 }
 
-void startAllReaders (config& cfg) {
+void startAllReaders (config& cfg, database& db) {
     for (auto& sensor: cfg.sensors) {
-        readerContexts.push_back (startReader (cfg, sensor));
+        readerContexts.push_back (startReader (cfg, db, sensor));
     }
 }
 

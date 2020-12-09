@@ -25,6 +25,9 @@ namespace nmea {
                 ok = false;
             }
         }
+        inline void checkAlive (time_t now) {
+            if ((now - updateTime) > timeout) ok = false;
+        }
     };
 
     struct sentence {
@@ -33,6 +36,18 @@ namespace nmea {
 
         sentence (): type {0, 0, 0, 0} {}
         bool parse (char *);
+        inline bool omitted (int index) {
+            return fields.size () <= index || fields.at (index).length () == 0;
+        }
+        inline size_t fieldLength (int index) {
+            return fields.size () <= index ? 0 : fields.at (index).length ();
+        }
+        inline char asCharAt (int index) {
+            return fields.size () <= index || fields.at (index).empty () ? 0 : fields.at (index).front ();
+        }
+        inline char *asStringAt (int index) {
+            return fields.size  () <= index ? 0 : & fields.at (index).front ();
+        }
     };
 
     struct gpsPos {
@@ -40,4 +55,12 @@ namespace nmea {
     };
 
     void parse (sentence&);
+    void checkAlive (time_t now);
+
+    time_t getTimestamp ();
+    double *getLat ();
+    double *getLon ();
+    float *getSOG ();
+    float *getCOG ();
+    float *getHDG ();
 }

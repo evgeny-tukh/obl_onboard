@@ -62,6 +62,16 @@ class database {
             double value
         );
 
+        uint64_t addLogbookRecord (
+            time_t timestamp,
+            double *lat,
+            double *lon,
+            float *cog,
+            float *sog,
+            float *hdg
+        );
+        void getRecentLogbookRecord (logbookRecord& rec);
+
     protected:
         config& cfg;
         static const char *dbPath;

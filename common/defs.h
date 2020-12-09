@@ -165,7 +165,7 @@ struct config {
     std::vector<tank> tanks;
     std::vector<fuelMeter> fuelMeters;
     ship shipInfo;
-    time_t pollingInterval, timeout;
+    time_t pollingInterval, timeout, logbookPeriod;
     uint32_t newDataMsg;
     std::map<uint8_t, param> params;
     std::map<uint8_t, paramGroup> paramGroups;
@@ -256,6 +256,12 @@ struct pollerContext {
     bool keepRunning;
 
     pollerContext (): runner (0), keepRunning (false), lastCheck (0) {}
+};
+
+struct logbookRecord {
+    time_t timestamp;
+    std::pair<double, bool> lat, lon;
+    std::pair<float, bool> cog, sog, hdg;
 };
 
 extern pollerContext *startPoller (config& cfg);

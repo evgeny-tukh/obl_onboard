@@ -133,12 +133,14 @@ void parseCfgFile (config& cfg) {
         if (settings) {
             json::numberNode *pollingInterval = (json::numberNode *) (*settings) ["pollingInterval"];
             json::numberNode *timeout = (json::numberNode *) (*settings) ["timeout"];
+            json::numberNode *logbookPeriod = (json::numberNode *) (*settings) ["logbookPeriod"];
             json::numberNode *timezone = (json::numberNode *) (*settings) ["timezone"];
             json::stringNode *newDataMsg = (json::stringNode *) (*settings) ["msg"];
 
             if (pollingInterval) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
             if (timezone) cfg.timezone = (float) timezone->getValue ();
             if (timeout) cfg.timeout = (time_t) timeout->getValue ();
+            if (logbookPeriod) cfg.logbookPeriod = (time_t) logbookPeriod->getValue ();
             if (newDataMsg) cfg.newDataMsg = RegisterWindowMessageA (newDataMsg->getValue ());
         }
         if (sensors) {

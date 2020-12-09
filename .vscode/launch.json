@@ -8,11 +8,11 @@
             "name": "debug GUI",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin2/gui.exe",
+            "program": "${workspaceFolder}/bin/gui.exe",
             "args": [
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/bin2",
+            "cwd": "${workspaceFolder}/bin",
             "environment": [],
             "externalConsole": false
         },

@@ -1,10 +1,18 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "db.h"
+#include "tools.h"
 
 const char *database::dbPath = "data.db";
 
 char *initialQueries [] {
+    "create table logbook"
+    "(id integer not null primary key asc,"
+    "timestamp integer not null,"
+    "lat real,lon real,"
+    "sog real,cog real,hdg real)",
+    "create index idx_lb on logbook(timestamp)",
+
     "create table operations"
     "(id integer not null primary key asc,type integer not null,tank integer not null,timestamp integer not null)",
     "create index idx_tank on operations(tank,timestamp,type)",
@@ -396,4 +404,67 @@ void database::collectCurrentMeters (valueMap& volumes) {
     valueCollectCtx context { volumes, cfg.tanks.size () };
 
     executeAndGet ("select meter,value,timestamp from meters order by timestamp desc", volumeCollectCb, & context, 0);
+}
+
+uint64_t database::addLogbookRecord (
+    time_t timestamp,
+    double *lat,
+    double *lon,
+    float *cog,
+    float *sog,
+    float *hdg
+) {
+    char query [200];
+    char buffer [100];
+    static const char *null = "null";
+    sprintf (
+        query,
+        "insert into logbook(timestamp,lat,lon,sog,cog,hdg) values(%I64d,%s,%s,%s,%s,%s)",
+        timestamp,
+        lat && lon ? ftoa (*lat, buffer, "%.8f") : null,
+        lat && lon ? ftoa (*lon, buffer + 20, "%.8f") : null,
+        sog ? ftoa (*sog, buffer + 40, "%.1f") : null,
+        cog ? ftoa (*cog, buffer + 60, "%.1f") : null,
+        hdg ? ftoa (*hdg, buffer + 80, "%.1f") : null
+    );
+
+    uint64_t result;
+    executeSimple (query, & result);
+
+    return result;
+}
+
+int logbookRecPickCb (void *param, int numOfFields, char **values, char **fields) {
+    logbookRecord *rec = (logbookRecord *) param;
+
+    auto assignDblField = [] (std::pair<double, bool>& data, char *stringVal) {
+        if (stringVal) {
+            data.first = atof (stringVal);
+            data.second = true;
+        } else {
+            data.second = false;
+        }
+    };
+    auto assignFltField = [] (std::pair<float, bool>& data, char *stringVal) {
+        if (stringVal) {
+            data.first = (float) atof (stringVal);
+            data.second = true;
+        } else {
+            data.second = false;
+        }
+    };
+
+    rec->timestamp = _atoi64 (values [1]);
+
+    assignDblField (rec->lat, values [2]);
+    assignDblField (rec->lon, values [3]);
+    assignFltField (rec->sog, values [4]);
+    assignFltField (rec->cog, values [5]);
+    assignFltField (rec->hdg, values [6]);
+
+    return 0;
+}
+
+void database::getRecentLogbookRecord (logbookRecord& rec) {
+    executeAndGet ("select * from logbook order by timestamp desc limit 1", logbookRecPickCb, & rec, 0);
 }

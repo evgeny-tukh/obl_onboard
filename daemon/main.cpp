@@ -112,11 +112,11 @@ int main (int argCount, char *args []) {
     
     auto runnerCtx = startPoller (cfg);
 
-    startAllReaders (cfg);
+    startAllReaders (cfg, db);
  
     if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
 
     stopAllReaders ();
-    
+
     exit (0);
 }

@@ -91,10 +91,13 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
 void CMainWnd::exportLevels () {
     database::valueMap tankLevels, meterValues;
 
+    logbookRecord record;
+
     db.collectCurrentVolumes (tankLevels);
     db.collectCurrentMeters (meterValues);
+    db.getRecentLogbookRecord (record);
 
-    json::hashNode root, volumes, meters, data;
+    json::hashNode root, volumes, meters, data, logbook;
     char buffer [50];
 
     for (auto& tankLevel: tankLevels) {
@@ -107,10 +110,18 @@ void CMainWnd::exportLevels () {
         meters.add (_itoa (meterValue.first, buffer, 10), value);
     }
 
+    logbook.add ("timestamp", new json::numberNode (record.timestamp));
+    logbook.add ("lat", record.lat.second ? new json::numberNode (record.lat.first) : new json::node);
+    logbook.add ("lon", record.lon.second ? new json::numberNode (record.lon.first) : new json::node);
+    logbook.add ("sog", record.sog.second ? new json::numberNode (record.sog.first) : new json::node);
+    logbook.add ("cog", record.cog.second ? new json::numberNode (record.cog.first) : new json::node);
+    logbook.add ("hdg", record.hdg.second ? new json::numberNode (record.hdg.first) : new json::node);
+
     data.add ("volumes", & volumes);
     data.add ("meters", & meters);
     root.add ("type", new json::stringNode ("values"));
     root.add ("data", & data);
+    root.add ("logbook", & logbook);
 
     exportJson (root, cfg);
 }
