@@ -8,6 +8,7 @@
 *.idb
 *.aps
 R???????
+!reader.*
 *._db
 gui/res
 *.xl*
