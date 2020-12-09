@@ -8,6 +8,7 @@
 #include "../common/json.h"
 #include "../common/defs.h"
 #include "../common/db.h"
+#include "reader.h"
 
 void showHelp () {
     printf (
@@ -110,8 +111,12 @@ int main (int argCount, char *args []) {
     parseParams (argCount, args, cfg);
     
     auto runnerCtx = startPoller (cfg);
+
+    startAllReaders (cfg);
  
     if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
 
+    stopAllReaders ();
+    
     exit (0);
 }

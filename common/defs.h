@@ -147,6 +147,14 @@ struct draftData {
     }
 };
 
+struct sensorCfg {
+    uint32_t port;
+    std::string type;
+    std::string nic;
+
+    sensorCfg (const char *_type, const char *_nic, uint32_t _port): type (_type), nic (_nic), port (_port) {}
+};
+
 struct config {
     std::string host, path;
     uint16_t port;
@@ -163,6 +171,7 @@ struct config {
     std::map<uint8_t, paramGroup> paramGroups;
     std::map<char *, uint8_t> columnMap;
     reporting repCfg;
+    std::vector<sensorCfg> sensors;
 
     tank *findTank (char *name) {
         for (auto& tank: tanks) {

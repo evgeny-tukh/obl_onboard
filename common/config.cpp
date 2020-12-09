@@ -69,6 +69,7 @@ void parseCfgFile (config& cfg) {
         json::arrayNode *paramGroups = (json::arrayNode *) (*root) ["paramGroups"];
         json::hashNode *columnMap = (json::hashNode *) (*root) ["columnMap"];
         json::hashNode *repCfg = (json::hashNode *) (*root) ["report"];
+        json::arrayNode *sensors = (json::arrayNode *) (*root) ["sensors"];
 
         if (host) cfg.host = host->getValue ();
         if (path) cfg.path = path->getValue ();
@@ -139,6 +140,19 @@ void parseCfgFile (config& cfg) {
             if (timezone) cfg.timezone = (float) timezone->getValue ();
             if (timeout) cfg.timeout = (time_t) timeout->getValue ();
             if (newDataMsg) cfg.newDataMsg = RegisterWindowMessageA (newDataMsg->getValue ());
+        }
+        if (sensors) {
+            for (auto i = 0; i < sensors->size (); ++ i) {
+                json::hashNode *sensor = (json::hashNode *) (*sensors) [i];
+
+                if (sensor) {
+                    json::stringNode *type = (json::stringNode *) (*sensor) ["type"];
+                    json::stringNode *nic = (json::stringNode *) (*sensor) ["nic"];
+                    json::numberNode *port = (json::numberNode *) (*sensor) ["port"];
+
+                    cfg.sensors.emplace_back (type->getValue (), nic->getValue (), port->getValue ());
+                }
+            }
         }
         if (params) {
             for (auto i = 0; i < params->size (); ++ i) {
