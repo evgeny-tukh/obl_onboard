@@ -71,17 +71,17 @@ void parseCfgFile (config& cfg) {
         json::hashNode *repCfg = (json::hashNode *) (*root) ["report"];
         json::arrayNode *sensors = (json::arrayNode *) (*root) ["sensors"];
 
-        if (host) cfg.host = host->getValue ();
-        if (path) cfg.path = path->getValue ();
-        if (port) cfg.port = (uint16_t) port->getValue ();
-        if (repCfg) {
+        if (host != json::nothing) cfg.host = host->getValue ();
+        if (path != json::nothing) cfg.path = path->getValue ();
+        if (port != json::nothing) cfg.port = (uint16_t) port->getValue ();
+        if (repCfg != json::nothing) {
             json::stringNode *templ = (json::stringNode *) (*repCfg) ["template"];
             json::stringNode *dataExport = (json::stringNode *) (*repCfg) ["export"];
 
-            if (templ) cfg.repCfg.templatePath = templ->getValue ();
-            if (dataExport) cfg.repCfg.exportPath = dataExport->getValue ();
+            if (templ != json::nothing) cfg.repCfg.templatePath = templ->getValue ();
+            if (dataExport != json::nothing) cfg.repCfg.exportPath = dataExport->getValue ();
         }
-        if (shipInfo) {
+        if (shipInfo != json::nothing) {
             auto& ship = (*shipInfo);
             json::stringNode *master = (json::stringNode *) ship ["master"];
             json::stringNode *cheng = (json::stringNode *) ship ["cheng"];
@@ -91,63 +91,71 @@ void parseCfgFile (config& cfg) {
             json::numberNode *mtID = (json::numberNode *) ship ["mt_id"];
             json::numberNode *draft = (json::numberNode *) ship ["normalDraft"];
 
-            if (master) cfg.shipInfo.master = master->getValue ();
-            if (cheng) cfg.shipInfo.cheng = cheng->getValue ();
-            if (name) cfg.shipInfo.name = name->getValue ();
-            if (mmsi) cfg.shipInfo.mmsi = mmsi->getValue ();
-            if (imo) cfg.shipInfo.imo = imo->getValue ();
-            if (draft) cfg.shipInfo.normalDraft = draft->getValue ();
+            if (master != json::nothing) cfg.shipInfo.master = master->getValue ();
+            if (cheng != json::nothing) cfg.shipInfo.cheng = cheng->getValue ();
+            if (name != json::nothing) cfg.shipInfo.name = name->getValue ();
+            if (mmsi != json::nothing) cfg.shipInfo.mmsi = mmsi->getValue ();
+            if (imo != json::nothing) cfg.shipInfo.imo = imo->getValue ();
+            if (draft != json::nothing) cfg.shipInfo.normalDraft = draft->getValue ();
         }
-        if (tanks) {
+        if (tanks != json::nothing) {
             for (auto i = 0; i < tanks->size (); ++ i) {
                 json::hashNode *tank = (json::hashNode *) (*tanks) [i];
 
-                if (tank) {
+                if (tank != json::nothing) {
                     json::numberNode *id = (json::numberNode *) (*tank) ["id"];
                     json::stringNode *name = (json::stringNode *) (*tank) ["name"];
                     json::stringNode *type = (json::stringNode *) (*tank) ["type"];
                     json::numberNode *volume = (json::numberNode *) (*tank) ["volume"];
                     json::stringNode *side = (json::stringNode *) (*tank) ["side"];
 
-                    if (id && name && type && volume) {
+                    if (id  != json::nothing && name != json::nothing && type != json::nothing && volume != json::nothing) {
                         cfg.tanks.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue (), (float) volume->getValue (), side->getValue ());
                     }
                 }
             }
         }
-        if (fuelMeters) {
+        if (fuelMeters != json::nothing) {
             for (auto i = 0; i < fuelMeters->size (); ++ i) {
                 json::hashNode *fuelMeter = (json::hashNode *) (*fuelMeters) [i];
 
-                if (fuelMeter) {
+                if (fuelMeter != json::nothing) {
                     json::numberNode *id = (json::numberNode *) (*fuelMeter) ["id"];
                     json::stringNode *name = (json::stringNode *) (*fuelMeter) ["name"];
                     json::stringNode *type = (json::stringNode *) (*fuelMeter) ["type"];
 
-                    if (id && name && type) {
+                    if (id != json::nothing && name != json::nothing && type != json::nothing) {
                         cfg.fuelMeters.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue ());
                     }
                 }
             }
         }
-        if (settings) {
+        if (settings != json::nothing) {
             json::numberNode *pollingInterval = (json::numberNode *) (*settings) ["pollingInterval"];
             json::numberNode *timeout = (json::numberNode *) (*settings) ["timeout"];
             json::numberNode *logbookPeriod = (json::numberNode *) (*settings) ["logbookPeriod"];
             json::numberNode *timezone = (json::numberNode *) (*settings) ["timezone"];
-            json::stringNode *newDataMsg = (json::stringNode *) (*settings) ["msg"];
+            json::stringNode *newDataMsg = (json::stringNode *) (*settings) ["dataMsg"];
+            json::stringNode *posChangedMsg = (json::stringNode *) (*settings) ["posChangedMsg"];
+            json::stringNode *cogChangedMsg = (json::stringNode *) (*settings) ["cogChangedMsg"];
+            json::stringNode *sogChangedMsg = (json::stringNode *) (*settings) ["sogChangedMsg"];
+            json::stringNode *hdgChangedMsg = (json::stringNode *) (*settings) ["hdgChangedMsg"];
 
-            if (pollingInterval) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
-            if (timezone) cfg.timezone = (float) timezone->getValue ();
-            if (timeout) cfg.timeout = (time_t) timeout->getValue ();
-            if (logbookPeriod) cfg.logbookPeriod = (time_t) logbookPeriod->getValue ();
-            if (newDataMsg) cfg.newDataMsg = RegisterWindowMessageA (newDataMsg->getValue ());
+            if (pollingInterval != json::nothing) cfg.pollingInterval = (time_t) pollingInterval->getValue ();
+            if (timezone != json::nothing) cfg.timezone = (float) timezone->getValue ();
+            if (timeout != json::nothing) cfg.timeout = (time_t) timeout->getValue ();
+            if (logbookPeriod != json::nothing) cfg.logbookPeriod = (time_t) logbookPeriod->getValue ();
+            if (newDataMsg != json::nothing) cfg.newDataMsg = RegisterWindowMessageA (newDataMsg->getValue ());
+            if (posChangedMsg != json::nothing) cfg.posChangedMsg = RegisterWindowMessageA (posChangedMsg->getValue ());
+            if (cogChangedMsg != json::nothing) cfg.cogChangedMsg = RegisterWindowMessageA (cogChangedMsg->getValue ());
+            if (sogChangedMsg != json::nothing) cfg.sogChangedMsg = RegisterWindowMessageA (sogChangedMsg->getValue ());
+            if (hdgChangedMsg != json::nothing) cfg.hdgChangedMsg = RegisterWindowMessageA (hdgChangedMsg->getValue ());
         }
-        if (sensors) {
+        if (sensors != json::nothing) {
             for (auto i = 0; i < sensors->size (); ++ i) {
                 json::hashNode *sensor = (json::hashNode *) (*sensors) [i];
 
-                if (sensor) {
+                if (sensor != json::nothing) {
                     json::stringNode *type = (json::stringNode *) (*sensor) ["type"];
                     json::stringNode *nic = (json::stringNode *) (*sensor) ["nic"];
                     json::numberNode *port = (json::numberNode *) (*sensor) ["port"];
@@ -156,11 +164,11 @@ void parseCfgFile (config& cfg) {
                 }
             }
         }
-        if (params) {
+        if (params != json::nothing) {
             for (auto i = 0; i < params->size (); ++ i) {
                 json::hashNode *parameter = (json::hashNode *) (*params) [i];
 
-                if (parameter) {
+                if (parameter != json::nothing) {
                     json::numberNode *id = (json::numberNode *) (*parameter) ["id"];
                     json::stringNode *key = (json::stringNode *) (*parameter) ["key"];
                     json::stringNode *name = (json::stringNode *) (*parameter) ["name"];
@@ -182,7 +190,7 @@ void parseCfgFile (config& cfg) {
                 }
             }
         }
-        if (paramGroups) {
+        if (paramGroups != json::nothing) {
             for (auto i = 0; i < paramGroups->size (); ++ i) {
                 json::hashNode *parameterGroup = (json::hashNode *) (*paramGroups) [i];
 
@@ -202,7 +210,7 @@ void parseCfgFile (config& cfg) {
                 }
             }
         }
-        if (columnMap) {
+        if (columnMap != json::nothing) {
             for (auto iter = columnMap->begin (); iter != columnMap->end (); ++ iter) {
                 json::numberNode *column = (json::numberNode *) iter->second;
 

@@ -23,6 +23,9 @@ namespace json {
         virtual std::string serialize () { return "null"; }
     };
 
+    extern node _nothing;
+    extern node *nothing;
+
     struct stringNode: node {
         std::string value;
 
@@ -93,7 +96,7 @@ namespace json {
         }
 
         inline node *at (size_t index) {
-            return index < value.size () ? value [index] : 0;
+            return index < value.size () ? value [index] : json::nothing;
         }
 
         inline void setAt (size_t index, node *nodeValue) {
@@ -141,7 +144,7 @@ namespace json {
                 if (result == 0) return item.second;
             }
 
-            return value.end ()->second;
+            return nothing;//value.end ()->second;
         }
 
         inline node *at (char *key) {

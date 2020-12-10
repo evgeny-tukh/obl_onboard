@@ -13,6 +13,9 @@ namespace json {
     node *extractNumber (char *stream, int& offset);
     node *extractHash (char *stream, int& offset);
     node *extractArray (char *stream, int& offset);
+
+    node _nothing;
+    node *nothing = & _nothing;
 }
 
 void json::removeWhiteSpaces (char *source, std::string& result) {

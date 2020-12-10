@@ -6,15 +6,24 @@
 #include "../common/defs.h"
 #include "../common/tools.h"
 #include "../common/json.h"
+#include "../nmea/nmea.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
 
 CMainWnd::CMainWnd (HINSTANCE instance):
     CWindowWrapper (instance, HWND_DESKTOP, "obl_gui", menu = LoadMenu (instance, MAKEINTRESOURCE (IDR_MENU))),
     shipSchema (0),
+    navData (0),
+    modeSwitch (0),
     bunkerings (0),
     selectedTank (-1),
     viewMode (mode::SCHEMA),
+    lat (nmea::NO_VALID_DATA),
+    lon (nmea::NO_VALID_DATA),
+    cog (nmea::NO_VALID_DATA),
+    sog (nmea::NO_VALID_DATA),
+    hdg (nmea::NO_VALID_DATA),
+    lastDataUpdate (0),
     db (cfg)
 {
     char path [MAX_PATH];
@@ -36,6 +45,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 CMainWnd::~CMainWnd () {
     delete modeSwitch;
     delete bunkerings;
+    delete navData;
+    delete shipSchema;
 }
 
 void CMainWnd::switchToMode (mode newMode) {
@@ -59,6 +70,9 @@ void CMainWnd::OnCreate () {
     modeSwitch->AddItem ("Мнемосхема", mode::SCHEMA);
     modeSwitch->AddItem ("Бункеровки", mode::BUNKERINGS);
 
+    navData = new CStaticWrapper (m_hwndHandle, ID_NAV_DATA);
+    navData->CreateControl (client.right - 199, 0, 200, 50, SS_LEFT, "POS: N/A\nSOG: N/A\nCOG: N/A");
+
     shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, db, cfg, history);
     bunkerings = new BunkeringWindow (m_hInstance, m_hwndHandle, cfg, db);
 
@@ -66,6 +80,8 @@ void CMainWnd::OnCreate () {
     bunkerings->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
 
     switchToMode (mode::SCHEMA);
+
+    SetTimer (1100, 5000);
 }
 
 void CMainWnd::RequestAppQuit () {
@@ -82,6 +98,19 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
         default:
             if (message == cfg.newDataMsg) {
                 shipSchema->onNewData ();
+            } else if (message == cfg.posChangedMsg) {
+                lastDataUpdate = time (0);
+                lat = wParam;
+                lon = lParam;
+                showNavData ();
+            } else if (message == cfg.cogChangedMsg) {
+                lastDataUpdate = time (0);
+                cog = lParam;
+                showNavData ();
+            } else if (message == cfg.sogChangedMsg) {
+                lastDataUpdate = time (0);
+                sog = lParam;
+                showNavData ();
             }
     }
 
@@ -178,9 +207,10 @@ LRESULT CMainWnd::OnSysCommand (WPARAM wParam, LPARAM lParam) {
 }
 
 LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD height) {
-    modeSwitch->Move (0, 0, width, 50, TRUE);
+    modeSwitch->Move (0, 0, width - 200, 50, TRUE);
     shipSchema->Move (0, 50, width, height - 49, TRUE);
     bunkerings->Move (0, 50, width, height - 49, TRUE);
+    navData->Move (width - 200, 0, 200, 50, TRUE);
 
     return FALSE;
 }
@@ -197,5 +227,42 @@ LRESULT CMainWnd::OnNotify (NMHDR *header) {
 }
 
 LRESULT CMainWnd::OnTimer (unsigned int timerID) {
+    if (timerID == 1100) {
+        if ((time (0) - lastDataUpdate) > cfg.timeout) {
+            lat = nmea::NO_VALID_DATA;
+            lon = nmea::NO_VALID_DATA;
+            sog = nmea::NO_VALID_DATA;
+            cog = nmea::NO_VALID_DATA;
+            hdg = nmea::NO_VALID_DATA;
+
+            showNavData ();
+        }
+    }
+
     return CWindowWrapper::OnTimer (timerID);
+}
+
+void CMainWnd::showNavData () {
+    std::string result;
+    char buffer [100];
+
+    result = "POS: ";
+    if (lat == nmea::NO_VALID_DATA || lon == nmea::NO_VALID_DATA)
+        result += "N/A";
+    else
+        result += nmea::formatPos ((double) lat / 60000.0, (double) lon / 60000.0, buffer);
+
+    result += "\nSOG: ";
+    if (sog == nmea::NO_VALID_DATA)
+        result += "N/A";
+    else
+        result += ftoa ((double) sog * 0.1, buffer, "%.1f");
+
+    result += "\nCOG: ";
+    if (cog == nmea::NO_VALID_DATA)
+        result += "N/A";
+    else
+        result += ftoa ((double) cog * 0.1, buffer, "%05.1f");
+
+    navData->SetText (result.c_str ());
 }

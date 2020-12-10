@@ -332,3 +332,47 @@ float *nmea::getCOG () {
 float *nmea::getHDG () {
     return _hdg.ok ? & hdg : 0;
 }
+
+int32_t nmea::getEncodedLat () {
+    return _pos.ok ? (int32_t) (pos.lat * 60000.0) : NO_VALID_DATA;
+}
+
+int32_t nmea::getEncodedLon () {
+    return _pos.ok ? (int32_t) (pos.lon * 60000.0) : NO_VALID_DATA;
+}
+
+uint32_t nmea::getEncodedSOG () {
+    return _sog.ok ? (uint32_t) (sog * 10.0) : NO_VALID_DATA;
+}
+
+uint32_t nmea::getEncodedCOG () {
+    return _cog.ok ? (uint32_t) (cog * 10.0) : NO_VALID_DATA;
+}
+
+uint32_t nmea::getEncodedHDG () {
+    return _hdg.ok ? (uint32_t) (hdg * 10.0) : NO_VALID_DATA;
+}
+
+char *nmea::formatPos (double lat, double lon, char *buffer) {
+    if (buffer) {
+        double absLat = fabs (lat);
+        double absLon = fabs (lon);
+        int latDeg = (int) absLat;
+        int lonDeg = (int) absLon;
+        double latMin = (absLat - (double) latDeg) * 60.0;
+        double lonMin = (absLon - (double) lonDeg) * 60.0;
+
+        sprintf (
+            buffer,
+            "%02d %06.3f%c %03d %06.3f%c",
+            latDeg,
+            latMin,
+            lat >= 0.0 ? 'N' : 'S',
+            lonDeg,
+            lonMin,
+            lon >= 0.0 ? 'E' : 'W'
+        );
+    }
+
+    return buffer;
+}

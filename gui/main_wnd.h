@@ -37,6 +37,7 @@ class CMainWnd : public CWindowWrapper
         
         mode             viewMode;
         CTabCtrlWrapper *modeSwitch;
+        CStaticWrapper  *navData;
         ShipSchema      *shipSchema;
         BunkeringWindow *bunkerings;
 
@@ -49,9 +50,11 @@ class CMainWnd : public CWindowWrapper
         HMENU                   menu;
         config                  cfg;
         int                     selectedTank;
+        int32_t                 lat, lon;
+        uint32_t                cog, sog, hdg;
         database                db;
         dataHistory            *history;
-        time_t                  beginTimestamp, endTimestamp;
+        time_t                  beginTimestamp, endTimestamp, lastDataUpdate;
 
         virtual LRESULT OnMessage (UINT message, WPARAM wParam, LPARAM lParam);
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);
@@ -68,4 +71,6 @@ class CMainWnd : public CWindowWrapper
         void switchToMode (mode newMode);
 
         void exportLevels ();
+
+        void showNavData ();
 };

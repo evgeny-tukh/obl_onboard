@@ -166,7 +166,7 @@ struct config {
     std::vector<fuelMeter> fuelMeters;
     ship shipInfo;
     time_t pollingInterval, timeout, logbookPeriod;
-    uint32_t newDataMsg;
+    uint32_t newDataMsg, posChangedMsg, sogChangedMsg, cogChangedMsg, hdgChangedMsg;
     std::map<uint8_t, param> params;
     std::map<uint8_t, paramGroup> paramGroups;
     std::map<char *, uint8_t> columnMap;

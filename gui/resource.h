@@ -60,6 +60,8 @@
 #define ID_ONLINE_MODE                          1040
 #define ID_HISTORY_MODE                         1039
 
+#define ID_NAV_DATA                             1041
+
 #define ID_TANK_INFO_BEFORE_FIRST               2000
 #define ID_TANK_INFO_AFTER_FIRST                2100
 

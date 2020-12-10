@@ -63,4 +63,14 @@ namespace nmea {
     float *getSOG ();
     float *getCOG ();
     float *getHDG ();
+
+    static const uint32_t NO_VALID_DATA = 0x7FFFFFFFF;
+
+    int32_t getEncodedLat ();
+    int32_t getEncodedLon ();
+    uint32_t getEncodedSOG ();
+    uint32_t getEncodedCOG ();
+    uint32_t getEncodedHDG ();
+
+    char *formatPos (double lat, double lon, char *buffer);
 }

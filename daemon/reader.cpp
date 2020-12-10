@@ -35,6 +35,12 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
 
     time_t lastAliveCheck = time (0), lastRecord = 0;
 
+    int32_t lastSentLat = nmea::NO_VALID_DATA;
+    int32_t lastSentLon = nmea::NO_VALID_DATA;
+    uint32_t lastSentSOG = nmea::NO_VALID_DATA;
+    uint32_t lastSentCOG = nmea::NO_VALID_DATA;
+    uint32_t lastSentHDG = nmea::NO_VALID_DATA;
+
     while (ctx->keepRunning) {
         u_long available;
 
@@ -51,6 +57,33 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
                 
                 if (sentence.parse (buffer)) {
                     nmea::parse (sentence);
+
+                    int32_t lat = nmea::getEncodedLat ();
+                    int32_t lon = nmea::getEncodedLon ();
+                    uint32_t sog = nmea::getEncodedSOG ();
+                    uint32_t cog = nmea::getEncodedCOG ();
+                    uint32_t hdg = nmea::getEncodedHDG ();
+
+                    if (lat != lastSentLat || lon != lastSentLon) {
+                        PostMessage (HWND_BROADCAST, cfg.posChangedMsg, lat, lon);
+                        lastSentLat = lat;
+                        lastSentLon = lon;
+                    }
+
+                    if (sog != lastSentSOG) {
+                        PostMessage (HWND_BROADCAST, cfg.sogChangedMsg, 0, sog);
+                        lastSentSOG = sog;
+                    }
+
+                    if (cog != lastSentCOG) {
+                        PostMessage (HWND_BROADCAST, cfg.cogChangedMsg, 0, cog);
+                        lastSentCOG = cog;
+                    }
+
+                    if (hdg != lastSentHDG) {
+                        PostMessage (HWND_BROADCAST, cfg.hdgChangedMsg, 0, hdg);
+                        lastSentHDG = hdg;
+                    }
                 }
             }
         }
