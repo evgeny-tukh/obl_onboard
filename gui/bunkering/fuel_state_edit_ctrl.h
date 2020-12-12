@@ -2,16 +2,18 @@
 
 #include "../wui/ListCtrlWrapper.h"
 #include "../../common/defs.h"
+#include "base_list_ctrl.h"
 
-class FuelStateEditCtrl: public CListCtrlWrapper {
+class FuelStateEditCtrl: public BaseListCtrl {
     public:
         FuelStateEditCtrl (HWND parent, UINT controlID);
         virtual ~FuelStateEditCtrl ();
 
-        void init ();
+        virtual void init ();
         void showState (fuelState& state);
         bool readState (fuelState& state);
-        bool editValue (int item);
 
-        char *getFormat (int item);
+        virtual bool isItemEditable (int item) {
+            return true;
+        }
 };

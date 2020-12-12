@@ -5,6 +5,7 @@
 #include "../resource.h"
 #include "../../common/tools.h"
 #include "fuel_state_edit_ctrl.h"
+#include "hw_data_edit_ctrl.h"
 #include "../../repgen/excel.h"
 #include "../../common/json.h"
 
@@ -30,6 +31,8 @@ BunkeringWindow::~BunkeringWindow () {
 
     for (auto& ctrl: tankInfoBefore) delete ctrl;
     for (auto& ctrl: tankInfoAfter) delete ctrl;
+    for (auto& ctrl: hwDataBefore) delete ctrl;
+    for (auto& ctrl: hwDataAfter) delete ctrl;
 }
 
 void BunkeringWindow::OnCreate () {
@@ -116,24 +119,29 @@ void BunkeringWindow::OnCreate () {
 
     auto count = 0;
     FuelStateEditCtrl *tankInfoCtrl;
+    HwDataEditCtrl *hwDataCtrl;
 
     for (auto& tankInfo: cfg.tanks) {
         tanksBefore->AddItem ((char *) tankInfo.name.c_str (), tankInfo.id);
         tanksAfter->AddItem ((char *) tankInfo.name.c_str (), tankInfo.id);
 
         tankInfoCtrl = new FuelStateEditCtrl (tanksBefore->GetHandle (), ID_TANK_INFO_BEFORE_FIRST + count);
+        hwDataCtrl = new HwDataEditCtrl (tanksBefore->GetHandle (), ID_HW_DATA_EDIT_BEFORE_FIRST + count);
         
-        tankInfoCtrl->CreateControl (10, 30, 262, 150, WS_BORDER | LVS_REPORT);
-        tankInfoCtrl->init ();
-
+        tankInfoCtrl->CreateControl (10, 30, 262, 150);
         tankInfoBefore.push_back (tankInfoCtrl);
 
-        tankInfoCtrl = new FuelStateEditCtrl (tanksAfter->GetHandle (), ID_TANK_INFO_AFTER_FIRST + count);
-        
-        tankInfoCtrl->CreateControl (10, 30, 262, 150, WS_BORDER | LVS_REPORT);
-        tankInfoCtrl->init ();
+        hwDataCtrl->CreateControl (271, 30, 162, 150);
+        hwDataBefore.push_back (hwDataCtrl);
 
+        tankInfoCtrl = new FuelStateEditCtrl (tanksAfter->GetHandle (), ID_TANK_INFO_AFTER_FIRST + count);
+        hwDataCtrl = new HwDataEditCtrl (tanksAfter->GetHandle (), ID_HW_DATA_EDIT_AFTER_FIRST + count);
+        
+        tankInfoCtrl->CreateControl (10, 30, 262, 150);
         tankInfoAfter.push_back (tankInfoCtrl);
+
+        hwDataCtrl->CreateControl (271, 30, 162, 150);
+        hwDataAfter.push_back (hwDataCtrl);
 
         ++ count;
     }
@@ -374,6 +382,8 @@ void BunkeringWindow::showOnlySelectedTank (bool before) {
     for (int i = 0; i < (int) cfg.tanks.size (); ++ i) {
         tankInfoBefore [i]->Show ((before && i == selection) ? SW_SHOW : SW_HIDE);
         tankInfoAfter [i]->Show ((!before && i == selection) ? SW_SHOW : SW_HIDE);
+        hwDataBefore [i]->Show ((before && i == selection) ? SW_SHOW : SW_HIDE);
+        hwDataAfter [i]->Show ((!before && i == selection) ? SW_SHOW : SW_HIDE);
     }
 }
 
@@ -387,13 +397,49 @@ void BunkeringWindow::enableButtons (bool enableAction, bool enableSave) {
     if (tabSwitch) tabSwitch->Show ((enableAction || enableSave) ? SW_SHOW : SW_HIDE);
 }
 
+bool BunkeringWindow::isTankInfoBefore (uint32_t id) {
+    return id >= ID_TANK_INFO_BEFORE_FIRST && id < (ID_TANK_INFO_BEFORE_FIRST + cfg.tanks.size ());
+}
+
+bool BunkeringWindow::isTankInfoAfter (uint32_t id) {
+    return id >= ID_TANK_INFO_AFTER_FIRST && id < (ID_TANK_INFO_AFTER_FIRST + cfg.tanks.size ());
+}
+
+bool BunkeringWindow::isHwDataBefore (uint32_t id) {
+    return id >= ID_HW_DATA_EDIT_BEFORE_FIRST && id < (ID_HW_DATA_EDIT_BEFORE_FIRST + cfg.tanks.size ());
+}
+
+bool BunkeringWindow::isHwDataAfter (uint32_t id) {
+    return id >= ID_HW_DATA_EDIT_AFTER_FIRST && id < (ID_HW_DATA_EDIT_AFTER_FIRST + cfg.tanks.size ());
+}
+
 LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
     if (header->code == NM_DBLCLK && (mode == _mode::add || mode == _mode::edit)) {
         NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-        if (header->idFrom >= ID_TANK_INFO_BEFORE_FIRST && header->idFrom < (ID_TANK_INFO_BEFORE_FIRST + cfg.tanks.size ())) {
+        if (isTankInfoBefore (header->idFrom)) {
             tankInfoBefore [header->idFrom-ID_TANK_INFO_BEFORE_FIRST]->editValue (info->iItem); return FALSE;
-        } else if (header->idFrom >= ID_TANK_INFO_AFTER_FIRST && header->idFrom < (ID_TANK_INFO_AFTER_FIRST + cfg.tanks.size ())) {
+        } else if (isTankInfoAfter (header->idFrom)) {
             tankInfoAfter [header->idFrom-ID_TANK_INFO_AFTER_FIRST]->editValue (info->iItem); return FALSE;
+        } else if (isHwDataBefore (header->idFrom)) {
+            hwDataBefore [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST]->editValue (info->iItem); return FALSE;
+        } else if (isHwDataAfter (header->idFrom)) {
+            hwDataAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST]->editValue (info->iItem); return FALSE;
+        }
+    }
+    if (header->code == NM_CLICK) {
+        NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+        BaseListCtrl *pairedList = 0;
+        if (isTankInfoBefore (header->idFrom)) {
+            pairedList = hwDataBefore [header->idFrom-ID_TANK_INFO_BEFORE_FIRST];
+        } else if (isTankInfoAfter (header->idFrom)) {
+            pairedList = hwDataAfter [header->idFrom-ID_TANK_INFO_AFTER_FIRST];
+        } else if (isHwDataBefore (header->idFrom)) {
+            pairedList = tankInfoBefore [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST];
+        } else if (isHwDataAfter (header->idFrom)) {
+            pairedList = tankInfoAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
+        }
+        if (pairedList && pairedList->GetSelectedItem () != info->iItem) {
+            pairedList->SetItemState (info->iItem, LVIS_SELECTED, LVIS_SELECTED); return FALSE;
         }
     }
     switch (header->idFrom) {
@@ -476,6 +522,7 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
 
     for (auto i = 0; i < _data.tankStates.size () && i < cfg.tanks.size (); ++ i) {
         tankInfoBefore [i]->showState (_data.tankStates [i].before);
+        hwDataBefore [i]->showState (_data.tankStates [i].before, _data.tankStates [i].before.volume);
     }
 
     // After page
@@ -486,6 +533,7 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
 
     for (auto i = 0; i < _data.tankStates.size () && i < cfg.tanks.size (); ++ i) {
         tankInfoAfter [i]->showState (_data.tankStates [i].after);
+        hwDataAfter [i]->showState (_data.tankStates [i].after, _data.tankStates [i].after.volume);
     }
 }
 
@@ -625,5 +673,7 @@ void BunkeringWindow::enableEditor (bool enable) {
         }
         for (auto& ctrl: tankInfoBefore) ctrl->Enable (enable);
         for (auto& ctrl: tankInfoAfter) ctrl->Enable (enable);
+        for (auto& ctrl: hwDataBefore) ctrl->Enable (enable);
+        for (auto& ctrl: hwDataAfter) ctrl->Enable (enable);
     }
 }

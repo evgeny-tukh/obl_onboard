@@ -14,6 +14,7 @@
 #include "../wui/DateTimePickerWrapper.h"
 #include "../wui/ListBoxWrapper.h"
 #include "bunkering_header.h"
+#include "hw_data_edit_ctrl.h"
 
 class BunkeringWindow: public CWindowWrapper {
     public:
@@ -40,6 +41,7 @@ class BunkeringWindow: public CWindowWrapper {
         CTabCtrlWrapper *tabSwitch, *tanksBefore, *tanksAfter;
         FuelStateEditCtrl *bunkerLoadInfo;
         std::vector <FuelStateEditCtrl *> tankInfoBefore, tankInfoAfter;
+        std::vector <HwDataEditCtrl *> hwDataBefore, hwDataAfter;
 
         // Page controls
         std::vector<controlGroup> controlGroups;
@@ -81,4 +83,9 @@ class BunkeringWindow: public CWindowWrapper {
 
         void preLoadData (bunkeringData& data);
         void exportReportData (bunkeringData& data);
+
+        bool isTankInfoBefore (uint32_t id);
+        bool isTankInfoAfter (uint32_t id);
+        bool isHwDataBefore (uint32_t id);
+        bool isHwDataAfter (uint32_t id);
 };

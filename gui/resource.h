@@ -64,4 +64,7 @@
 
 #define ID_TANK_INFO_BEFORE_FIRST               2000
 #define ID_TANK_INFO_AFTER_FIRST                2100
+#define ID_HW_DATA_EDIT_BEFORE_FIRST            2200
+#define ID_HW_DATA_EDIT_AFTER_FIRST             2300
+
 
