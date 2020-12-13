@@ -91,9 +91,9 @@ size_t extractAndPopulateField (config& cfg, bunkeringData& data, char *source ,
                 case field::temperatureLoaded:
                     result += ftoa (data.loaded.temp, buffer, "%.1f"); break;
                 case field::volumeLoaded:
-                    result += ftoa (data.loaded.volume, buffer, "%.3f"); break;
+                    result += ftoa (data.loaded.volume.reported, buffer, "%.3f"); break;
                 case field::quantityLoaded:
-                    result += ftoa (data.loaded.quantity, buffer, "%.3f"); break;
+                    result += ftoa (data.loaded.quantity.reported, buffer, "%.3f"); break;
             }
 
             return index + strlen (templateFields [i]) - 1;

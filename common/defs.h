@@ -83,8 +83,22 @@ struct param {
     ): id (_id), key (_key), name (_name), multiplier (_mult), isNumber (_isNum != 0), group (_grp) {}
 };
 
+struct amounts {
+    float reported, byVolume, byCounter;
+
+    amounts (float rep, float byVol, float byCnt): reported (rep), byVolume (byVol), byCounter (byCnt) {}
+    amounts (float value): reported (value), byVolume (value), byCounter (value) {}
+
+    void copyFrom (amounts& from) {
+        reported = from.reported;
+        byVolume = from.byVolume;
+        byCounter = from.byCounter;
+    }
+};
+
 struct fuelState {
-    float density, viscosity, sulphur, temp, volume, quantity, fuelMeter, vcf;
+    float density, viscosity, sulphur, temp, fuelMeter, vcf;
+    amounts volume, quantity;
 
     fuelState ():
         density (0.95f),
@@ -101,10 +115,11 @@ struct fuelState {
         viscosity = from.viscosity;
         sulphur = from.sulphur;
         temp = from.temp;
-        volume = from.volume;
-        quantity = from.quantity;
         fuelMeter = from.fuelMeter;
         vcf = from.vcf;
+
+        volume.copyFrom (from.volume);
+        quantity.copyFrom (from.quantity);
     }
 };
 
@@ -184,6 +199,14 @@ struct config {
     fuelMeter *findFuelMeter (char *name) {
         for (auto& fuelMeter: fuelMeters) {
             if (strcmp (fuelMeter.name.c_str (), name) == 0) return & fuelMeter;
+        }
+
+        return 0;
+    }
+
+    fuelMeter *findUploadingMeter () {
+        for (auto& fuelMeter: fuelMeters) {
+            if (stricmp (fuelMeter.type.c_str (), "upl") == 0) return & fuelMeter;
         }
 
         return 0;

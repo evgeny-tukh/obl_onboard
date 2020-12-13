@@ -10,10 +10,10 @@ class HwDataEditCtrl: public BaseListCtrl {
         virtual ~HwDataEditCtrl ();
 
         virtual void init ();
-        void showState (fuelState& state, float volumentaryCounter);
-        bool readState (fuelState& state, float& volumentaryCounter);
+        void showState (fuelState& state);
+        bool readState (fuelState& state);
 
         inline virtual bool isItemEditable (int item) {
-            return item == 5;
+            return item == 5 || item == 6;
         }
 };

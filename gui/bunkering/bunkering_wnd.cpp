@@ -9,25 +9,24 @@
 #include "../../repgen/excel.h"
 #include "../../common/json.h"
 
+WNDPROC BunkeringWindow::defTabSwitchProc = 0;
+
 BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg, database& _db):
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
-    mode (_mode::browseList), editingItem (-1),
+    mode (_mode::browseList), editingItem (-1), bunkerHwDataInfo (0),
     bunkerList (0), addBunker (0), removeBunker (0), editBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
     beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
-    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0), exportReport (0),
+    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0), exportReport (0), loadData (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
-    fmInBeforeLabel (0), fmOutBeforeLabel (0), fmInAfterLabel (0), fmOutAfterLabel (0),
-    fmInBefore (0), fmOutBefore (0), fmInAfter (0), fmOutAfter (0),
     draftForeBefore (0), draftForeAfter (0), draftAftBefore (0), draftAftAfter (0) {}
 
 BunkeringWindow::~BunkeringWindow () {
     delete bunkerList;
     delete addBunker, removeBunker, editBunker;
     delete tabSwitch;
+    delete bunkerHwDataInfo;
     delete tanksBefore, tanksAfter;
-    delete save, discard, createReport, exportReport;
-    delete fmInBeforeLabel, fmOutBeforeLabel, fmInAfterLabel, fmOutAfterLabel;
-    delete fmInBefore, fmOutBefore, fmInAfter, fmOutAfter;
+    delete save, discard, createReport, exportReport, loadData;
 
     for (auto& ctrl: tankInfoBefore) delete ctrl;
     for (auto& ctrl: tankInfoAfter) delete ctrl;
@@ -50,7 +49,7 @@ void BunkeringWindow::OnCreate () {
     bunkerList->AddColumn ("Конец закачки", 110);
     bunkerList->AddColumn ("Закачано по ОБР, т", 120);
     bunkerList->AddColumn ("Закачано по УМ, т", 120);
-    bunkerList->SendMessage (LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+    bunkerList->SendMessage (LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
     addBunker = new CButtonWrapper (m_hwndHandle, ID_NEW_BUNKERING);
     removeBunker = new CButtonWrapper (m_hwndHandle, ID_DELETE_BUNKERING);
@@ -79,7 +78,8 @@ void BunkeringWindow::OnCreate () {
 
     auto switchHandle = tabSwitch->GetHandle ();
 
-    addControlToGroup (0, bunkerLoadInfo = new FuelStateEditCtrl (switchHandle, ID_BUNK_HDR_FUEL_STATE))->CreateControl (0, 30, 262, 150, WS_BORDER | LVS_REPORT);
+    ((BaseListCtrl *) addControlToGroup (0, bunkerLoadInfo = new FuelStateEditCtrl (switchHandle, ID_BUNK_HDR_FUEL_STATE)))->CreateControl (0, 30, 262, 150);
+    ((BaseListCtrl *) addControlToGroup (0, bunkerHwDataInfo = new HwDataEditCtrl (switchHandle, ID_BUNK_HDR_HW_DATA)))->CreateControl (261, 30, 162, 150);
     addControlToGroup (0, beginLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 185, 55, 20, SS_LEFT, "Начало");
     addControlToGroup (0, endLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 205, 55, 20, SS_LEFT, "Конец");
     addControlToGroup (0, portLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 225, 55, 20, SS_LEFT, "Порт");
@@ -87,35 +87,29 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (0, port = new CEditWrapper (switchHandle, ID_PORT))->CreateControl (60, 225, 180, 20, WS_BORDER);
     addControlToGroup (0, barge = new CEditWrapper (switchHandle, ID_BARGE))->CreateControl (60, 245, 180, 20, WS_BORDER);
     addControlToGroup (0, beginDate = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_DATE))->CreateControl (60, 185, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
-    addControlToGroup (0, beginTime = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_TIME))->CreateControl (160, 185, 80, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
+    addControlToGroup (0, beginTime = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_TIME))->CreateControl (160, 185, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
     addControlToGroup (0, endDate = new CDateTimePickerWrapper (switchHandle, ID_END_DATE))->CreateControl (60, 205, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
-    addControlToGroup (0, endTime = new CDateTimePickerWrapper (switchHandle, ID_END_TIME))->CreateControl (160, 205, 80, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
+    addControlToGroup (0, endTime = new CDateTimePickerWrapper (switchHandle, ID_END_TIME))->CreateControl (160, 205, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
+    addControlToGroup (0, loadData = new CButtonWrapper (switchHandle, ID_LOAD_DATA))->CreateControl (250, 185, 220, 20, WS_VISIBLE, "Автозагрузка данных");
 
     addControlToGroup (1, draftForeBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 30, 120, 20, SS_LEFT, "Осадка в носу");
     addControlToGroup (1, draftAftBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
     addControlToGroup (1, draftForeBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_BEFORE))->CreateControl (125, 30, 80, 20, WS_BORDER);
     addControlToGroup (1, draftAftBefore = new CEditWrapper (switchHandle, ID_DRAFT_AFT_BEFORE))->CreateControl (125, 50, 80, 20, WS_BORDER);
-    addControlToGroup (1, fmInBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 30, 150, 20, SS_LEFT, "Р/м входящий до");
-    addControlToGroup (1, fmOutBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 50, 150, 20, SS_LEFT, "Р/м исходящий до");
-    addControlToGroup (1, fmInBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 30, 80, 20, WS_BORDER);
-    addControlToGroup (1, fmOutBefore = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 50, 80, 20, WS_BORDER);
 
     addControlToGroup (2, draftForeAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 30, 120, 20, SS_LEFT, "Осадка в носу");
     addControlToGroup (2, draftAftAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
     addControlToGroup (2, draftForeAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (125, 30, 80, 20, WS_BORDER);
     addControlToGroup (2, draftAftAfter = new CEditWrapper (switchHandle, ID_DRAFT_AFT_AFTER))->CreateControl (125, 50, 80, 20, WS_BORDER);
-    addControlToGroup (2, fmInAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 30, 150, 20, SS_LEFT, "Р/м входящий после");
-    addControlToGroup (2, fmOutAfterLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (220, 50, 150, 20, SS_LEFT, "Р/м исходящий после");
-    addControlToGroup (2, fmInAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 30, 80, 20, WS_BORDER);
-    addControlToGroup (2, fmOutAfter = new CEditWrapper (switchHandle, ID_DRAFT_FORE_AFTER))->CreateControl (370, 50, 80, 20, WS_BORDER);
+
+    beginTime->SetFormat ("HH:mm");
+    endTime->SetFormat ("HH:mm");
 
     tanksBefore = new CTabCtrlWrapper (switchHandle, ID_TANKS_BEFORE);
     tanksAfter = new CTabCtrlWrapper (switchHandle, ID_TANKS_AFTER);
 
     addControlToGroup (1, tanksBefore->CreateControl (0, 80, bunkerListWidth, client.bottom - 80, TCS_BUTTONS));
     addControlToGroup (2, tanksAfter->CreateControl (0, 80, bunkerListWidth, client.bottom - 80, TCS_BUTTONS));
-
-    bunkerLoadInfo->init ();
 
     auto count = 0;
     FuelStateEditCtrl *tankInfoCtrl;
@@ -148,6 +142,9 @@ void BunkeringWindow::OnCreate () {
 
     showControlGroup (0);
     loadBunkeringList ();
+
+    defTabSwitchProc = (WNDPROC) GetWindowLongPtr (tabSwitch->GetHandle (), GWLP_WNDPROC);
+    SetWindowLongPtr (tabSwitch->GetHandle (), GWLP_WNDPROC, (LONG_PTR) localTabSwitchProc);
 }
 
 LRESULT BunkeringWindow::OnSize (const DWORD requestType, const WORD width, const WORD height)
@@ -171,13 +168,23 @@ void BunkeringWindow::exportReportData (bunkeringData& data) {
     json::hashNode root, dataNode, fuelMeters, fuelMetersBefore, fuelMetersAfter, loaded, draft, draftBefore, draftAfter;
     json::arrayNode tanks;
 
-    auto addFuelState = [] (fuelState& fs, json::hashNode& jsonNode) {
+    auto addAmounts = [] (amounts& amnts, json::hashNode *jsonNode) {
+        jsonNode->add ("reported", new json::numberNode (amnts.reported));
+        jsonNode->add ("byVolume", new json::numberNode (amnts.byVolume));
+        jsonNode->add ("byCounter", new json::numberNode (amnts.byCounter));
+    };
+
+    auto addFuelState = [addAmounts] (fuelState& fs, json::hashNode& jsonNode) {
+        json::hashNode *volume = new json::hashNode;
+        json::hashNode *quantity = new json::hashNode;
+
+        addAmounts (fs.volume, volume);
+        addAmounts (fs.quantity, quantity);
+
         jsonNode.add ("density", new json::numberNode (fs.density));
         jsonNode.add ("viscosity", new json::numberNode (fs.viscosity));
         jsonNode.add ("sulphur", new json::numberNode (fs.sulphur));
         jsonNode.add ("temp", new json::numberNode (fs.temp));
-        jsonNode.add ("volume", new json::numberNode (fs.volume));
-        jsonNode.add ("quantity", new json::numberNode (fs.quantity));
         jsonNode.add ("fuelMeter", new json::numberNode (fs.fuelMeter));
         jsonNode.add ("vcf", new json::numberNode (fs.vcf));
     };
@@ -230,10 +237,52 @@ void BunkeringWindow::exportReportData (bunkeringData& data) {
     exportJson (root, cfg);
 }
 
+void BunkeringWindow::loadAndPopulateData () {
+    auto begin = composeDateAndTime (beginDate->GetTimestamp (), beginTime->GetTimestamp ());
+    auto end = composeDateAndTime (endDate->GetTimestamp (), endTime->GetTimestamp ());
+
+    std::vector<tankState> states;
+
+    for (auto& tank: cfg.tanks) {
+        states.emplace_back (tank.id);
+    }
+
+    float uploadingCounterBefore = 0.0f, uploadingCounterAfter = 0.0f;
+    float volumeTotalBefore = 0.0f, volumeTotalAfter = 0.0f;
+
+    if (!db.loadTankStatesAt (begin, end, states, uploadingCounterBefore, uploadingCounterAfter)) {
+        MessageBox ("Некоторые параметры бункеровки на указанные моменты времени не найдены. Автозаполнение невозможно.", "Ошибка", MB_ICONSTOP); return;
+    }
+
+    for (auto& state: states) {
+        volumeTotalBefore += state.before.volume.byVolume;
+        volumeTotalAfter += state.after.volume.byVolume;
+    }
+
+    fuelState loaded;
+
+    loaded.volume.byVolume = volumeTotalAfter - volumeTotalBefore;
+    loaded.volume.byCounter = uploadingCounterAfter - uploadingCounterBefore;
+
+    bunkerHwDataInfo->showState (loaded);
+
+    for (size_t i = 0; i < states.size (); ++ i) {
+        auto& state = states [i];
+
+        tankInfoBefore [i]->showState (state.before);
+        tankInfoAfter [i]->showState (state.after);
+        hwDataBefore [i]->showState (state.before);
+        hwDataAfter [i]->showState (state.after);
+    }
+}
+
 LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = TRUE;
 
     switch (LOWORD (wParam)) {
+        case ID_LOAD_DATA: {
+            loadAndPopulateData (); break;
+        }
         case ID_CREATE_REPORT: {
             int index = bunkerList->GetSelectedItem ();
             if (index >= 0) {
@@ -360,8 +409,8 @@ void BunkeringWindow::loadBunkeringList ()
         auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering - list.begin ());
 
         bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
-        bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.volume, buffer, "%.3f"));
-        bunkerList->SetItemText (item,3, ftoa (bunkering->loaded.fuelMeter, buffer, "%.3f"));
+        bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.volume.reported, buffer, "%.3f"));
+        bunkerList->SetItemText (item,3, ftoa (bunkering->loaded.volume.byVolume, buffer, "%.3f"));
     }
 
     editingItem = -1;
@@ -417,13 +466,19 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
     if (header->code == NM_DBLCLK && (mode == _mode::add || mode == _mode::edit)) {
         NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
         if (isTankInfoBefore (header->idFrom)) {
-            tankInfoBefore [header->idFrom-ID_TANK_INFO_BEFORE_FIRST]->editValue (info->iItem); return FALSE;
+            auto ctrl = tankInfoBefore [header->idFrom-ID_TANK_INFO_BEFORE_FIRST];
+            ctrl->editValue (info->iItem, ctrl); return FALSE;
         } else if (isTankInfoAfter (header->idFrom)) {
-            tankInfoAfter [header->idFrom-ID_TANK_INFO_AFTER_FIRST]->editValue (info->iItem); return FALSE;
+            auto ctrl = tankInfoAfter [header->idFrom-ID_TANK_INFO_AFTER_FIRST];
+            ctrl->editValue (info->iItem, ctrl); return FALSE;
         } else if (isHwDataBefore (header->idFrom)) {
-            hwDataBefore [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST]->editValue (info->iItem); return FALSE;
+            auto ctrl = hwDataBefore [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST];
+            auto pairedCtrl = tankInfoBefore  [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST];
+            ctrl->editValue (info->iItem, pairedCtrl); return FALSE;
         } else if (isHwDataAfter (header->idFrom)) {
-            hwDataAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST]->editValue (info->iItem); return FALSE;
+            auto ctrl = hwDataAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
+            auto pairedCtrl = tankInfoAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
+            ctrl->editValue (info->iItem, pairedCtrl); return FALSE;
         }
     }
     if (header->code == NM_CLICK) {
@@ -487,7 +542,14 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
         case ID_BUNK_HDR_FUEL_STATE: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                bunkerLoadInfo->editValue (info->iItem);
+                bunkerLoadInfo->editValue (info->iItem, bunkerLoadInfo);
+            }
+            break;
+        }
+        case ID_BUNK_HDR_HW_DATA: {
+            if (header->code == NM_DBLCLK) {
+                NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
+                bunkerHwDataInfo->editValue (info->iItem, bunkerLoadInfo);
             }
             break;
         }
@@ -507,6 +569,7 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
 
     // Loaded page
     bunkerLoadInfo->showState (_data.loaded);
+    bunkerHwDataInfo->showState (_data.loaded);
     beginDate->SetTimestamp (_data.begin);
     beginTime->SetTimestamp (_data.begin);
     endDate->SetTimestamp (_data.end);
@@ -517,23 +580,19 @@ void BunkeringWindow::setBunkeringData (bunkeringData& _data) {
     // Before page
     draftForeBefore->SetText (ftoa (_data.draftBefore.fore, buffer, "%.1f"));
     draftAftBefore->SetText (ftoa (_data.draftBefore.aft, buffer, "%.1f"));
-    fmInBefore->SetText (ftoa (_data.pmBefore.in, buffer, "%.3f"));
-    fmOutBefore->SetText (ftoa (_data.pmBefore.out, buffer, "%.3f"));
 
     for (auto i = 0; i < _data.tankStates.size () && i < cfg.tanks.size (); ++ i) {
         tankInfoBefore [i]->showState (_data.tankStates [i].before);
-        hwDataBefore [i]->showState (_data.tankStates [i].before, _data.tankStates [i].before.volume);
+        hwDataBefore [i]->showState (_data.tankStates [i].before);
     }
 
     // After page
     draftForeAfter->SetText (ftoa (_data.draftAfter.fore, buffer, "%.1f"));
     draftAftAfter->SetText (ftoa (_data.draftAfter.aft, buffer, "%.1f"));
-    fmInAfter->SetText (ftoa (_data.pmAfter.in, buffer, "%.3f"));
-    fmOutAfter->SetText (ftoa (_data.pmAfter.out, buffer, "%.3f"));
 
     for (auto i = 0; i < _data.tankStates.size () && i < cfg.tanks.size (); ++ i) {
         tankInfoAfter [i]->showState (_data.tankStates [i].after);
-        hwDataAfter [i]->showState (_data.tankStates [i].after, _data.tankStates [i].after.volume);
+        hwDataAfter [i]->showState (_data.tankStates [i].after);
     }
 }
 
@@ -558,7 +617,7 @@ bool BunkeringWindow::checkData (bunkeringData& data) {
         barge->SetFocus (); return false;
     }
 
-    if (!bunkerLoadInfo->readState (data.loaded)) {
+    if (!bunkerLoadInfo->readState (data.loaded) || !bunkerHwDataInfo->readState (data.loaded)) {
         tabSwitch->SetCurSel (0);
         showError ("Информация о загруженном топливе неполная");
         return false;
@@ -580,38 +639,6 @@ bool BunkeringWindow::checkData (bunkeringData& data) {
     
     getText (port, data.port);
     getText (barge, data.barge);
-
-    if ((data.pmBefore.in = getFloat (fmInBefore)) < 0.01f) {
-        tabSwitch->SetCurSel (1);
-        showControlGroup (1);
-        fmInBefore->SetFocus ();
-        showError ("Отсутствует информация о показаниях входящего расходомера до закачки");
-        return false;
-    }
-
-    if ((data.pmBefore.out = getFloat (fmOutBefore)) < 0.01f) {
-        tabSwitch->SetCurSel (1);
-        showControlGroup (1);
-        fmOutBefore->SetFocus ();
-        showError ("Отсутствует информация о показаниях исходящего расходомера до закачки");
-        return false;
-    }
-
-    if ((data.pmAfter.in = getFloat (fmInAfter)) < 0.01f) {
-        tabSwitch->SetCurSel (2);
-        showControlGroup (2);
-        fmInAfter->SetFocus ();
-        showError ("Отсутствует информация о показаниях входящего расходомера после закачки");
-        return false;
-    }
-
-    if ((data.pmAfter.out = getFloat (fmOutAfter)) < 0.01f) {
-        tabSwitch->SetCurSel (2);
-        showControlGroup (2);
-        fmOutAfter->SetFocus ();
-        showError ("Отсутствует информация о показаниях исходящего расходомера после закачки");
-        return false;
-    }
 
     if ((data.draftBefore.fore = getFloat (draftForeBefore)) < 0.01f) {
         tabSwitch->SetCurSel (1);
@@ -676,4 +703,12 @@ void BunkeringWindow::enableEditor (bool enable) {
         for (auto& ctrl: hwDataBefore) ctrl->Enable (enable);
         for (auto& ctrl: hwDataAfter) ctrl->Enable (enable);
     }
+}
+
+LRESULT CALLBACK BunkeringWindow::localTabSwitchProc (HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    if (msg == WM_COMMAND && GetDlgCtrlID (wnd) == ID_BUNKERING_TABS && LOWORD (wParam) == ID_LOAD_DATA) {
+        ::SendMessage (GetParent (wnd), msg, wParam, lParam);
+    }
+    
+    return CallWindowProc (defTabSwitchProc, wnd, msg, wParam, lParam);
 }

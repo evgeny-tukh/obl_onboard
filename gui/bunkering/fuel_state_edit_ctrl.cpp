@@ -15,8 +15,8 @@ void FuelStateEditCtrl::showState (fuelState& state) {
     SetItemText (2, 1, ftoa (state.sulphur, buffer, getFormat (2)));
     SetItemText (3, 1, ftoa (state.temp, buffer, getFormat (3)));
     SetItemText (4, 1, ftoa (state.vcf, buffer, getFormat (4)));
-    SetItemText (5, 1, ftoa (state.volume, buffer, getFormat (5)));
-    SetItemText (6, 1, ftoa (state.quantity, buffer, getFormat (6)));
+    SetItemText (5, 1, ftoa (state.volume.reported, buffer, getFormat (5)));
+    SetItemText (6, 1, ftoa (state.quantity.reported, buffer, getFormat (6)));
     SetItemText (7, 1, ftoa (state.fuelMeter, buffer, getFormat (7)));
 }
 
@@ -33,8 +33,8 @@ bool FuelStateEditCtrl::readState (fuelState& state) {
             case 2: state.sulphur = value; break;
             case 3: state.temp = value; break;
             case 4: state.vcf = value; break;
-            case 5: state.volume = value; break;
-            case 6: state.quantity = value; break;
+            case 5: state.volume.reported = value; break;
+            case 6: state.quantity.reported = value; break;
             case 7: state.fuelMeter = value; break;
         }
     }

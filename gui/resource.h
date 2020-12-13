@@ -10,6 +10,7 @@
 #define ID_CREATE_REPORT                        40004
 #define ID_EXPORT_LEVELS                        40005
 #define ID_EXPORT_REPORT                        40006
+#define ID_LOAD_DATA                            40007
 
 #define IDD_BUNKERING                           20000
 
@@ -61,6 +62,7 @@
 #define ID_HISTORY_MODE                         1039
 
 #define ID_NAV_DATA                             1041
+#define ID_BUNK_HDR_HW_DATA                     1042
 
 #define ID_TANK_INFO_BEFORE_FIRST               2000
 #define ID_TANK_INFO_AFTER_FIRST                2100

@@ -72,6 +72,8 @@ class database {
         );
         void getRecentLogbookRecord (logbookRecord& rec);
 
+        bool loadTankStatesAt (time_t begin, time_t end, std::vector<tankState>& states, float& counterBefore, float& counterAfter);
+
     protected:
         config& cfg;
         static const char *dbPath;

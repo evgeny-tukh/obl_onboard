@@ -8,21 +8,21 @@ HwDataEditCtrl::HwDataEditCtrl (HWND parent, UINT ctrlID): BaseListCtrl (parent,
 HwDataEditCtrl::~HwDataEditCtrl () {
 }
 
-void HwDataEditCtrl::showState (fuelState& state, float volumentaryCounter) {
+void HwDataEditCtrl::showState (fuelState& state) {
     char buffer [100];
-    //SetItemText (0, 1, ftoa (state.density, buffer, getFormat (0)));
-    //SetItemText (4, 1, ftoa (state.vcf, buffer, getFormat (4)));
-    SetItemText (5, 1, ftoa (state.volume, buffer, getFormat (5)));
-    //SetItemText (6, 1, ftoa (state.quantity, buffer, getFormat (6)));
+    SetItemText (5, 0, ftoa (state.volume.byVolume, buffer, getFormat (5)));
+    SetItemText (5, 1, ftoa (state.volume.byCounter, buffer, getFormat (5)));
+    SetItemText (6, 0, ftoa (state.quantity.byVolume, buffer, getFormat (6)));
+    SetItemText (6, 1, ftoa (state.quantity.byCounter, buffer, getFormat (6)));
 }
 
-bool HwDataEditCtrl::readState (fuelState& state, float& volumentaryCounter) {
+bool HwDataEditCtrl::readState (fuelState& state) {
     char buffer [100];
 
-    auto getValue = [this, &buffer] (int item, float& value) {
+    auto getValue = [this, &buffer] (int item, int column, float& value) {
         bool result = true;
 
-        GetItemText (item, 0, buffer, sizeof (buffer));        
+        GetItemText (item, column, buffer, sizeof (buffer));        
         
         value = (float) atof (buffer);
 
@@ -31,24 +31,12 @@ bool HwDataEditCtrl::readState (fuelState& state, float& volumentaryCounter) {
         return result;
     };
 
-    return getValue (5, volumentaryCounter);
-    /*for (auto i = 0; i < 7; ++ i) {
-        GetItemText (i, 1, buffer, sizeof (buffer));
-        float value = (float) atof (buffer);
-        if (value < 0.01f) result = false;
-        switch (i) {
-            case 0: state.density = value; break;
-            case 1: state.viscosity = value; break;
-            case 2: state.sulphur = value; break;
-            case 3: state.temp = value; break;
-            case 4: state.vcf = value; break;
-            case 5: state.volume = value; break;
-            case 6: state.quantity = value; break;
-            case 7: state.fuelMeter = value; break;
-        }
-    }
-
-    return result;*/
+    return (
+        getValue (5, 0, state.volume.byVolume) &&
+        getValue (5, 1, state.volume.byCounter) &&
+        getValue (6, 0, state.quantity.byVolume) &&
+        getValue (6, 1, state.quantity.byCounter)
+    );
 }
 
 void HwDataEditCtrl::init () {

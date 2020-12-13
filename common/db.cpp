@@ -50,8 +50,12 @@ char *initialQueries [] {
     "viscosity real not null,"
     "sulphur real not null,"
     "temp real not null,"
-    "volume real not null,"
-    "quantity real not null,"
+    "volume_rep real not null,"
+    "volume_by_vol real not null,"
+    "volume_by_cnt real not null,"
+    "quantity_rep real not null,"
+    "quantity_by_vol real not null,"
+    "quantity_by_cnt real not null,"
     "vcf real not null,"
     "fuelmeter real not null)",
     "create index idx_bunk1 on bunkerings(begin)",
@@ -65,16 +69,24 @@ char *initialQueries [] {
     "viscosity_before real not null,"
     "sulphur_before real not null,"
     "temp_before real not null,"
-    "volume_before real not null,"
-    "quantity_before real not null,"
+    "volume_before_rep real not null,"
+    "volume_before_by_vol real not null,"
+    "volume_before_by_cnt real not null,"
+    "quantity_before_rep real not null,"
+    "quantity_before_by_vol real not null,"
+    "quantity_before_by_cnt real not null,"
     "vcf_before real not null,"
     "fuelmeter_before real not null,"
     "density_after real not null,"
     "viscosity_after real not null,"
     "sulphur_after real not null,"
     "temp_after real not null,"
-    "volume_after real not null,"
-    "quantity_after real not null,"
+    "volume_after_rep real not null,"
+    "volume_after_by_vol real not null,"
+    "volume_after_by_cnt real not null,"
+    "quantity_after_rep real not null,"
+    "quantity_after_by_vol real not null,"
+    "quantity_after_by_cnt real not null,"
     "vcf_after real not null,"
     "fuelmeter_after real not null)",
     "create index idx_tankstate1 on tank_state(bunkering,tank)",
@@ -185,7 +197,7 @@ void database::addFuelParameter (
 }
 
 void database::saveBunkering (bunkeringData& data) {
-    char query [500];
+    char query [1000];
 
     sprintf (
         query, 
@@ -193,12 +205,16 @@ void database::saveBunkering (bunkeringData& data) {
         "begin=%I64d,end=%I64d,port='%s',barge='%s',"
         "draft_fore_before=%f,draft_aft_before=%f,fm_in_value_before=%f,fm_out_value_before=%f,"
         "draft_fore_after=%f,draft_aft_after=%f,fm_in_value_after=%f,fm_out_value_after=%f,"
-        "density=%f,viscosity=%f,sulphur=%f,temp=%f,volume=%f,quantity=%f,vcf=%f,fuelmeter=%f "
+        "density=%f,viscosity=%f,sulphur=%f,temp=%f,volume_rep=%f,volume_by_vol=%f,volume_by_cnt=%f,"
+        "quantity_rep=%f,quantity_by_vol=%f,quantity_by_cnt=%f,vcf=%f,fuelmeter=%f "
         "where id=%d",
         data.begin, data.end, data.port.c_str (), data.barge.c_str (),
         data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
         data.draftAfter.fore, data.draftAfter.aft, data.pmAfter.in, data.pmAfter.out,
-        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp, data.loaded.volume, data.loaded.quantity, data.loaded.vcf, data.loaded.fuelMeter,
+        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp, 
+        data.loaded.volume.reported, data.loaded.volume.byVolume, data.loaded.volume.byCounter,
+        data.loaded.quantity.reported, data.loaded.quantity.byVolume, data.loaded.quantity.byCounter,
+        data.loaded.vcf, data.loaded.fuelMeter,
         data.id
     );
     executeSimple (query);
@@ -207,19 +223,29 @@ void database::saveBunkering (bunkeringData& data) {
         sprintf (
             query, 
             "update tank_state "
-            "set density_before=%f,viscosity_before=%f,sulphur_before=%f,temp_before=%f,volume_before=%f,quantity_before=%f,vcf_before=%f,fuelmeter_before=%f,"
-            "density_after=%f,viscosity_after=%f,sulphur_after=%f,temp_after=%f,volume_after=%f,quantity_after=%f,vcf_after=%f,fuelmeter_after=%f "
+            "set density_before=%f,viscosity_before=%f,sulphur_before=%f,temp_before=%f,"
+            "volume_before_rep=%f,volume_before_by_vol=%f,volume_before_by_cnt=%f,"
+            "quantity_before_rep=%f,quantity_before_by_vol=%f,quantity_before_by_cnt=%f,"
+            "vcf_before=%f,fuelmeter_before=%f,"
+            "density_after=%f,viscosity_after=%f,sulphur_after=%f,temp_after=%f,"
+            "volume_after_rep=%f,volume_after_by_vol=%f,volume_after_by_cnt=%f,"
+            "quantity_after_rep=%f,quantity_after_by_vol=%f,quantity_after_by_cnt=%f,"
+            "vcf_after=%f,fuelmeter_after=%f "
             "where id=%d and bunkering=%d",
-            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp, tankState.before.volume, tankState.before.quantity,
+            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp,
+            tankState.before.volume.reported, tankState.before.volume.byVolume, tankState.before.volume.byCounter,
+            tankState.before.quantity.reported, tankState.before.quantity.byVolume, tankState.before.quantity.byCounter,
             tankState.before.vcf, tankState.before.fuelMeter, tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp,
-            tankState.after.volume, tankState.after.quantity, tankState.after.vcf, tankState.after.fuelMeter, tankState.id, data.id
+            tankState.after.volume.reported, tankState.after.volume.byVolume, tankState.after.volume.byCounter,
+            tankState.after.quantity.reported, tankState.after.quantity.byVolume, tankState.after.quantity.byCounter,
+            tankState.after.vcf, tankState.after.fuelMeter, tankState.id, data.id
         );
         executeSimple (query);
     }
 }
 
 uint64_t database::createBunkering (bunkeringData& data) {
-    char query [500];
+    char query [1000];
     uint64_t bunkeringID, stateID;
 
     sprintf (
@@ -228,12 +254,15 @@ uint64_t database::createBunkering (bunkeringData& data) {
         "(begin,end,port,barge,"
         "draft_fore_before,draft_aft_before,fm_in_value_before,fm_out_value_before,"
         "draft_fore_after,draft_aft_after,fm_in_value_after,fm_out_value_after,"
-        "density,viscosity,sulphur,temp,volume,quantity,vcf,fuelmeter) "
-        "values(%I64d,%I64d,'%s','%s',%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,%.3f,%.3f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,%.4f)",
+        "density,viscosity,sulphur,temp,volume_rep,volume_by_vol,volume_by_cnt,quantity_rep,quantity_by_vol,quantity_by_cnt,vcf,fuelmeter) "
+        "values(%I64d,%I64d,'%s','%s',%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,%.3f,%.3f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f)",
         data.begin, data.end, data.port.c_str (), data.barge.c_str (),
         data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
         data.draftAfter.fore, data.draftAfter.aft, data.pmAfter.in, data.pmAfter.out,
-        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp, data.loaded.volume, data.loaded.quantity, data.loaded.vcf, data.loaded.fuelMeter
+        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp,
+        data.loaded.volume.reported, data.loaded.volume.byVolume, data.loaded.volume.byCounter,
+        data.loaded.quantity.reported, data.loaded.quantity.byVolume, data.loaded.quantity.byCounter,
+        data.loaded.vcf, data.loaded.fuelMeter
     );
     executeSimple (query, & bunkeringID);
 
@@ -244,13 +273,23 @@ uint64_t database::createBunkering (bunkeringData& data) {
             query, 
             "insert into tank_state"
             "(bunkering,tank,"
-            "density_before,viscosity_before,sulphur_before,temp_before,volume_before,quantity_before,vcf_before,fuelmeter_before,"
-            "density_after,viscosity_after,sulphur_after,temp_after,volume_after,quantity_after,vcf_after,fuelmeter_after) "
-            "values(%I64d,%d,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,%.4f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.4f,%.4f)",
+            "density_before,viscosity_before,sulphur_before,temp_before,"
+            "volume_before_rep,volume_before_by_vol,volume_before_by_cnt,"
+            "quantity_before_rep,quantity_before_by_vol,quantity_before_by_cnt,"
+            "vcf_before,fuelmeter_before,"
+            "density_after,viscosity_after,sulphur_after,temp_after,"
+            "volume_after_rep,volume_after_by_vol,volume_after_by_cnt,"
+            "quantity_after_rep,quantity_after_by_vol,quantity_after_by_cnt,"
+            "vcf_after,fuelmeter_after) "
+            "values(%I64d,%d,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f)",
             bunkeringID, tankState.tank,
-            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp, tankState.before.volume, tankState.before.quantity,
+            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp,
+            tankState.before.volume.reported, tankState.before.volume.byVolume, tankState.before.volume.byCounter,
+            tankState.before.quantity.reported, tankState.before.quantity.byVolume, tankState.before.quantity.byCounter,
             tankState.before.vcf, tankState.before.fuelMeter,
-            tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp, tankState.after.volume, tankState.after.quantity,
+            tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp,
+            tankState.after.volume.reported, tankState.after.volume.byVolume, tankState.after.volume.byCounter,
+            tankState.after.quantity.reported, tankState.after.quantity.byVolume, tankState.after.quantity.byCounter,
             tankState.after.vcf, tankState.after.fuelMeter
         );
         executeSimple (query, & stateID);
@@ -274,10 +313,14 @@ int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fie
         state.viscosity = atoF (values [start+1]);
         state.sulphur = atoF (values [start+2]);
         state.temp = atoF (values [start+3]);
-        state.volume = atoF (values [start+4]);
-        state.quantity = atoF (values [start+5]);
-        state.vcf = atoF (values [start+6]);
-        state.fuelMeter = atoF (values [start+7]);
+        state.volume.reported = atoF (values [start+4]);
+        state.volume.byVolume = atoF (values [start+5]);
+        state.volume.byCounter = atoF (values [start+6]);
+        state.quantity.reported = atoF (values [start+7]);
+        state.quantity.byVolume = atoF (values [start+8]);
+        state.quantity.byCounter = atoF (values [start+9]);
+        state.vcf = atoF (values [start+10]);
+        state.fuelMeter = atoF (values [start+11]);
     };
 
     uint32_t bunkeringID = atoi (values [0]);
@@ -301,12 +344,12 @@ int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fie
         bunkData->tankStates.clear ();
     }
 
-    bunkData->tankStates.emplace_back (atol (values [23]), atol (values [21]));
+    bunkData->tankStates.emplace_back (atol (values [27]), atol (values [25]));
 
     tankState& tank = bunkData->tankStates.back ();
 
-    loadFuelState (tank.before, 24);
-    loadFuelState (tank.after, 32);
+    loadFuelState (tank.before, 28);
+    loadFuelState (tank.after, 40);
 
     return 0;
 }
@@ -372,6 +415,7 @@ double database::getLastMeterValue (uint32_t id) {
 struct valueCollectCtx {
     database::valueMap& map;
     size_t numOfIDs;
+    bool found;
 };
 
 int volumeCollectCb (void *param, int numOfFields, char **values, char **fields) {
@@ -389,19 +433,21 @@ int volumeCollectCb (void *param, int numOfFields, char **values, char **fields)
 
             if (context->map.size () >= context->numOfIDs) return 1;
         }
+
+        context->found = true;
     }
 
     return 0;
 }
 
 void database::collectCurrentVolumes (valueMap& volumes) {
-    valueCollectCtx context { volumes, cfg.tanks.size () };
+    valueCollectCtx context { volumes, cfg.tanks.size (), false };
 
     executeAndGet ("select tank,value,stimestamp from volumes order by timestamp desc", volumeCollectCb, & context, 0);
 }
 
 void database::collectCurrentMeters (valueMap& volumes) {
-    valueCollectCtx context { volumes, cfg.tanks.size () };
+    valueCollectCtx context { volumes, cfg.tanks.size (), false };
 
     executeAndGet ("select meter,value,timestamp from meters order by timestamp desc", volumeCollectCb, & context, 0);
 }
@@ -468,3 +514,53 @@ int logbookRecPickCb (void *param, int numOfFields, char **values, char **fields
 void database::getRecentLogbookRecord (logbookRecord& rec) {
     executeAndGet ("select * from logbook order by timestamp desc limit 1", logbookRecPickCb, & rec, 0);
 }
+
+bool database::loadTankStatesAt (time_t begin, time_t end, std::vector<tankState>& states, float& counterBefore, float& counterAfter) {
+    valueMap volumesAtBegin, metersAtBegin, volumesAtEnd, metersAtEnd;
+    valueCollectCtx volumesAtBeginCtx { volumesAtBegin, cfg.tanks.size (), false };
+    valueCollectCtx metersAtBeginCtx { metersAtBegin, cfg.fuelMeters.size (), false };
+    valueCollectCtx volumesAtEndCtx { volumesAtEnd, cfg.tanks.size (), false };
+    valueCollectCtx metersAtEndCtx { metersAtEnd, cfg.fuelMeters.size (), false };
+
+    auto getStateAt = [this, &states, &counterBefore, &counterAfter] (time_t timestamp, valueCollectCtx *volumeCtx, valueCollectCtx *meterCtx, bool isBegin) {
+        char query [200];
+        sprintf (query, "select tank,value,timestamp from volumes where timestamp<=%I64d order by timestamp desc", timestamp);
+        executeAndGet (query, volumeCollectCb, volumeCtx, 0);
+        sprintf (query, "select meter,value,timestamp from meters where timestamp<=%I64d order by timestamp desc", timestamp);
+        executeAndGet (query, volumeCollectCb, meterCtx, 0);
+
+        auto uploadingMeter = cfg.findUploadingMeter ();
+
+        for (auto& meter: meterCtx->map) {
+            if (meter.first == uploadingMeter->id) {
+                if (isBegin) {
+                    counterBefore = meter.second.value;
+                } else {
+                    counterAfter = meter.second.value;
+                }
+                break;
+            }
+        }
+
+        for (auto& volume: volumeCtx->map) {
+            for (auto& state: states) {
+                if (volume.first == state.tank) {
+                    if (isBegin) {
+                        state.before.volume.byVolume = volume.second.value;
+                        state.before.volume.byCounter = counterBefore;
+                    } else {
+                        state.after.volume.byVolume = volume.second.value;
+                        state.after.volume.byCounter = counterAfter;
+                    }
+                    break;
+                }
+            }
+        }
+    };
+
+    getStateAt (begin, & volumesAtBeginCtx, & metersAtBeginCtx, true);
+    getStateAt (end, & volumesAtEndCtx, & metersAtEndCtx, false);
+
+    return volumesAtBeginCtx.found && metersAtBeginCtx.found && volumesAtEndCtx.found && metersAtEndCtx.found;
+}
+

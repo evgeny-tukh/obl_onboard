@@ -40,6 +40,7 @@ class BunkeringWindow: public CWindowWrapper {
         //BunkeringHeaderWindow *bunkerHeader;
         CTabCtrlWrapper *tabSwitch, *tanksBefore, *tanksAfter;
         FuelStateEditCtrl *bunkerLoadInfo;
+        HwDataEditCtrl *bunkerHwDataInfo;
         std::vector <FuelStateEditCtrl *> tankInfoBefore, tankInfoAfter;
         std::vector <HwDataEditCtrl *> hwDataBefore, hwDataAfter;
 
@@ -57,17 +58,16 @@ class BunkeringWindow: public CWindowWrapper {
         CStaticWrapper *bunkeringLabel, *beginLabel, *endLabel, *portLabel, *bargeLabel, *beforeLabel, *afterLabel;
         CStaticWrapper *draftForeBeforeLabel, *draftForeAfterLabel;
         CStaticWrapper *draftAftBeforeLabel, *draftAftAfterLabel;
-        CStaticWrapper *fmInBeforeLabel, *fmOutBeforeLabel, *fmInAfterLabel, *fmOutAfterLabel;
-        CEditWrapper *fmInBefore, *fmOutBefore, *fmInAfter, *fmOutAfter;
         CListCtrlWrapper *bunkerList;
         CListBoxWrapper *tankList;
         CEditWrapper *port, *barge, *draftForeBefore, *draftForeAfter, *draftAftBefore, *draftAftAfter;
-        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport, *exportReport;
+        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport, *exportReport, *loadData;
         CDateTimePickerWrapper *beginDate, *beginTime, *endDate, *endTime;
         config& cfg;
         database& db;
         bunkeringList list;
         bool editMode;
+        static WNDPROC defTabSwitchProc;
 
         virtual void OnCreate ();
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);
@@ -88,4 +88,8 @@ class BunkeringWindow: public CWindowWrapper {
         bool isTankInfoAfter (uint32_t id);
         bool isHwDataBefore (uint32_t id);
         bool isHwDataAfter (uint32_t id);
+
+        void loadAndPopulateData ();
+
+        static LRESULT CALLBACK localTabSwitchProc (HWND, UINT, WPARAM, LPARAM);
 };
