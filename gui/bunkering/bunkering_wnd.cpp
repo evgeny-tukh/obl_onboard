@@ -15,7 +15,7 @@ BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg,
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
     mode (_mode::browseList), editingItem (-1), bunkerHwDataInfo (0),
     bunkerList (0), addBunker (0), removeBunker (0), editBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
-    beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
+    beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0), tempAndDEsityWarning (0),
     save (0), discard (0), tabSwitch (0), editMode (false), createReport (0), exportReport (0), loadData (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
     draftForeBefore (0), draftForeAfter (0), draftAftBefore (0), draftAftAfter (0) {}
@@ -27,6 +27,7 @@ BunkeringWindow::~BunkeringWindow () {
     delete bunkerHwDataInfo;
     delete tanksBefore, tanksAfter;
     delete save, discard, createReport, exportReport, loadData;
+    delete tempAndDEsityWarning;
 
     for (auto& ctrl: tankInfoBefore) delete ctrl;
     for (auto& ctrl: tankInfoAfter) delete ctrl;
@@ -91,6 +92,7 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (0, endDate = new CDateTimePickerWrapper (switchHandle, ID_END_DATE))->CreateControl (60, 205, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
     addControlToGroup (0, endTime = new CDateTimePickerWrapper (switchHandle, ID_END_TIME))->CreateControl (160, 205, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
     addControlToGroup (0, loadData = new CButtonWrapper (switchHandle, ID_LOAD_DATA))->CreateControl (250, 185, 220, 20, WS_VISIBLE, "Автозагрузка данных");
+    addControlToGroup (0, tempAndDEsityWarning = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (245, 205, 230, 100, SS_LEFT, "Важно! Расчет VCF и веса топлива производится, исходя из заданных плотности и температуры топлива.");
 
     addControlToGroup (1, draftForeBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 30, 120, 20, SS_LEFT, "Осадка в носу");
     addControlToGroup (1, draftAftBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
