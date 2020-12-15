@@ -87,9 +87,9 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (0, bargeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 245, 55, 20, SS_LEFT, "Баржа");
     addControlToGroup (0, port = new CEditWrapper (switchHandle, ID_PORT))->CreateControl (60, 225, 180, 20, WS_BORDER);
     addControlToGroup (0, barge = new CEditWrapper (switchHandle, ID_BARGE))->CreateControl (60, 245, 180, 20, WS_BORDER);
-    addControlToGroup (0, beginDate = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_DATE))->CreateControl (60, 185, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
+    addControlToGroup (0, beginDate = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_DATE))->CreateControl (60, 185, 100, 20, DTS_SHORTDATECENTURYFORMAT /*| DTS_UPDOWN*/);
     addControlToGroup (0, beginTime = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_TIME))->CreateControl (160, 185, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
-    addControlToGroup (0, endDate = new CDateTimePickerWrapper (switchHandle, ID_END_DATE))->CreateControl (60, 205, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
+    addControlToGroup (0, endDate = new CDateTimePickerWrapper (switchHandle, ID_END_DATE))->CreateControl (60, 205, 100, 20, DTS_SHORTDATECENTURYFORMAT /*| DTS_UPDOWN*/);
     addControlToGroup (0, endTime = new CDateTimePickerWrapper (switchHandle, ID_END_TIME))->CreateControl (160, 205, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
     addControlToGroup (0, loadData = new CButtonWrapper (switchHandle, ID_LOAD_DATA))->CreateControl (250, 185, 220, 25, WS_VISIBLE, "Автозагрузка данных");
     addControlToGroup (0, calcWeight = new CButtonWrapper (switchHandle, ID_CALC_WEIGHT))->CreateControl (250, 210, 220, 25, WS_VISIBLE, "Расчет масс топлива");
@@ -535,6 +535,8 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
             auto ctrl = hwDataAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
             auto pairedCtrl = tankInfoAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
             ctrl->editValue (info->iItem, pairedCtrl); return FALSE;
+        } else if (header->idFrom == ID_BEGIN_DATE) {
+            MessageBox("!!!","!!",0);
         }
     }
     if (header->code == NM_CLICK) {
@@ -762,11 +764,18 @@ void BunkeringWindow::enableEditor (bool enable) {
 }
 
 LRESULT CALLBACK BunkeringWindow::localTabSwitchProc (HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_COMMAND && GetDlgCtrlID (wnd) == ID_BUNKERING_TABS && HIWORD (wParam) == BN_CLICKED) {
-        switch (LOWORD (wParam)) {
-            case ID_LOAD_DATA:
-            case ID_CALC_WEIGHT:
-                ::SendMessage (GetParent (wnd), msg, wParam, lParam); break;
+    if (msg == WM_COMMAND) {
+        if (GetDlgCtrlID (wnd) == ID_BUNKERING_TABS && HIWORD (wParam) == BN_CLICKED) {
+            switch (LOWORD (wParam)) {
+                case ID_LOAD_DATA:
+                case ID_CALC_WEIGHT:
+                    ::SendMessage (GetParent (wnd), msg, wParam, lParam); break;
+            }
+        }
+    } else if (msg == WM_NOTIFY) {
+        NMHDR *header = (NMHDR *) lParam;
+        if ((header->idFrom == ID_BEGIN_DATE || header->idFrom == ID_END_DATE) && header->code == NM_SETFOCUS) {
+            ::SendMessage (GetParent (wnd), msg, wParam, lParam);
         }
     }
     
