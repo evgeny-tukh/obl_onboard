@@ -15,8 +15,8 @@ BunkeringWindow::BunkeringWindow (HINSTANCE instance, HWND parent, config& _cfg,
     CWindowWrapper (instance, parent, "obl_bnk_wnd"), cfg (_cfg), db (_db),
     mode (_mode::browseList), editingItem (-1), bunkerHwDataInfo (0),
     bunkerList (0), addBunker (0), removeBunker (0), editBunker (0), bunkerLoadInfo (0), bunkeringLabel (0),
-    beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0), tempAndDEsityWarning (0),
-    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0), exportReport (0), loadData (0),
+    beforeLabel (0), afterLabel (0), tanksBefore (0), tanksAfter (0),
+    save (0), discard (0), tabSwitch (0), editMode (false), createReport (0), exportReport (0), loadData (0), calcWeight (0),
     draftForeBeforeLabel (0), draftForeAfterLabel (0), draftAftBeforeLabel (0), draftAftAfterLabel (0),
     draftForeBefore (0), draftForeAfter (0), draftAftBefore (0), draftAftAfter (0) {}
 
@@ -26,8 +26,7 @@ BunkeringWindow::~BunkeringWindow () {
     delete tabSwitch;
     delete bunkerHwDataInfo;
     delete tanksBefore, tanksAfter;
-    delete save, discard, createReport, exportReport, loadData;
-    delete tempAndDEsityWarning;
+    delete save, discard, createReport, exportReport, loadData, calcWeight;
 
     for (auto& ctrl: tankInfoBefore) delete ctrl;
     for (auto& ctrl: tankInfoAfter) delete ctrl;
@@ -42,14 +41,15 @@ void BunkeringWindow::OnCreate () {
 
     bunkerList = new CListCtrlWrapper (m_hwndHandle, ID_BUNKER_LIST);
 
-    int bunkerListWidth = min (client.right - BUTTON_WIDTH, 480);
+    int bunkerListWidth = min (client.right - BUTTON_WIDTH, 595);
     int buttonWidth = client.right - bunkerListWidth;
 
     bunkerList->CreateControl (0, 0, bunkerListWidth, BUNK_LIST_HEIGHT, LVS_REPORT | LVS_SHOWSELALWAYS | WS_VISIBLE | WS_BORDER, 0);
     bunkerList->AddColumn ("Начало закачки", 110);
     bunkerList->AddColumn ("Конец закачки", 110);
     bunkerList->AddColumn ("Закачано по ОБР, т", 120);
-    bunkerList->AddColumn ("Закачано по УМ, т", 120);
+    bunkerList->AddColumn ("Закачано по УМ, т", 115);
+    bunkerList->AddColumn ("Закачано по РМ, т", 115);
     bunkerList->SendMessage (LVM_SETEXTENDEDLISTVIEWSTYLE, 0, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
     addBunker = new CButtonWrapper (m_hwndHandle, ID_NEW_BUNKERING);
@@ -91,8 +91,8 @@ void BunkeringWindow::OnCreate () {
     addControlToGroup (0, beginTime = new CDateTimePickerWrapper (switchHandle, ID_BEGIN_TIME))->CreateControl (160, 185, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
     addControlToGroup (0, endDate = new CDateTimePickerWrapper (switchHandle, ID_END_DATE))->CreateControl (60, 205, 100, 20, DTS_SHORTDATECENTURYFORMAT | DTS_UPDOWN);
     addControlToGroup (0, endTime = new CDateTimePickerWrapper (switchHandle, ID_END_TIME))->CreateControl (160, 205, 60, 20, DTS_TIMEFORMAT | DTS_UPDOWN);
-    addControlToGroup (0, loadData = new CButtonWrapper (switchHandle, ID_LOAD_DATA))->CreateControl (250, 185, 220, 20, WS_VISIBLE, "Автозагрузка данных");
-    addControlToGroup (0, tempAndDEsityWarning = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (245, 205, 230, 100, SS_LEFT, "Важно! Расчет VCF и веса топлива производится, исходя из заданных плотности и температуры топлива.");
+    addControlToGroup (0, loadData = new CButtonWrapper (switchHandle, ID_LOAD_DATA))->CreateControl (250, 185, 220, 25, WS_VISIBLE, "Автозагрузка данных");
+    addControlToGroup (0, calcWeight = new CButtonWrapper (switchHandle, ID_CALC_WEIGHT))->CreateControl (250, 210, 220, 25, WS_VISIBLE, "Расчет масс топлива");
 
     addControlToGroup (1, draftForeBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 30, 120, 20, SS_LEFT, "Осадка в носу");
     addControlToGroup (1, draftAftBeforeLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 50, 120, 20, SS_LEFT, "Осадка в корме");
@@ -151,7 +151,7 @@ void BunkeringWindow::OnCreate () {
 
 LRESULT BunkeringWindow::OnSize (const DWORD requestType, const WORD width, const WORD height)
 {
-    int bunkerListWidth = min (width - BUTTON_WIDTH, 480);
+    int bunkerListWidth = min (width - BUTTON_WIDTH, 595);
     int buttonWidth = width - bunkerListWidth;
 
     bunkerList->Move (0, 0, bunkerListWidth, BUNK_LIST_HEIGHT, TRUE);
@@ -239,9 +239,59 @@ void BunkeringWindow::exportReportData (bunkeringData& data) {
     exportJson (root, cfg);
 }
 
+void BunkeringWindow::calcFuelWeight () {
+    auto calcFuelWeightInTank = [] (FuelStateEditCtrl *reportedDataCtl, HwDataEditCtrl *actualDataCtl) {
+        fuelState reportedState, actualState;
+
+        reportedDataCtl->readState (reportedState);
+        actualDataCtl->readState (actualState);
+
+        float vcf = (1.0f - (reportedState.temp - 15.0f) * 0.00064f);
+        float density = reportedState.density * vcf;
+
+        actualState.quantity.byVolume = actualState.volume.byVolume * density;
+        actualState.quantity.byCounter = actualState.volume.byCounter * density;
+        actualState.vcf = vcf;
+
+        reportedState.vcf = vcf;
+
+        reportedDataCtl->showState (reportedState);
+        actualDataCtl->showState (actualState);
+    };
+
+    if (MessageBox (
+        "Расчет приведет к потере уже введенных весов загруженного топлива и топлива в танках, а также расчитанного ранее или введенного коэффициэнта "
+        "температурного расширения топлива VCF. Расчет требует предварительного ввода корректных значений температуры топлива (загруженного и в танках), "
+        "а также плотности загруженного топлива и топлива в танках при 15 градусах по Цельсию. Желаете продолжить?",
+        "Требуется подтверждение",
+        MB_YESNO | MB_ICONQUESTION
+    ) == IDYES) {
+        calcFuelWeightInTank (bunkerLoadInfo, bunkerHwDataInfo);
+
+        for (auto i = 0; i < cfg.tanks.size (); ++ i) {
+            calcFuelWeightInTank (tankInfoBefore [i], hwDataBefore [i]);
+            calcFuelWeightInTank (tankInfoAfter [i], hwDataAfter [i]);
+        }
+    }
+}
+
 void BunkeringWindow::loadAndPopulateData () {
-    auto begin = composeDateAndTime (beginDate->GetTimestamp (), beginTime->GetTimestamp ());
-    auto end = composeDateAndTime (endDate->GetTimestamp (), endTime->GetTimestamp ());
+    MessageBox (
+        "Будет произведен расчет объема загруженного топлива, а также объемов топлива в танках на моменты начала и конца бункеровки, "
+        "исходя из указанного времени начала и конца. После ввода значений температуры и плотности загруженного топлива и топлива в танках можно "
+        "также рассчитать массу загруженного топлива и топива в танках (а также коэффициэнт температурного расширения топлива VCF) "
+        "на моменты начала и конца бункеровки с помощью соответствующей кнопки.",
+        "Внимание!",
+        MB_ICONINFORMATION
+    );
+
+    auto beginDateTs = beginDate->GetTimestamp ();
+    auto beginTimeTs = beginTime->GetTimestamp ();
+    auto endDateTs = endDate->GetTimestamp ();
+    auto endTimeTs = endTime->GetTimestamp ();
+
+    auto begin = composeDateAndTime (beginDateTs, beginTimeTs);
+    auto end = composeDateAndTime (endDateTs, endTimeTs);
 
     std::vector<tankState> states;
 
@@ -282,6 +332,9 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = TRUE;
 
     switch (LOWORD (wParam)) {
+        case ID_CALC_WEIGHT: {
+            calcFuelWeight (); break;
+        }
         case ID_LOAD_DATA: {
             loadAndPopulateData (); break;
         }
@@ -411,8 +464,9 @@ void BunkeringWindow::loadBunkeringList ()
         auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering - list.begin ());
 
         bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
-        bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.volume.reported, buffer, "%.3f"));
-        bunkerList->SetItemText (item,3, ftoa (bunkering->loaded.volume.byVolume, buffer, "%.3f"));
+        bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.quantity.reported, buffer, "%.3f"));
+        bunkerList->SetItemText (item, 3, ftoa (bunkering->loaded.quantity.byVolume, buffer, "%.3f"));
+        bunkerList->SetItemText (item, 4, ftoa (bunkering->loaded.quantity.byCounter, buffer, "%.3f"));
     }
 
     editingItem = -1;
@@ -708,8 +762,12 @@ void BunkeringWindow::enableEditor (bool enable) {
 }
 
 LRESULT CALLBACK BunkeringWindow::localTabSwitchProc (HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_COMMAND && GetDlgCtrlID (wnd) == ID_BUNKERING_TABS && LOWORD (wParam) == ID_LOAD_DATA) {
-        ::SendMessage (GetParent (wnd), msg, wParam, lParam);
+    if (msg == WM_COMMAND && GetDlgCtrlID (wnd) == ID_BUNKERING_TABS && HIWORD (wParam) == BN_CLICKED) {
+        switch (LOWORD (wParam)) {
+            case ID_LOAD_DATA:
+            case ID_CALC_WEIGHT:
+                ::SendMessage (GetParent (wnd), msg, wParam, lParam); break;
+        }
     }
     
     return CallWindowProc (defTabSwitchProc, wnd, msg, wParam, lParam);

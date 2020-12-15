@@ -58,11 +58,10 @@ class BunkeringWindow: public CWindowWrapper {
         CStaticWrapper *bunkeringLabel, *beginLabel, *endLabel, *portLabel, *bargeLabel, *beforeLabel, *afterLabel;
         CStaticWrapper *draftForeBeforeLabel, *draftForeAfterLabel;
         CStaticWrapper *draftAftBeforeLabel, *draftAftAfterLabel;
-        CStaticWrapper *tempAndDEsityWarning;
         CListCtrlWrapper *bunkerList;
         CListBoxWrapper *tankList;
         CEditWrapper *port, *barge, *draftForeBefore, *draftForeAfter, *draftAftBefore, *draftAftAfter;
-        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport, *exportReport, *loadData;
+        CButtonWrapper *addBunker, *removeBunker, *editBunker, *save, *discard, *createReport, *exportReport, *loadData, *calcWeight;
         CDateTimePickerWrapper *beginDate, *beginTime, *endDate, *endTime;
         config& cfg;
         database& db;
@@ -91,6 +90,7 @@ class BunkeringWindow: public CWindowWrapper {
         bool isHwDataAfter (uint32_t id);
 
         void loadAndPopulateData ();
+        void calcFuelWeight ();
 
         static LRESULT CALLBACK localTabSwitchProc (HWND, UINT, WPARAM, LPARAM);
 };
