@@ -11,6 +11,7 @@
 #define ID_EXPORT_LEVELS                        40005
 #define ID_EXPORT_REPORT                        40006
 #define ID_LOAD_DATA                            40007
+#define ID_CALC_WEIGHT                          40008
 
 #define IDD_BUNKERING                           20000
 

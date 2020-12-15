@@ -90,3 +90,57 @@ void tankDisplay::draw (
     TextOutA (drawCtx, x + 10, y + 40, volString, strlen (volString));
     #endif
 }
+
+#if 0
+tankDisplayWnd::tankDisplayWnd (HINSTANCE instance, HWND parent, UINT_PTR id, tank& _tankCfg, gdiObjects& _objects):
+    CWindowWrapper (instance, parent, "obl_status_ind", (HMENU) id, 0, 0, NULL_BRUSH), objects (_objects), tankCfg (_tankCfg) {
+}
+
+LRESULT tankDisplayWnd::OnPaint () {
+    PAINTSTRUCT data;
+    HDC paintCtx = BeginPaint (m_hwndHandle, & data);
+    RECT client;
+    
+    int x, y;
+
+    switch (tankCfg.side) {
+        case tankSide::center:
+            x = HOR_EDGE * 3 + tankMetrics->width;
+            y = tankMetrics->middle;
+            tankMetrics->middle += tankMetrics->height + HOR_EDGE; break;
+        case tankSide::port:
+            x = HOR_EDGE * 2;
+            y = tankMetrics->port;
+            tankMetrics->port += tankMetrics->height + HOR_EDGE; break;
+        case tankSide::starboard:
+            x = HOR_EDGE * 4 + tankMetrics->width * 2;
+            y = tankMetrics->stbd;
+            tankMetrics->stbd += tankMetrics->height + HOR_EDGE; break;
+        dafault:
+            EndPaint (m_hwndHandle, & data); return 0;
+    }
+
+    int filledPartHeight = (int) ((volume / tankCfg.volume) * (double) (tankMetrics->height - 35));
+    char idString [10], volString [50];
+
+    sprintf (idString, "#%d", id);
+    sprintf (volString, "%.1f/%.f", volume, tankCfg.volume);
+
+    paintRectangleGradient (paintCtx, x, y + 10, x + tankMetrics->width - 1, y + tankMetrics->height - 9, RGB (100, 100, 100), RGB (200, 200, 200), true);
+    paintEllipseGradient (paintCtx, x, y + tankMetrics->height - 20, x + tankMetrics->width - 1, y + tankMetrics->height - 1, RGB (100, 100, 100), RGB (200, 200, 200), true);
+    paintEllipseGradient (paintCtx, x, y, x + tankMetrics->width - 1, y + 19, RGB (30, 30, 30), RGB (120, 120, 120), true);
+    SelectObject (paintCtx, GetStockObject (BLACK_PEN));
+    SelectObject (paintCtx, GetStockObject (WHITE_BRUSH));
+    Rectangle (paintCtx, x + tankMetrics->width / 2 - 5, y + 25, x + tankMetrics->width / 2 + 5, y + tankMetrics->height - 10);
+    SelectObject (paintCtx, objects.shadow);
+    Rectangle (paintCtx, x + tankMetrics->width / 2 - 5, y + tankMetrics->height - 10 - filledPartHeight, x + tankMetrics->width / 2 + 5, y + tankMetrics->height - 10);
+    SetTextColor (paintCtx, 0);
+    SetBkMode (paintCtx, TRANSPARENT);
+    TextOutA (paintCtx, x + 10, y + 30, idString, strlen (idString));
+    TextOutA (paintCtx, x + 10, y + 45, type, strlen (type));
+    TextOutA (paintCtx, x + 10, y + 60, volString, strlen (volString));
+    EndPaint (m_hwndHandle, & data);
+
+    return 0L;
+}
+#endif

@@ -173,7 +173,7 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam) {
                     selectedTank = tankSelector->GetItemData (selection);
 
                     shipSchema->selectTank (selectedTank);
-                    InvalidateRect (shipSchema->GetHandle (), 0, TRUE);
+                    InvalidateRect (shipSchema->GetHandle (), 0, FALSE);
                     //loadBunkeringList ();
                 }
             }

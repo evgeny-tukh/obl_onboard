@@ -45,14 +45,14 @@ char *formatTimestampEx (time_t timestamp, char *buffer, uint8_t flags) {
 }
 
 time_t composeDateAndTime (time_t dateTS, time_t timeTS) {
-    tm *date = localtime (& dateTS);
-    tm *time = localtime (& timeTS);
+    tm date = *localtime (& dateTS);
+    tm time = *localtime (& timeTS);
 
-    time->tm_year = date->tm_year;
-    time->tm_mon = date->tm_mon;
-    time->tm_mday = date->tm_mday;
+    time.tm_year = date.tm_year;
+    time.tm_mon = date.tm_mon;
+    time.tm_mday = date.tm_mday;
 
-    return mktime (time);
+    return mktime (& time) - _timezone;
 }
 
 void paintRectangleGradient (HDC paintCtx, int x1, int y1, int x2, int y2, uint32_t beginColor, uint32_t endColor, bool horizontal) {

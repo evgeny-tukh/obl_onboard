@@ -23,6 +23,8 @@ class ShipSchema: public CWindowWrapper {
         void setTimestamp (time_t ts);
         
         void onNewData ();
+
+        void redrawTanks ();
         
     private:
         static const int DATE_TIME_WIDTH = 200;

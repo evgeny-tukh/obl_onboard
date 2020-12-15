@@ -26,7 +26,8 @@ void ShipSchema::setTimestamp (time_t ts)
 {
     timestamp = ts;
 
-    InvalidateRect (m_hwndHandle, NULL, TRUE);
+    //InvalidateRect (m_hwndHandle, NULL, FALSE);
+    redrawTanks ();
 }
 
 LRESULT ShipSchema::OnSize (const DWORD requestType, const WORD width, const WORD height) {
@@ -73,6 +74,44 @@ void ShipSchema::OnCreate () {
     updateTimer = SetTimer (1000, 60000);
 
     updateStatus ();
+}
+
+void ShipSchema::redrawTanks () {
+    RECT client;
+    tankDisplay::metrics tankMetrics;
+    HDC paintCtx = GetDC (m_hwndHandle);
+
+    GetClientRect (& client);
+    recalc (tankMetrics);
+
+    for (auto tank = cfg.tanks.begin (); tank != cfg.tanks.end (); ++ tank) {
+        tankDisplay tankDisp (*tank);
+
+        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
+    }
+
+    int fmCount = 0;
+    int middle = client.right >> 1;
+
+    for (auto fuelMeter = cfg.fuelMeters.begin (); fuelMeter != cfg.fuelMeters.end (); ++ fuelMeter, ++ fmCount) {
+        int x;
+        int placeFromCenter = fmCount >> 1;
+        int offsetFromCenter = placeFromCenter * (fuelMeterDisplay::WIDTH + fuelMeterDisplay::GAP) + (fuelMeterDisplay::GAP >> 1);
+
+        if (fmCount & 1) {
+            // left side
+            x = middle - offsetFromCenter - fuelMeterDisplay::WIDTH;
+        } else {
+            // right side
+            x = middle + offsetFromCenter;
+        }
+
+        fuelMeterDisplay fmDisplay (*fuelMeter);
+
+        fmDisplay.draw (paintCtx, m_hwndHandle, x, objects, history->getData (fuelMeter->id, timestamp), fuelMeter->name.c_str ());
+    }
+
+    ReleaseDC (m_hwndHandle, paintCtx);
 }
 
 LRESULT ShipSchema::OnPaint () {
@@ -238,7 +277,8 @@ LRESULT ShipSchema::OnTimer (UINT timerID) {
 
         updateStatus ();
 
-        InvalidateRect (m_hwndHandle, 0, FALSE);
+        //InvalidateRect (m_hwndHandle, 0, FALSE);
+        redrawTanks ();
     }
 
     return 0;
@@ -255,7 +295,8 @@ LRESULT ShipSchema::OnCommand (WPARAM wParam, LPARAM lParam) {
                 timestamp = history->maxTime ();
                 timeline->SetValue (timestamp);
                 dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
-                InvalidateRect (m_hwndHandle, 0, FALSE);
+                //InvalidateRect (m_hwndHandle, 0, FALSE);
+                redrawTanks ();
             }
             break;
         }
