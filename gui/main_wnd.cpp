@@ -159,6 +159,17 @@ LRESULT CMainWnd::OnCommand (WPARAM wParam, LPARAM lParam) {
     LRESULT result = FALSE;
 
     switch (LOWORD (wParam)) {
+        case ID_NEW_BUNKERING: {
+            modeSwitch->SetCurSel (1);
+            switchToMode (mode::BUNKERINGS);
+            bunkerings->SendMessage (WM_COMMAND, wParam, lParam);
+            break;
+        }
+        case ID_EDIT_BUNKERING:
+        case ID_DELETE_BUNKERING: {
+            if (modeSwitch->GetCurSel () == 1) bunkerings->SendMessage (WM_COMMAND, wParam, lParam);
+            break;
+        }
         case ID_EXPORT_LEVELS: {
             exportLevels ();
             MessageBox ("Данные экспортированы", "Информация", MB_ICONINFORMATION);

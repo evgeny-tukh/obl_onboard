@@ -6,7 +6,7 @@
 
 class HwDataEditCtrl: public BaseListCtrl {
     public:
-        HwDataEditCtrl (HWND parent, UINT controlID);
+        HwDataEditCtrl (HWND parent, UINT controlID, bool showFcValues = false);
         virtual ~HwDataEditCtrl ();
 
         virtual void init ();
@@ -14,6 +14,9 @@ class HwDataEditCtrl: public BaseListCtrl {
         bool readState (fuelState& state);
 
         inline virtual bool isItemEditable (int item) {
-            return item == 5 || item == 6;
+            return item != 1 || item != 2;
         }
+
+    protected:
+        bool showFuelCounterValues;
 };

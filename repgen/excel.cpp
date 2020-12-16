@@ -83,13 +83,13 @@ size_t extractAndPopulateField (config& cfg, bunkeringData& data, char *source ,
                 case field::barge:
                     result += ansi2utf8 (data.barge.c_str (), buffer, sizeof (buffer)); break;
                 case field::densityLoaded:
-                    result += ftoa (data.loaded.density, buffer, "%.4f"); break;
+                    result += ftoa (data.loaded.density.reported, buffer, "%.4f"); break;
                 case field::viscosityLoaded:
-                    result += ftoa (data.loaded.density, buffer, "%.2f"); break;
+                    result += ftoa (data.loaded.viscosity, buffer, "%.2f"); break;
                 case field::sulphurLoaded:
                     result += ftoa (data.loaded.sulphur, buffer, "%.2f"); break;
                 case field::temperatureLoaded:
-                    result += ftoa (data.loaded.temp, buffer, "%.1f"); break;
+                    result += ftoa (data.loaded.temp.reported, buffer, "%.1f"); break;
                 case field::volumeLoaded:
                     result += ftoa (data.loaded.volume.reported, buffer, "%.3f"); break;
                 case field::quantityLoaded:

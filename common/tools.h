@@ -31,3 +31,5 @@ typedef void (*walkCb) (char *path, void *param, WIN32_FIND_DATAA *findData);
 void walkThroughFolder (char *path, walkCb cb, void *param);
 
 void exportJson (json::hashNode& root, config& cfg);
+
+

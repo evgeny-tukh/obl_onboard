@@ -131,3 +131,4 @@ void exportJson (json::hashNode& root, config& cfg) {
     fwrite (content.c_str (), 1, content.length (), output);
     fclose (output);
 }
+

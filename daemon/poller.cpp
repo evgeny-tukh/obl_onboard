@@ -34,6 +34,9 @@ void tankData::addSensorInput (const char *inputKey, const char *value, database
     if (tankCfg) {
         db.addData (tankCfg->id, timestamp, database::dataValueType::tankVolume, numValue);
     } else {
+        // Draft channel
+        //if (strcmp (inputKey, cfg.draftAftChannel.c_str ()) == 0) {
+        //}
         // Does input key belong to the fuel meter?
         fuelMeter *fmCfg = cfg.findFuelMeter ((char *) inputKey);
 

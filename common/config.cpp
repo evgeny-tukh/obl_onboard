@@ -70,6 +70,8 @@ void parseCfgFile (config& cfg) {
         json::hashNode *columnMap = (json::hashNode *) (*root) ["columnMap"];
         json::hashNode *repCfg = (json::hashNode *) (*root) ["report"];
         json::arrayNode *sensors = (json::arrayNode *) (*root) ["sensors"];
+        json::stringNode *draftAft = (json::stringNode *) (*root) ["draftAftChannel"];
+        json::stringNode *draftFore = (json::stringNode *) (*root) ["draftForeChannel"];
 
         if (host != json::nothing) cfg.host = host->getValue ();
         if (path != json::nothing) cfg.path = path->getValue ();
@@ -217,6 +219,8 @@ void parseCfgFile (config& cfg) {
                 cfg.columnMap.emplace (iter->first, (uint8_t) column->getValue ());
             }
         }
+        if (draftAft != json::nothing) cfg.draftAftChannel = draftAft->getValue ();
+        if (draftFore != json::nothing) cfg.draftForeChannel = draftFore->getValue ();
 
         printf ("port: %.f; host: %s\n", port->getValue (), host->getValue ());
 

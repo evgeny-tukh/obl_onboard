@@ -97,8 +97,8 @@ struct amounts {
 };
 
 struct fuelState {
-    float density, viscosity, sulphur, temp, fuelMeter, vcf;
-    amounts volume, quantity;
+    float viscosity, sulphur;
+    amounts volume, temp, density, quantity, vcf;
 
     fuelState ():
         density (0.95f),
@@ -107,19 +107,17 @@ struct fuelState {
         temp (45.0f),
         volume (500.0f),
         quantity (490.0f),
-        fuelMeter (505.0f),
         vcf (0.95f) {}
 
     void copyFrom (fuelState& from) {
-        density = from.density;
         viscosity = from.viscosity;
         sulphur = from.sulphur;
-        temp = from.temp;
-        fuelMeter = from.fuelMeter;
-        vcf = from.vcf;
 
         volume.copyFrom (from.volume);
         quantity.copyFrom (from.quantity);
+        vcf.copyFrom (from.vcf);
+        temp.copyFrom (from.temp);
+        density.copyFrom (from.density);
     }
 };
 
@@ -187,6 +185,7 @@ struct config {
     std::map<char *, uint8_t> columnMap;
     reporting repCfg;
     std::vector<sensorCfg> sensors;
+    std::string draftForeChannel, draftAftChannel;
 
     tank *findTank (char *name) {
         for (auto& tank: tanks) {
@@ -206,7 +205,7 @@ struct config {
 
     fuelMeter *findUploadingMeter () {
         for (auto& fuelMeter: fuelMeters) {
-            if (stricmp (fuelMeter.type.c_str (), "upl") == 0) return & fuelMeter;
+            if (_stricmp (fuelMeter.type.c_str (), "upl") == 0) return & fuelMeter;
         }
 
         return 0;
@@ -237,7 +236,6 @@ struct bunkeringData {
     time_t begin, end;
     std::string port, barge;
     fuelState loaded;
-    pipeMeters pmBefore, pmAfter;
     draftData draftBefore, draftAfter;
     std::vector<tankState> tankStates;
 
@@ -261,8 +259,6 @@ struct bunkeringData {
         barge = from.barge.c_str ();
 
         loaded.copyFrom (from.loaded);
-        pmBefore.copyFrom (from.pmBefore);
-        pmAfter.copyFrom (from.pmAfter);
         draftBefore.copyFrom (from.draftBefore);
         draftAfter.copyFrom (from.draftAfter);
 

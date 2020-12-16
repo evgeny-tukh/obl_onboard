@@ -40,24 +40,25 @@ char *initialQueries [] {
     "barge text,"
     "draft_fore_before real,"
     "draft_aft_before real,"
-    "fm_in_value_before real,"
-    "fm_out_value_before real,"
     "draft_fore_after real,"
     "draft_aft_after real,"
-    "fm_in_value_after real,"
-    "fm_out_value_after real,"
-    "density real not null,"
+    "density_rep real not null,"
+    "density_by_vol real not null,"
+    "density_by_cnt real not null,"
     "viscosity real not null,"
     "sulphur real not null,"
-    "temp real not null,"
+    "temp_rep real not null,"
+    "temp_by_vol real not null,"
+    "temp_by_cnt real not null,"
     "volume_rep real not null,"
     "volume_by_vol real not null,"
     "volume_by_cnt real not null,"
     "quantity_rep real not null,"
     "quantity_by_vol real not null,"
     "quantity_by_cnt real not null,"
-    "vcf real not null,"
-    "fuelmeter real not null)",
+    "vcf_rep real not null,"
+    "vcf_by_vol real not null,"
+    "vcf_by_cnt real not null)",
     "create index idx_bunk1 on bunkerings(begin)",
     "create index idx_bunk2 on bunkerings(end)",
 
@@ -65,35 +66,58 @@ char *initialQueries [] {
     "id integer not null primary key asc,"
     "bunkering integer not null,"
     "tank integer not null,"
-    "density_before real not null,"
+    "density_before_rep real not null,"
+    "density_before_by_vol real not null,"
+    "density_before_by_cnt real not null,"
     "viscosity_before real not null,"
     "sulphur_before real not null,"
-    "temp_before real not null,"
+    "temp_before_rep real not null,"
+    "temp_before_by_vol real not null,"
+    "temp_before_by_cnt real not null,"
     "volume_before_rep real not null,"
     "volume_before_by_vol real not null,"
     "volume_before_by_cnt real not null,"
     "quantity_before_rep real not null,"
     "quantity_before_by_vol real not null,"
     "quantity_before_by_cnt real not null,"
-    "vcf_before real not null,"
-    "fuelmeter_before real not null,"
-    "density_after real not null,"
+    "vcf_before_rep real not null,"
+    "vcf_before_by_vol real not null,"
+    "vcf_before_by_cnt real not null,"
+    "density_after_rep real not null,"
+    "density_after_by_vol real not null,"
+    "density_after_by_cnt real not null,"
     "viscosity_after real not null,"
     "sulphur_after real not null,"
-    "temp_after real not null,"
+    "temp_after_rep real not null,"
+    "temp_after_by_vol real not null,"
+    "temp_after_by_cnt real not null,"
     "volume_after_rep real not null,"
     "volume_after_by_vol real not null,"
     "volume_after_by_cnt real not null,"
     "quantity_after_rep real not null,"
     "quantity_after_by_vol real not null,"
     "quantity_after_by_cnt real not null,"
-    "vcf_after real not null,"
-    "fuelmeter_after real not null)",
+    "vcf_after_rep real not null,"
+    "vcf_after_by_vol real not null,"
+    "vcf_after_by_cnt real not null)",
     "create index idx_tankstate1 on tank_state(bunkering,tank)",
     "create index idx_tankstate2 on tank_state(tank,bunkering)",
 
     0,
 };
+
+void logString (char *string) {
+    FILE *log = fopen ("data.log", "rb+");
+
+    if (!log) log = fopen ("data.log", "wb+");
+
+    if (log) {
+        fseek (log, 0, SEEK_END);
+        fwrite (string, 1, strlen (string), log);
+        fwrite ("\r\n", 1, 2, log);
+        fclose (log);
+    }
+}
 
 database::database (config& _cfg): cfg (_cfg) {
     if (sqlite3_open_v2 (dbPath, & db, SQLITE_OPEN_READWRITE, 0) == SQLITE_OK) {
@@ -197,24 +221,28 @@ void database::addFuelParameter (
 }
 
 void database::saveBunkering (bunkeringData& data) {
-    char query [1000];
+    char query [2000];
 
     sprintf (
         query, 
         "update bunkerings set "
         "begin=%I64d,end=%I64d,port='%s',barge='%s',"
-        "draft_fore_before=%f,draft_aft_before=%f,fm_in_value_before=%f,fm_out_value_before=%f,"
-        "draft_fore_after=%f,draft_aft_after=%f,fm_in_value_after=%f,fm_out_value_after=%f,"
-        "density=%f,viscosity=%f,sulphur=%f,temp=%f,volume_rep=%f,volume_by_vol=%f,volume_by_cnt=%f,"
-        "quantity_rep=%f,quantity_by_vol=%f,quantity_by_cnt=%f,vcf=%f,fuelmeter=%f "
+        "draft_fore_before=%.4f,draft_aft_before=%.4f,"
+        "draft_fore_after=%.4f,draft_aft_after=%.4f,"
+        "density_rep=%.4f,density_by_vol=%.4f,density_by_cnt=%.4f,"
+        "viscosity=%.4f,sulphur=%.4f,"
+        "temp_rep=%.4f,temp_by_vol=%.4f,temp_by_cnt=%.4f,"
+        "volume_rep=%.4f,volume_by_vol=%.4f,volume_by_cnt=%.4f,"
+        "quantity_rep=%.4f,quantity_by_vol=%.4f,quantity_by_cnt=%.4f,vcf_rep=%.4f,vcf_by_vol=%.4f,vcf_by_cnt=%.4f "
         "where id=%d",
         data.begin, data.end, data.port.c_str (), data.barge.c_str (),
-        data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
-        data.draftAfter.fore, data.draftAfter.aft, data.pmAfter.in, data.pmAfter.out,
-        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp, 
+        data.draftBefore.fore, data.draftBefore.aft, data.draftAfter.fore, data.draftAfter.aft,
+        data.loaded.density.reported, data.loaded.density.byVolume, data.loaded.density.byCounter,
+        data.loaded.viscosity, data.loaded.sulphur, 
+        data.loaded.temp.reported, data.loaded.temp.byVolume, data.loaded.temp.byCounter,
         data.loaded.volume.reported, data.loaded.volume.byVolume, data.loaded.volume.byCounter,
         data.loaded.quantity.reported, data.loaded.quantity.byVolume, data.loaded.quantity.byCounter,
-        data.loaded.vcf, data.loaded.fuelMeter,
+        data.loaded.vcf.reported, data.loaded.vcf.byVolume, data.loaded.vcf.byCounter,
         data.id
     );
     executeSimple (query);
@@ -223,75 +251,103 @@ void database::saveBunkering (bunkeringData& data) {
         sprintf (
             query, 
             "update tank_state "
-            "set density_before=%f,viscosity_before=%f,sulphur_before=%f,temp_before=%f,"
-            "volume_before_rep=%f,volume_before_by_vol=%f,volume_before_by_cnt=%f,"
-            "quantity_before_rep=%f,quantity_before_by_vol=%f,quantity_before_by_cnt=%f,"
-            "vcf_before=%f,fuelmeter_before=%f,"
-            "density_after=%f,viscosity_after=%f,sulphur_after=%f,temp_after=%f,"
-            "volume_after_rep=%f,volume_after_by_vol=%f,volume_after_by_cnt=%f,"
-            "quantity_after_rep=%f,quantity_after_by_vol=%f,quantity_after_by_cnt=%f,"
-            "vcf_after=%f,fuelmeter_after=%f "
+            "set density_before_rep=%.4f,density_before_by_vol=%.4f,density_before_by_cnt=%.4f,"
+            "viscosity_before=%.4f,sulphur_before=%.4f,"
+            "temp_before_rep=%.4f,temp_before_by_vol=%.4f,temp_before_by_cnt=%.4f,"
+            "volume_before_rep=%.4f,volume_before_by_vol=%.4f,volume_before_by_cnt=%.4f,"
+            "quantity_before_rep=%.4f,quantity_before_by_vol=%.4f,quantity_before_by_cnt=%.4f,"
+            "vcf_before_rep=%.4f,vcf_before_by_vol=%.4f,vcf_before_by_cnt=%.4f,"
+            "density_after_rep=%.4f,density_after_by_vol=%.4f,density_after_by_cnt=%.4f,"
+            "viscosity_after=%.4f,sulphur_after=%.4f,"
+            "temp_after_rep=%.4f,temp_after_by_vol=%.4f,temp_after_by_cnt=%.4f,"
+            "volume_after_rep=%.4f,volume_after_by_vol=%.4f,volume_after_by_cnt=%.4f,"
+            "quantity_after_rep=%.4f,quantity_after_by_vol=%.4f,quantity_after_by_cnt=%.4f,"
+            "vcf_after_rep=%.4f,vcf_after_by_vol=%.4f,vcf_after_by_cnt=%.4f "
             "where id=%d and bunkering=%d",
-            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp,
+            tankState.before.density.reported, tankState.before.density.byVolume, tankState.before.density.byCounter,
+            tankState.before.viscosity, tankState.before.sulphur, 
+            tankState.before.temp.reported, tankState.before.temp.byVolume, tankState.before.temp.byCounter,
             tankState.before.volume.reported, tankState.before.volume.byVolume, tankState.before.volume.byCounter,
             tankState.before.quantity.reported, tankState.before.quantity.byVolume, tankState.before.quantity.byCounter,
-            tankState.before.vcf, tankState.before.fuelMeter, tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp,
+            tankState.before.vcf.reported, tankState.before.vcf.byVolume, tankState.before.vcf.byCounter,
+            tankState.after.density.reported, tankState.after.density.byVolume, tankState.after.density.byCounter,
+            tankState.after.viscosity, tankState.after.sulphur, 
+            tankState.after.temp.reported, tankState.after.temp.byVolume, tankState.after.temp.byCounter,
             tankState.after.volume.reported, tankState.after.volume.byVolume, tankState.after.volume.byCounter,
             tankState.after.quantity.reported, tankState.after.quantity.byVolume, tankState.after.quantity.byCounter,
-            tankState.after.vcf, tankState.after.fuelMeter, tankState.id, data.id
+            tankState.after.vcf.reported, tankState.after.vcf.byVolume, tankState.after.vcf.byCounter,
+            tankState.id, data.id
         );
         executeSimple (query);
     }
 }
 
 uint64_t database::createBunkering (bunkeringData& data) {
-    char query [1000];
+    char query [3000];
     uint64_t bunkeringID, stateID;
+
+    memset (query, 0, sizeof (query));
 
     sprintf (
         query, 
         "insert into bunkerings"
         "(begin,end,port,barge,"
-        "draft_fore_before,draft_aft_before,fm_in_value_before,fm_out_value_before,"
-        "draft_fore_after,draft_aft_after,fm_in_value_after,fm_out_value_after,"
-        "density,viscosity,sulphur,temp,volume_rep,volume_by_vol,volume_by_cnt,quantity_rep,quantity_by_vol,quantity_by_cnt,vcf,fuelmeter) "
-        "values(%I64d,%I64d,'%s','%s',%.1f,%.1f,%.3f,%.3f,%.1f,%.1f,%.3f,%.3f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f)",
+        "draft_fore_before,draft_aft_before,draft_fore_after,draft_aft_after,"
+        "density_rep,density_by_vol,density_by_cnt,"
+        "viscosity,sulphur,"
+        "temp_rep,temp_by_vol,temp_by_cnt,"
+        "volume_rep,volume_by_vol,volume_by_cnt,quantity_rep,quantity_by_vol,quantity_by_cnt,"
+        "vcf_rep,vcf_by_vol,vcf_by_cnt) "
+        "values(%I64d,%I64d,'%s','%s',%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f)",
         data.begin, data.end, data.port.c_str (), data.barge.c_str (),
-        data.draftBefore.fore, data.draftBefore.aft, data.pmBefore.in, data.pmBefore.out,
-        data.draftAfter.fore, data.draftAfter.aft, data.pmAfter.in, data.pmAfter.out,
-        data.loaded.density, data.loaded.viscosity, data.loaded.sulphur, data.loaded.temp,
+        data.draftBefore.fore, data.draftBefore.aft, data.draftAfter.fore, data.draftAfter.aft,
+        data.loaded.density.reported, data.loaded.density.byVolume, data.loaded.density.byCounter,
+        data.loaded.viscosity, data.loaded.sulphur,
+        data.loaded.temp.reported, data.loaded.temp.byVolume, data.loaded.temp.byCounter,
         data.loaded.volume.reported, data.loaded.volume.byVolume, data.loaded.volume.byCounter,
         data.loaded.quantity.reported, data.loaded.quantity.byVolume, data.loaded.quantity.byCounter,
-        data.loaded.vcf, data.loaded.fuelMeter
+        data.loaded.vcf.reported, data.loaded.vcf.byVolume, data.loaded.vcf.byCounter
     );
     executeSimple (query, & bunkeringID);
 
     data.id = bunkering;
 
     for (auto& tankState: data.tankStates) {
+        memset (query, 0, sizeof (query));
         sprintf (
             query, 
             "insert into tank_state"
             "(bunkering,tank,"
-            "density_before,viscosity_before,sulphur_before,temp_before,"
+            "density_before_rep,density_before_by_vol,density_before_by_cnt,"
+            "viscosity_before,sulphur_before,"
+            "temp_before_rep,temp_before_by_vol,temp_before_by_cnt,"
             "volume_before_rep,volume_before_by_vol,volume_before_by_cnt,"
             "quantity_before_rep,quantity_before_by_vol,quantity_before_by_cnt,"
-            "vcf_before,fuelmeter_before,"
-            "density_after,viscosity_after,sulphur_after,temp_after,"
+            "vcf_before_rep,vcf_before_by_vol,vcf_before_by_cnt,"
+            "density_after_rep,density_after_by_vol,density_after_by_cnt,"
+            "viscosity_after,sulphur_after,"
+            "temp_after_rep,temp_after_by_vol,temp_after_by_cnt,"
             "volume_after_rep,volume_after_by_vol,volume_after_by_cnt,"
             "quantity_after_rep,quantity_after_by_vol,quantity_after_by_cnt,"
-            "vcf_after,fuelmeter_after) "
-            "values(%I64d,%d,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f,%.4f,%.2f,%.2f,%.1f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.4f,%.4f)",
+            "vcf_after_rep,vcf_after_by_vol,vcf_after_by_cnt) "
+            "values(%I64d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,"
+            "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,"
+            "%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f)",
             bunkeringID, tankState.tank,
-            tankState.before.density, tankState.before.viscosity, tankState.before.sulphur, tankState.before.temp,
+            tankState.before.density.reported, tankState.before.density.byVolume, tankState.before.density.byCounter, 
+            tankState.before.viscosity, tankState.before.sulphur, 
+            tankState.before.temp.reported, tankState.before.temp.byVolume, tankState.before.temp.byCounter,
             tankState.before.volume.reported, tankState.before.volume.byVolume, tankState.before.volume.byCounter,
             tankState.before.quantity.reported, tankState.before.quantity.byVolume, tankState.before.quantity.byCounter,
-            tankState.before.vcf, tankState.before.fuelMeter,
-            tankState.after.density, tankState.after.viscosity, tankState.after.sulphur, tankState.after.temp,
+            tankState.before.vcf.reported, tankState.before.vcf.byVolume, tankState.before.vcf.byCounter,
+            tankState.after.density.reported, tankState.after.density.byVolume, tankState.after.density.byCounter,
+            tankState.after.viscosity, tankState.after.sulphur, 
+            tankState.after.temp.reported, tankState.after.temp.byVolume, tankState.after.temp.byCounter,
             tankState.after.volume.reported, tankState.after.volume.byVolume, tankState.after.volume.byCounter,
             tankState.after.quantity.reported, tankState.after.quantity.byVolume, tankState.after.quantity.byCounter,
-            tankState.after.vcf, tankState.after.fuelMeter
+            tankState.after.vcf.reported, tankState.after.vcf.byVolume, tankState.after.vcf.byCounter
         );
+        logString (query);
         executeSimple (query, & stateID);
 
         tankState.id = stateID;
@@ -309,18 +365,23 @@ int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fie
         return strValue ? (float) atof (strValue) : 0.0f;
     };
     auto loadFuelState = [values, atoF] (fuelState& state, int start) {
-        state.density = atoF (values [start]);
-        state.viscosity = atoF (values [start+1]);
-        state.sulphur = atoF (values [start+2]);
-        state.temp = atoF (values [start+3]);
-        state.volume.reported = atoF (values [start+4]);
-        state.volume.byVolume = atoF (values [start+5]);
-        state.volume.byCounter = atoF (values [start+6]);
-        state.quantity.reported = atoF (values [start+7]);
-        state.quantity.byVolume = atoF (values [start+8]);
-        state.quantity.byCounter = atoF (values [start+9]);
-        state.vcf = atoF (values [start+10]);
-        state.fuelMeter = atoF (values [start+11]);
+        state.density.reported = atoF (values [start]);
+        state.density.byVolume = atoF (values [start+1]);
+        state.density.byCounter = atoF (values [start+2]);
+        state.viscosity = atoF (values [start+3]);
+        state.sulphur = atoF (values [start+4]);
+        state.temp.reported = atoF (values [start+5]);
+        state.temp.byVolume = atoF (values [start+6]);
+        state.temp.byCounter = atoF (values [start+7]);
+        state.volume.reported = atoF (values [start+8]);
+        state.volume.byVolume = atoF (values [start+9]);
+        state.volume.byCounter = atoF (values [start+10]);
+        state.quantity.reported = atoF (values [start+11]);
+        state.quantity.byVolume = atoF (values [start+12]);
+        state.quantity.byCounter = atoF (values [start+13]);
+        state.vcf.reported = atoF (values [start+14]);
+        state.vcf.byVolume = atoF (values [start+15]);
+        state.vcf.byCounter = atoF (values [start+16]);
     };
 
     uint32_t bunkeringID = atoi (values [0]);
@@ -333,23 +394,19 @@ int bunkeringListLoadCb (void *param, int numOfFields, char **values, char **fie
         bunkData->end = atol (values [2]);
         bunkData->draftBefore.fore = atoF (values [5]);
         bunkData->draftBefore.aft = atoF (values [6]);
-        bunkData->pmBefore.in = atoF (values [7]);
-        bunkData->pmBefore.out = atoF (values [8]);
-        bunkData->draftAfter.fore = atoF (values [9]);
-        bunkData->draftAfter.aft = atoF (values [10]);
-        bunkData->pmAfter.in = atoF (values [11]);
-        bunkData->pmAfter.out = atoF (values [12]);
+        bunkData->draftAfter.fore = atoF (values [7]);
+        bunkData->draftAfter.aft = atoF (values [8]);
         
-        loadFuelState (bunkData->loaded, 13);
+        loadFuelState (bunkData->loaded, 9);
         bunkData->tankStates.clear ();
     }
 
-    bunkData->tankStates.emplace_back (atol (values [27]), atol (values [25]));
+    bunkData->tankStates.emplace_back (atol (values [28]), atol (values [26]));
 
     tankState& tank = bunkData->tankStates.back ();
 
-    loadFuelState (tank.before, 28);
-    loadFuelState (tank.after, 40);
+    loadFuelState (tank.before, 29);
+    loadFuelState (tank.after, 46);
 
     return 0;
 }
@@ -563,4 +620,3 @@ bool database::loadTankStatesAt (time_t begin, time_t end, std::vector<tankState
 
     return volumesAtBeginCtx.found && metersAtBeginCtx.found && volumesAtEndCtx.found && metersAtEndCtx.found;
 }
-

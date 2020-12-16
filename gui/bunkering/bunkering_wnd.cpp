@@ -80,7 +80,7 @@ void BunkeringWindow::OnCreate () {
     auto switchHandle = tabSwitch->GetHandle ();
 
     ((BaseListCtrl *) addControlToGroup (0, bunkerLoadInfo = new FuelStateEditCtrl (switchHandle, ID_BUNK_HDR_FUEL_STATE)))->CreateControl (0, 30, 262, 150);
-    ((BaseListCtrl *) addControlToGroup (0, bunkerHwDataInfo = new HwDataEditCtrl (switchHandle, ID_BUNK_HDR_HW_DATA)))->CreateControl (261, 30, 162, 150);
+    ((BaseListCtrl *) addControlToGroup (0, bunkerHwDataInfo = new HwDataEditCtrl (switchHandle, ID_BUNK_HDR_HW_DATA, true)))->CreateControl (261, 30, 162, 150);
     addControlToGroup (0, beginLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 185, 55, 20, SS_LEFT, "Начало");
     addControlToGroup (0, endLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 205, 55, 20, SS_LEFT, "Конец");
     addControlToGroup (0, portLabel = new CStaticWrapper (switchHandle, IDC_STATIC))->CreateControl (5, 225, 55, 20, SS_LEFT, "Порт");
@@ -127,7 +127,7 @@ void BunkeringWindow::OnCreate () {
         tankInfoCtrl->CreateControl (10, 30, 262, 150);
         tankInfoBefore.push_back (tankInfoCtrl);
 
-        hwDataCtrl->CreateControl (271, 30, 162, 150);
+        hwDataCtrl->CreateControl (271, 30, 82, 150);
         hwDataBefore.push_back (hwDataCtrl);
 
         tankInfoCtrl = new FuelStateEditCtrl (tanksAfter->GetHandle (), ID_TANK_INFO_AFTER_FIRST + count);
@@ -136,7 +136,7 @@ void BunkeringWindow::OnCreate () {
         tankInfoCtrl->CreateControl (10, 30, 262, 150);
         tankInfoAfter.push_back (tankInfoCtrl);
 
-        hwDataCtrl->CreateControl (271, 30, 162, 150);
+        hwDataCtrl->CreateControl (271, 30, 82, 150);
         hwDataAfter.push_back (hwDataCtrl);
 
         ++ count;
@@ -179,22 +179,19 @@ void BunkeringWindow::exportReportData (bunkeringData& data) {
     auto addFuelState = [addAmounts] (fuelState& fs, json::hashNode& jsonNode) {
         json::hashNode *volume = new json::hashNode;
         json::hashNode *quantity = new json::hashNode;
+        json::hashNode *density = new json::hashNode;
+        json::hashNode *temp = new json::hashNode;
+        json::hashNode *vcf = new json::hashNode;
 
         addAmounts (fs.volume, volume);
         addAmounts (fs.quantity, quantity);
+        addAmounts (fs.density, density);
+        addAmounts (fs.temp, temp);
+        addAmounts (fs.vcf, vcf);
 
-        jsonNode.add ("density", new json::numberNode (fs.density));
         jsonNode.add ("viscosity", new json::numberNode (fs.viscosity));
         jsonNode.add ("sulphur", new json::numberNode (fs.sulphur));
-        jsonNode.add ("temp", new json::numberNode (fs.temp));
-        jsonNode.add ("fuelMeter", new json::numberNode (fs.fuelMeter));
-        jsonNode.add ("vcf", new json::numberNode (fs.vcf));
     };
-
-    fuelMetersBefore.add ("in", new json::numberNode (data.pmBefore.in));
-    fuelMetersBefore.add ("out", new json::numberNode (data.pmBefore.out));
-    fuelMetersAfter.add ("in", new json::numberNode (data.pmAfter.in));
-    fuelMetersAfter.add ("out", new json::numberNode (data.pmAfter.out));
 
     fuelMeters.add ("before", & fuelMetersBefore);
     fuelMeters.add ("after", & fuelMetersAfter);
@@ -229,7 +226,6 @@ void BunkeringWindow::exportReportData (bunkeringData& data) {
     dataNode.add ("end", new json::numberNode (data.end));
     dataNode.add ("port", new json::stringNode (data.port.c_str ()));
     dataNode.add ("barge", new json::stringNode (data.barge.c_str ()));
-    dataNode.add ("fuelMeters", & fuelMeters);
     dataNode.add ("draft", & draft);
     dataNode.add ("tanks", & tanks);
 
@@ -246,14 +242,20 @@ void BunkeringWindow::calcFuelWeight () {
         reportedDataCtl->readState (reportedState);
         actualDataCtl->readState (actualState);
 
-        float vcf = (1.0f - (reportedState.temp - 15.0f) * 0.00064f);
-        float density = reportedState.density * vcf;
+        float vcfReported = (1.0f - (reportedState.temp.reported - 15.0f) * 0.00064f);
+        float densityReported = reportedState.density.reported * vcfReported;
+        float vcfByVolumeMeter = (1.0f - (reportedState.temp.byVolume - 15.0f) * 0.00064f);
+        float densityByVolumeMeter = reportedState.density.byVolume * vcfByVolumeMeter;
+        float vcfByCounter = (1.0f - (reportedState.temp.byCounter - 15.0f) * 0.00064f);
+        float densityByCounter = reportedState.density.byCounter * vcfByCounter;
 
-        actualState.quantity.byVolume = actualState.volume.byVolume * density;
-        actualState.quantity.byCounter = actualState.volume.byCounter * density;
-        actualState.vcf = vcf;
+        actualState.quantity.byVolume = actualState.volume.byVolume * densityByVolumeMeter;
+        actualState.quantity.byCounter = actualState.volume.byCounter * densityByCounter;
+        actualState.vcf.reported = vcfReported;
+        actualState.vcf.byVolume = vcfByVolumeMeter;
+        actualState.vcf.byCounter = vcfByCounter;
 
-        reportedState.vcf = vcf;
+        reportedState.vcf = vcfReported;
 
         reportedDataCtl->showState (reportedState);
         actualDataCtl->showState (actualState);
@@ -439,15 +441,6 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
 }
 
 void BunkeringWindow::preLoadData (bunkeringData& data) {
-    for (auto& meter: cfg.fuelMeters) {
-        if (meter.type.compare ("UPL") == 0) {
-            data.pmBefore.in = db.getLastMeterValue (meter.id);
-            data.pmAfter.in = data.pmBefore.in;
-        } else if (meter.type.compare ("CONS") == 0) {
-            data.pmBefore.out = db.getLastMeterValue (meter.id);
-            data.pmAfter.out = data.pmBefore.in;
-        }
-    }
 }
 
 void BunkeringWindow::loadBunkeringList ()
