@@ -41,6 +41,15 @@ class ShipSchema: public CWindowWrapper {
         time_t timestamp;
         uint32_t updateTimer;
         bool isHistoryMode;
+        
+        union {
+            struct {
+                HBITMAP tank;
+            };
+            HBITMAP image [1];
+        } images;
+
+        BITMAP tankImgProps;
 
         std::map<uint32_t, time_t> tankUpdates, fuelMeterUpdates;
 

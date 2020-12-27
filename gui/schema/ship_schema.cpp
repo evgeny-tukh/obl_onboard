@@ -14,12 +14,19 @@ ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, database& _db, config& 
     historyMode (0), onlineMode (0), statusIndicator (0),
     isHistoryMode (false),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
+    images.tank = (HBITMAP) LoadImage (instance, MAKEINTRESOURCE (IDB_TANK), IMAGE_BITMAP, 0, 0, 0);
+
+    GetObject (images.tank, sizeof (tankImgProps), & tankImgProps);
 }
 
 ShipSchema::~ShipSchema () {
     delete timeline;
     delete historyMode, onlineMode;
     delete statusIndicator;
+
+    for (auto i = 0; i < sizeof (images.image) / sizeof (*(images.image)); ++ i) {
+        DeleteObject (images.image [i]);
+    }
 }
 
 void ShipSchema::setTimestamp (time_t ts)
@@ -62,7 +69,7 @@ void ShipSchema::OnCreate () {
     dateTime = new CStaticWrapper (m_hwndHandle, IDC_DATE_TIME);
 
     dateTime->CreateControl (client.right - DATE_TIME_WIDTH - 200, client.bottom - 25, DATE_TIME_WIDTH, 25, SS_CENTER);
-    dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
+    dateTime->SetText (formatTimestamp (timestamp + _timezone, dateTimeString));
 
     historyMode = new CButtonWrapper (m_hwndHandle, ID_HISTORY_MODE);
     onlineMode = new CButtonWrapper (m_hwndHandle, ID_ONLINE_MODE);
@@ -85,9 +92,18 @@ void ShipSchema::redrawTanks () {
     recalc (tankMetrics);
 
     for (auto tank = cfg.tanks.begin (); tank != cfg.tanks.end (); ++ tank) {
-        tankDisplay tankDisp (*tank);
+        auto tankLayout = cfg.layout.find (tank->id);
 
-        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
+        if (tankLayout != cfg.layout.end ()) {
+            tankDisplay tankDisp (*tank, tankLayout->second);
+
+            if (tankDisp.adjust (client.right + 1, client.bottom - 24)) {
+                tankDisp.paint (paintCtx, images.tank, history->getData (tank->id, timestamp), tank->id, tank->type.c_str ());
+                tankDisp.updateValue (paintCtx, history->getData (tank->id, timestamp), tank->id);
+            }
+        }
+
+        //tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
     }
 
     int fmCount = 0;
@@ -125,6 +141,50 @@ LRESULT ShipSchema::OnPaint () {
     SelectObject (paintCtx, (HBRUSH) GetStockObject (WHITE_BRUSH));
     SelectObject (paintCtx, (HPEN) GetStockObject (BLACK_PEN));
 
+    static std::vector<POINT> shape {
+        { 0, 76 },
+        { 0, 74 },
+        { 4, 70 },
+        { 35, 51 },
+        { 75, 34 },
+        { 99, 25 },
+        { 126, 19 },
+        { 158, 12 },
+        { 188, 8 },
+        { 219, 4 },
+        { 249, 0 },
+        { 734, 0 },
+        { 760, 1 },
+        { 779, 3 },
+        { 791, 4 },
+        { 799, 5 },
+        { 838, 12 },
+        { 871, 22 },
+        { 886, 28 },
+        { 896, 34 },
+        { 906, 44 },
+        { 912, 49 },
+        { 918, 60 },
+        { 919, 63 },
+        { 919, 76 }
+    };
+
+    std::vector<POINT> resizedShape, secondHalf;
+
+    for (auto& point: shape) {
+        resizedShape.push_back (POINT ());
+        resizedShape.back ().x = 10 + (int) (float) point.x / (float) (shape.back ().x + 1) * (float) (client.right - 20);
+        resizedShape.back ().y = (int) ((float) point.y / (float) (shape.back ().y + 1) * (float) (client.bottom - 24) * 0.33f + (float) (client.bottom - 24) * 0.17f);
+
+        secondHalf.push_back (POINT ());
+        secondHalf.back ().x = resizedShape.back ().x;
+        secondHalf.back ().y = client.bottom - 25 - resizedShape.back ().y;
+    }
+
+    resizedShape.insert (resizedShape.end (), secondHalf.rbegin (), secondHalf.rend ());
+
+    Polygon (paintCtx, & resizedShape.front (), resizedShape.size ());
+
     POINT vesselShape [12];
 
     vesselShape [0].x = client.right >> 1;
@@ -156,16 +216,25 @@ LRESULT ShipSchema::OnPaint () {
     vesselShape [11].x = 30;
     vesselShape [11].y = 40;
 
-    Polygon (paintCtx, vesselShape, 12);
+    //Polygon (paintCtx, vesselShape, 12);
 
     tankDisplay::metrics tankMetrics;
 
     recalc (tankMetrics);
 
     for (auto tank = cfg.tanks.begin (); tank != cfg.tanks.end (); ++ tank) {
-        tankDisplay tankDisp (*tank);
+        auto tankLayout = cfg.layout.find (tank->id);
 
-        tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
+        if (tankLayout != cfg.layout.end ()) {
+            tankDisplay tankDisp (*tank, tankLayout->second);
+
+            if (tankDisp.adjust (client.right + 1, client.bottom - 24)) {
+                tankDisp.paint (paintCtx, images.tank, history->getData (tank->id, timestamp), tank->id, tank->type.c_str ());
+                tankDisp.updateValue (paintCtx, history->getData (tank->id, timestamp), tank->id);
+            }
+        }
+
+        //tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
     }
 
     int fmCount = 0;
@@ -186,7 +255,7 @@ LRESULT ShipSchema::OnPaint () {
 
         fuelMeterDisplay fmDisplay (*fuelMeter);
 
-        fmDisplay.draw (paintCtx, m_hwndHandle, x, objects, history->getData (fuelMeter->id, timestamp), fuelMeter->name.c_str ());
+        //fmDisplay.draw (paintCtx, m_hwndHandle, x, objects, history->getData (fuelMeter->id, timestamp), fuelMeter->name.c_str ());
     }
 
     EndPaint (m_hwndHandle, & data);
@@ -222,7 +291,7 @@ LRESULT ShipSchema::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
                 time_t curTimestamp = timeline->GetPos ();
                 char dateTimeString [100];
 
-                dateTime->SetText (formatTimestamp (curTimestamp, dateTimeString));
+                dateTime->SetText (formatTimestamp (curTimestamp + _timezone, dateTimeString));
                 setTimestamp (curTimestamp);
             }
 
@@ -266,7 +335,7 @@ void ShipSchema::updateStatus () {
 
     char dateTimeString [100];
 
-    dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
+    dateTime->SetText (formatTimestamp (timestamp + _timezone, dateTimeString));
     timeline->SetRange (history->minTime (), timestamp);
     timeline->SetValue (timestamp);
 }
@@ -294,7 +363,7 @@ LRESULT ShipSchema::OnCommand (WPARAM wParam, LPARAM lParam) {
                 char dateTimeString [100];
                 timestamp = history->maxTime ();
                 timeline->SetValue (timestamp);
-                dateTime->SetText (formatTimestamp (timestamp, dateTimeString));
+                dateTime->SetText (formatTimestamp (timestamp + _timezone, dateTimeString));
                 //InvalidateRect (m_hwndHandle, 0, FALSE);
                 redrawTanks ();
             }

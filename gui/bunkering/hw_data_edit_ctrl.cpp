@@ -35,26 +35,28 @@ bool HwDataEditCtrl::readState (fuelState& state) {
         
         value = (float) atof (buffer);
 
-        if (value < 0.01f) result = false;
+        //if (value < 0.01f) result = false;
 
         return result;
     };
 
-    return (
+    bool result = (
         getValue (0, 0, state.density.byVolume) &&
         getValue (3, 0, state.temp.byVolume) &&
         getValue (4, 0, state.vcf.byVolume) &&
         getValue (5, 0, state.volume.byVolume) &&
-        getValue (6, 0, state.quantity.byVolume) &&
-
-        !showFuelCounterValues || (
-            getValue (0, 1, state.density.byCounter) &&
-            getValue (3, 1, state.temp.byCounter) &&
-            getValue (4, 1, state.vcf.byCounter) &&
-            getValue (5, 1, state.volume.byCounter) &&
-            getValue (6, 1, state.quantity.byCounter)
-        )
+        getValue (6, 0, state.quantity.byVolume)
     );
+
+    if (showFuelCounterValues) result = result && (
+        getValue (0, 1, state.density.byCounter) &&
+        getValue (3, 1, state.temp.byCounter) &&
+        getValue (4, 1, state.vcf.byCounter) &&
+        getValue (5, 1, state.volume.byCounter) &&
+        getValue (6, 1, state.quantity.byCounter)
+    );
+
+    return result;
 }
 
 void HwDataEditCtrl::init () {

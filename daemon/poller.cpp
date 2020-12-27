@@ -7,6 +7,9 @@
 #include "req_mgr.h"
 #include "../common/json.h"
 #include "../common/db.h"
+#include "logbook.h"
+
+extern logbook::record logbookData;
 
 class tankData {
     public:
@@ -33,10 +36,12 @@ void tankData::addSensorInput (const char *inputKey, const char *value, database
 
     if (tankCfg) {
         db.addData (tankCfg->id, timestamp, database::dataValueType::tankVolume, numValue);
-    } else {
+    } else if (strcmp (inputKey, cfg.draftForeChannel.c_str ()) == 0) {
         // Draft channel
-        //if (strcmp (inputKey, cfg.draftAftChannel.c_str ()) == 0) {
-        //}
+        logbookData.draftFore.update ((float) numValue);
+    } else if (strcmp (inputKey, cfg.draftAftChannel.c_str ()) == 0) {
+        logbookData.draftAft.update ((float) numValue);
+    } else {
         // Does input key belong to the fuel meter?
         fuelMeter *fmCfg = cfg.findFuelMeter ((char *) inputKey);
 

@@ -34,6 +34,35 @@ struct fuelMeter {
     fuelMeter (const uint16_t _id, const char *_name, const char *_type): name (_name), type (_type), id (_id) {}
 };
 
+enum layoutElementType {
+    TANK = 1,
+    IMAGE = 2,
+    LINE = 3,
+};
+
+enum layoutUnit {
+    PERCENT = 1,
+    PIXELS = 2,
+};
+
+enum layoutLabelPos {
+    ABOVE = 1,
+    BELOW = 2,
+    LEFT = 3,
+    RIGHT = 4,
+};
+
+struct layoutElement {
+    layoutElementType type;
+    layoutLabelPos labelPos;
+    layoutUnit unit;
+    int id, x, y, width, height;
+
+    layoutElement (layoutElementType _type, layoutUnit _unit, layoutLabelPos _lblPos, int _id, int _x, int _y, int _width, int _height):
+        type (_type), unit (_unit), id (_id), x (_x), y (_y), width (_width), height (_height), labelPos (_lblPos) {
+    }
+};
+
 struct tank {
     uint16_t id;
     std::string name, type;
@@ -186,6 +215,7 @@ struct config {
     reporting repCfg;
     std::vector<sensorCfg> sensors;
     std::string draftForeChannel, draftAftChannel;
+    std::map<int, layoutElement> layout;
 
     tank *findTank (char *name) {
         for (auto& tank: tanks) {

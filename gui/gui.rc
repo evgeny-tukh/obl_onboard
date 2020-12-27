@@ -189,3 +189,5 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "Отмена", 2, 129, 199, 50, 14, 0, WS_EX_LEFT
     DEFPUSHBUTTON   "OK", 1, 129, 182, 50, 14, 0, WS_EX_LEFT
 }
+
+IDB_TANK BITMAP ".\\res\\tank.bmp"

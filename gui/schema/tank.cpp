@@ -1,10 +1,84 @@
 #include "tank.h"
 #include "../../common/tools.h"
 
-tankDisplay::tankDisplay (tank& cfg): tankCfg (cfg) {
+tankDisplay::tankDisplay (tank& _cfg, layoutElement& _layout): tankCfg (_cfg), layout (_layout), image (0), x (0), y (0), width (0), height (0) {
 }
 
 tankDisplay::~tankDisplay () {
+    if (image) DeleteObject (image);
+}
+
+bool tankDisplay::adjust (int wndWidth, int wndHeight) {
+    switch (layout.unit) {
+        case layoutUnit::PERCENT: {
+            x = layout.x * wndWidth / 100;
+            y = layout.y * wndHeight / 100;
+            width = layout.width * wndWidth / 100;
+            height = layout.height * wndHeight / 100;
+            return true;
+        }
+        case layoutUnit::PIXELS: {
+            x = layout.x;
+            y = layout.y;
+            width = layout.width;
+            height = layout.height;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void tankDisplay::paint (HDC drawCtx, HBITMAP tankImage, double volume, uint16_t id, const char *type) {
+    HDC tempCtx = CreateCompatibleDC (drawCtx);
+    BITMAP tankImgInfo;
+
+    if (image) DeleteObject (image);
+
+    GetObject (tankImage, sizeof (tankImgInfo),  & tankImgInfo);
+    SelectObject (tempCtx, tankImage);
+    StretchBlt (drawCtx, x, y, width, height, tempCtx, 0, 0, tankImgInfo.bmWidth, tankImgInfo.bmHeight, SRCCOPY);
+    SelectObject (tempCtx, 0);
+    DeleteDC (tempCtx);
+
+    char idString [10], volString [50];
+    int filledPartHeight = volume <  tankCfg.volume ? (int) ((volume / tankCfg.volume) * (double) height) : height;
+
+    sprintf (idString, "#%d", id);
+    sprintf (volString, "%.1f/%.f", volume, tankCfg.volume);
+
+    RECT scale {
+        x + width, y - 10, x + width + 11, y + height + 10
+    };
+    POINT gauge [3] {
+        { x + width, y + height - filledPartHeight },
+        { x + width + 10, y + height - filledPartHeight - 10 },
+        { x + width + 10, y + height - filledPartHeight + 10 }
+    };
+
+    FillRect (drawCtx, & scale, (HBRUSH) GetStockObject (WHITE_BRUSH));
+    SelectObject (drawCtx, GetStockObject (BLACK_BRUSH));
+    Polygon (drawCtx, gauge, 3);
+
+    /*switch (layout.labelPos) {
+        case layoutLabelPos::ABOVE:
+            y -= 45; break;
+        case layoutLabelPos::BELOW:
+            y += height - 15; break;
+        default:
+            return;
+    }*/
+    y += height / 2 - 55;
+
+    SetTextColor (drawCtx, RGB (255, 255, 255));
+    SetBkMode (drawCtx, TRANSPARENT);
+    TextOutA (drawCtx, x + 10, y + 30, idString, strlen (idString));
+    TextOutA (drawCtx, x + 10, y + 45, type, strlen (type));
+    TextOutA (drawCtx, x + 10, y + 60, volString, strlen (volString));
+}
+
+void tankDisplay::updateValue (HDC drawCtx, double volume, uint16_t id) {
+
 }
 
 void tankDisplay::draw (

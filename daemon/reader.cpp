@@ -7,10 +7,13 @@
 #include "../common/defs.h"
 #include "../nmea/nmea.h"
 #include "../common/db.h"
+#include "logbook.h"
 
 struct readerContext: pollerContext {
     SOCKET socket;
 };
+
+logbook::record logbookData;
 
 std::vector<readerContext *> readerContexts;
 
@@ -89,19 +92,33 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
         }
 
         time_t now = time (0);
+
         if ((now - lastAliveCheck) >= 5) {
             nmea::checkAlive (now);
 
             lastAliveCheck = now;
+
+            logbookData.position.update (nmea::getLat (), nmea::getLon ());
+            logbookData.sog.update (nmea::getSOG ());
+            logbookData.cog.update (nmea::getCOG ());
+            logbookData.hdg.update (nmea::getHDG ());
+            logbookData.checkAlive (now);
         }
+
         if ((now - lastRecord) >= cfg.logbookPeriod ) {
+            time_t timestamp = nmea::getTimestamp ();
+
+            if (!timestamp) timestamp = time (0);
+            
             db.addLogbookRecord (
-                nmea::getTimestamp (),
-                nmea::getLat (),
-                nmea::getLon (),
-                nmea::getCOG (),
-                nmea::getSOG (),
-                nmea::getHDG ()
+                timestamp,
+                logbookData.getLat (),
+                logbookData.getLon (),
+                logbookData.getCOG (),
+                logbookData.getSOG (),
+                logbookData.getHDG (),
+                logbookData.getDraftFore (),
+                logbookData.getDraftAft ()
             );
 
             lastRecord = now;

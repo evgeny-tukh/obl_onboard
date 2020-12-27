@@ -16,13 +16,20 @@ class tankDisplay {
             metrics () : stbd (VER_EDGE), port (VER_EDGE), middle (VER_EDGE) {}
         };
 
-        tankDisplay (tank&);
+        tankDisplay (tank&, layoutElement&);
         ~tankDisplay ();
 
+        bool adjust (int wndWidth, int wndHeight);
         void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume, uint16_t id, const char *type, bool selected);
+        void paint (HDC drawCtx, HBITMAP tankImage, double volume, uint16_t id, const char *type);
+        void updateValue (HDC drawCtx, double volume, uint16_t id);
 
     protected:
         tank& tankCfg;
+        layoutElement& layout;
+        BITMAP imageInfo;
+        HBITMAP image;
+        int x, y, width, height;
 };
 
 #if 0

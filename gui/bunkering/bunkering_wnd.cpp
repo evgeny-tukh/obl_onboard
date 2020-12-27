@@ -244,10 +244,10 @@ void BunkeringWindow::calcFuelWeight () {
 
         float vcfReported = (1.0f - (reportedState.temp.reported - 15.0f) * 0.00064f);
         float densityReported = reportedState.density.reported * vcfReported;
-        float vcfByVolumeMeter = (1.0f - (reportedState.temp.byVolume - 15.0f) * 0.00064f);
-        float densityByVolumeMeter = reportedState.density.byVolume * vcfByVolumeMeter;
-        float vcfByCounter = (1.0f - (reportedState.temp.byCounter - 15.0f) * 0.00064f);
-        float densityByCounter = reportedState.density.byCounter * vcfByCounter;
+        float vcfByVolumeMeter = (1.0f - (actualState.temp.byVolume - 15.0f) * 0.00064f);
+        float densityByVolumeMeter = actualState.density.byVolume * vcfByVolumeMeter;
+        float vcfByCounter = (1.0f - (actualState.temp.byCounter - 15.0f) * 0.00064f);
+        float densityByCounter = actualState.density.byCounter * vcfByCounter;
 
         actualState.quantity.byVolume = actualState.volume.byVolume * densityByVolumeMeter;
         actualState.quantity.byCounter = actualState.volume.byCounter * densityByCounter;
@@ -454,9 +454,9 @@ void BunkeringWindow::loadBunkeringList ()
     for (auto bunkering = list.begin (); bunkering != list.end (); ++ bunkering) {
         char buffer [50];
 
-        auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin, buffer), bunkering - list.begin ());
+        auto item = bunkerList->AddItem (formatTimestamp (bunkering->begin + _timezone, buffer), bunkering - list.begin ());
 
-        bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end, buffer));
+        bunkerList->SetItemText (item, 1, formatTimestamp (bunkering->end + _timezone, buffer));
         bunkerList->SetItemText (item, 2, ftoa (bunkering->loaded.quantity.reported, buffer, "%.3f"));
         bunkerList->SetItemText (item, 3, ftoa (bunkering->loaded.quantity.byVolume, buffer, "%.3f"));
         bunkerList->SetItemText (item, 4, ftoa (bunkering->loaded.quantity.byCounter, buffer, "%.3f"));
@@ -516,20 +516,20 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
         NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
         if (isTankInfoBefore (header->idFrom)) {
             auto ctrl = tankInfoBefore [header->idFrom-ID_TANK_INFO_BEFORE_FIRST];
-            ctrl->editValue (info->iItem, ctrl); return FALSE;
+            ctrl->editValue (info->iItem, 1, ctrl); return FALSE;
         } else if (isTankInfoAfter (header->idFrom)) {
             auto ctrl = tankInfoAfter [header->idFrom-ID_TANK_INFO_AFTER_FIRST];
-            ctrl->editValue (info->iItem, ctrl); return FALSE;
+            ctrl->editValue (info->iItem, 1, ctrl); return FALSE;
         } else if (isHwDataBefore (header->idFrom)) {
             auto ctrl = hwDataBefore [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST];
             auto pairedCtrl = tankInfoBefore  [header->idFrom-ID_HW_DATA_EDIT_BEFORE_FIRST];
-            ctrl->editValue (info->iItem, pairedCtrl); return FALSE;
+            ctrl->editValue (info->iItem, info->iSubItem, pairedCtrl); return FALSE;
         } else if (isHwDataAfter (header->idFrom)) {
             auto ctrl = hwDataAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
             auto pairedCtrl = tankInfoAfter [header->idFrom-ID_HW_DATA_EDIT_AFTER_FIRST];
-            ctrl->editValue (info->iItem, pairedCtrl); return FALSE;
+            ctrl->editValue (info->iItem, info->iSubItem, pairedCtrl); return FALSE;
         } else if (header->idFrom == ID_BEGIN_DATE) {
-            MessageBox("!!!","!!",0);
+            //MessageBox("!!!","!!",0);
         }
     }
     if (header->code == NM_CLICK) {
@@ -593,14 +593,14 @@ LRESULT BunkeringWindow::OnNotify (NMHDR *header) {
         case ID_BUNK_HDR_FUEL_STATE: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                bunkerLoadInfo->editValue (info->iItem, bunkerLoadInfo);
+                bunkerLoadInfo->editValue (info->iItem, 1, bunkerLoadInfo);
             }
             break;
         }
         case ID_BUNK_HDR_HW_DATA: {
             if (header->code == NM_DBLCLK) {
                 NMITEMACTIVATE *info = (NMITEMACTIVATE *) header;
-                bunkerHwDataInfo->editValue (info->iItem, bunkerLoadInfo);
+                bunkerHwDataInfo->editValue (info->iItem, info->iSubItem, bunkerLoadInfo);
             }
             break;
         }

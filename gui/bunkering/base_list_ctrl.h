@@ -9,7 +9,7 @@ class BaseListCtrl: public CListCtrlWrapper {
         virtual ~BaseListCtrl () {}
 
         virtual void init () {}
-        bool editValue (int item, BaseListCtrl *labelHolder);
+        bool editValue (int item, int column, BaseListCtrl *labelHolder);
         virtual bool isItemEditable (int item) {
             return false;
         }

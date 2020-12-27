@@ -68,7 +68,9 @@ class database {
             double *lon,
             float *cog,
             float *sog,
-            float *hdg
+            float *hdg,
+            float *draftFore,
+            float *draftAft
         );
         void getRecentLogbookRecord (logbookRecord& rec);
 

@@ -10,7 +10,8 @@ char *initialQueries [] {
     "(id integer not null primary key asc,"
     "timestamp integer not null,"
     "lat real,lon real,"
-    "sog real,cog real,hdg real)",
+    "sog real,cog real,hdg real,"
+    "draft_fore real,draft_aft real)",
     "create index idx_lb on logbook(timestamp)",
 
     "create table operations"
@@ -515,20 +516,24 @@ uint64_t database::addLogbookRecord (
     double *lon,
     float *cog,
     float *sog,
-    float *hdg
+    float *hdg,
+    float *draftFore,
+    float *draftAft
 ) {
     char query [200];
     char buffer [100];
     static const char *null = "null";
     sprintf (
         query,
-        "insert into logbook(timestamp,lat,lon,sog,cog,hdg) values(%I64d,%s,%s,%s,%s,%s)",
+        "insert into logbook(timestamp,lat,lon,sog,cog,hdg,draft_fore,draft_aft) values(%I64d,%s,%s,%s,%s,%s,%s,%s)",
         timestamp,
         lat && lon ? ftoa (*lat, buffer, "%.8f") : null,
         lat && lon ? ftoa (*lon, buffer + 20, "%.8f") : null,
         sog ? ftoa (*sog, buffer + 40, "%.1f") : null,
         cog ? ftoa (*cog, buffer + 60, "%.1f") : null,
-        hdg ? ftoa (*hdg, buffer + 80, "%.1f") : null
+        hdg ? ftoa (*hdg, buffer + 80, "%.1f") : null,
+        draftFore ? ftoa (*draftFore, buffer + 80, "%.1f") : null,
+        draftAft ? ftoa (*draftAft, buffer + 80, "%.1f") : null
     );
 
     uint64_t result;

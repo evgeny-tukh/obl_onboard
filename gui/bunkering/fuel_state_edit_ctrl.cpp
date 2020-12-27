@@ -25,7 +25,7 @@ bool FuelStateEditCtrl::readState (fuelState& state) {
     for (auto i = 0; i < 7; ++ i) {
         GetItemText (i, 1, buffer, sizeof (buffer));
         float value = (float) atof (buffer);
-        if (value < 0.01f) result = false;
+        //if (value < 0.01f) result = false;
         switch (i) {
             case 0: state.density.reported = value; break;
             case 1: state.viscosity = value; break;

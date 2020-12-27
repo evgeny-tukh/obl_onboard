@@ -72,6 +72,7 @@ void parseCfgFile (config& cfg) {
         json::arrayNode *sensors = (json::arrayNode *) (*root) ["sensors"];
         json::stringNode *draftAft = (json::stringNode *) (*root) ["draftAftChannel"];
         json::stringNode *draftFore = (json::stringNode *) (*root) ["draftForeChannel"];
+        json::arrayNode *layout = (json::arrayNode *) (*root) ["layout"];
 
         if (host != json::nothing) cfg.host = host->getValue ();
         if (path != json::nothing) cfg.path = path->getValue ();
@@ -163,6 +164,68 @@ void parseCfgFile (config& cfg) {
                     json::numberNode *port = (json::numberNode *) (*sensor) ["port"];
 
                     cfg.sensors.emplace_back (type->getValue (), nic->getValue (), port->getValue ());
+                }
+            }
+        }
+        if (layout != json::nothing) {
+            for (auto i = 0; i < layout->size (); ++ i) {
+                json::hashNode *element = (json::hashNode *) (*layout) [i];
+
+                if (element != json::nothing) {
+                    json::stringNode *type = (json::stringNode *) (*element) ["type"];
+                    json::stringNode *unit = (json::stringNode *) (*element) ["unit"];
+                    json::stringNode *labelPos = (json::stringNode *) (*element) ["label"];
+                    json::numberNode *id = (json::numberNode *) (*element) ["id"];
+                    json::numberNode *x = (json::numberNode *) (*element) ["x"];
+                    json::numberNode *y = (json::numberNode *) (*element) ["y"];
+                    json::numberNode *width = (json::numberNode *) (*element) ["width"];
+                    json::numberNode *height = (json::numberNode *) (*element) ["height"];
+
+                    layoutElementType elemType;
+                    if (strcmp (type->getValue (), "tank") == 0)
+                        elemType = layoutElementType::TANK;
+                    else if (strcmp (type->getValue (), "image") == 0)
+                        elemType = layoutElementType::IMAGE;
+                    else if (strcmp (type->getValue (), "line") == 0)
+                        elemType = layoutElementType::LINE;
+                    else
+                        continue;
+
+                    layoutUnit elemUnit;
+                    if (strcmp (unit->getValue (), "pixel") == 0)
+                        elemUnit = layoutUnit::PIXELS;
+                    else if (strcmp (unit->getValue (), "percent") == 0)
+                        elemUnit = layoutUnit::PERCENT;
+                    else
+                        continue;
+
+                    layoutLabelPos lblPos;
+                    if (strcmp (labelPos->getValue (), "above") == 0)
+                        lblPos = layoutLabelPos::ABOVE;
+                    else if (strcmp (labelPos->getValue (), "below") == 0)
+                        lblPos = layoutLabelPos::BELOW;
+                    else if (strcmp (labelPos->getValue (), "left") == 0)
+                        lblPos = layoutLabelPos::LEFT;
+                    else if (strcmp (labelPos->getValue (), "right") == 0)
+                        lblPos = layoutLabelPos::RIGHT;
+                    else if (labelPos->getValue () [0])
+                        continue;
+                    else
+                        lblPos = layoutLabelPos::BELOW;
+
+                    cfg.layout.emplace (
+                        (int) id->getValue (),
+                        layoutElement (
+                            elemType,
+                            elemUnit,
+                            lblPos,
+                            (int) id->getValue (),
+                            (int) x->getValue (),
+                            (int) y->getValue (),
+                            (int) width->getValue (),
+                            (int) height->getValue ()
+                        )
+                    );
                 }
             }
         }
