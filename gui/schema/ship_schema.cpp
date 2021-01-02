@@ -15,8 +15,12 @@ ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, database& _db, config& 
     isHistoryMode (false),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
     images.tank = (HBITMAP) LoadImage (instance, MAKEINTRESOURCE (IDB_TANK), IMAGE_BITMAP, 0, 0, 0);
+    images.engine = (HBITMAP) LoadImage (instance, MAKEINTRESOURCE (IDB_ENGINE), IMAGE_BITMAP, 0, 0, 0);
+    images.fuelMeter = (HBITMAP) LoadImage (instance, MAKEINTRESOURCE (IDB_METER), IMAGE_BITMAP, 0, 0, 0);
 
     GetObject (images.tank, sizeof (tankImgProps), & tankImgProps);
+    GetObject (images.engine, sizeof (engineImgProps), & engineImgProps);
+    GetObject (images.fuelMeter, sizeof (fmImgProps), & fmImgProps);
 }
 
 ShipSchema::~ShipSchema () {
@@ -106,7 +110,19 @@ void ShipSchema::redrawTanks () {
         //tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
     }
 
-    int fmCount = 0;
+    for (auto meter = cfg.fuelMeters.begin (); meter != cfg.fuelMeters.end (); ++ meter) {
+        auto fmLayout = cfg.layout.find (meter->id);
+
+        if (fmLayout != cfg.layout.end ()) {
+            fmDisplay fmDisp (*meter, fmLayout->second);
+
+            if (fmDisp.adjust (client.right + 1, client.bottom - 24)) {
+                fmDisp.paint (paintCtx, images.fuelMeter, history->getData (meter->id, timestamp), meter->id);
+            }
+        }
+    }
+
+    /*int fmCount = 0;
     int middle = client.right >> 1;
 
     for (auto fuelMeter = cfg.fuelMeters.begin (); fuelMeter != cfg.fuelMeters.end (); ++ fuelMeter, ++ fmCount) {
@@ -125,7 +141,7 @@ void ShipSchema::redrawTanks () {
         fuelMeterDisplay fmDisplay (*fuelMeter);
 
         fmDisplay.draw (paintCtx, m_hwndHandle, x, objects, history->getData (fuelMeter->id, timestamp), fuelMeter->name.c_str ());
-    }
+    }*/
 
     ReleaseDC (m_hwndHandle, paintCtx);
 }
@@ -222,6 +238,16 @@ LRESULT ShipSchema::OnPaint () {
 
     recalc (tankMetrics);
 
+    for (auto& element = cfg.layout.begin (); element != cfg.layout.end (); ++ element) {
+        if (element->second.type == layoutElementType::PIPE) {
+            pipeDisplay pipeDisp (element->second);
+
+            if (pipeDisp.adjust (client.right + 1, client.bottom - 24)) {
+                pipeDisp.paint (paintCtx, objects);
+            }
+        }
+    }
+
     for (auto tank = cfg.tanks.begin (); tank != cfg.tanks.end (); ++ tank) {
         auto tankLayout = cfg.layout.find (tank->id);
 
@@ -233,11 +259,36 @@ LRESULT ShipSchema::OnPaint () {
                 tankDisp.updateValue (paintCtx, history->getData (tank->id, timestamp), tank->id);
             }
         }
-
-        //tankDisp.draw (paintCtx, m_hwndHandle, tankMetrics, objects, history->getData (tank->id, timestamp), tank->id, tank->type.c_str (), selectedTank == tank->id);
     }
 
-    int fmCount = 0;
+    for (auto meter = cfg.fuelMeters.begin (); meter != cfg.fuelMeters.end (); ++ meter) {
+        auto fmLayout = cfg.layout.find (meter->id);
+
+        if (fmLayout != cfg.layout.end ()) {
+            fmDisplay fmDisp (*meter, fmLayout->second);
+
+            if (fmDisp.adjust (client.right + 1, client.bottom - 24)) {
+                fmDisp.paint (paintCtx, images.fuelMeter, history->getData (meter->id, timestamp), meter->id);
+            }
+        }
+    }
+
+    for (auto& element = cfg.layout.begin (); element != cfg.layout.end (); ++ element) {
+        if (element->second.type == layoutElementType::IMAGE) {
+            switch (element->second.id) {
+                case layoutImage::ENGINE: {
+                    layoutElementDisplay imgDisp (element->second);
+
+                    if (imgDisp.adjust (client.right + 1, client.bottom - 24)) {
+                        imgDisp.paint (paintCtx, images.engine);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    /*int fmCount = 0;
     int middle = client.right >> 1;
 
     for (auto fuelMeter = cfg.fuelMeters.begin (); fuelMeter != cfg.fuelMeters.end (); ++ fuelMeter, ++ fmCount) {
@@ -256,7 +307,7 @@ LRESULT ShipSchema::OnPaint () {
         fuelMeterDisplay fmDisplay (*fuelMeter);
 
         //fmDisplay.draw (paintCtx, m_hwndHandle, x, objects, history->getData (fuelMeter->id, timestamp), fuelMeter->name.c_str ());
-    }
+    }*/
 
     EndPaint (m_hwndHandle, & data);
 

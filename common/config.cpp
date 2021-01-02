@@ -54,6 +54,7 @@ void parseCfgFile (config& cfg) {
         fread (buffer, sizeof (char), size, cfgFile);
 
         int next = 0;
+        int elemId;
         
         auto json = json::parse (/*(char *) source.c_str ()*/buffer, next);
         json::hashNode *root = (json::hashNode *) json;
@@ -173,24 +174,56 @@ void parseCfgFile (config& cfg) {
 
                 if (element != json::nothing) {
                     json::stringNode *type = (json::stringNode *) (*element) ["type"];
+                    json::hashNode *label = (json::hashNode *) (*element) ["label"];
                     json::stringNode *unit = (json::stringNode *) (*element) ["unit"];
-                    json::stringNode *labelPos = (json::stringNode *) (*element) ["label"];
+                    json::stringNode *orient = (json::stringNode *) (*element) ["orientation"];
                     json::numberNode *id = (json::numberNode *) (*element) ["id"];
                     json::numberNode *x = (json::numberNode *) (*element) ["x"];
                     json::numberNode *y = (json::numberNode *) (*element) ["y"];
                     json::numberNode *width = (json::numberNode *) (*element) ["width"];
                     json::numberNode *height = (json::numberNode *) (*element) ["height"];
+                    json::stringNode *image = (json::stringNode *) (*element) ["image"];
+                    json::numberNode *offsetX = (json::numberNode *) (*element) ["offsetX"];
+                    json::numberNode *offsetY = (json::numberNode *) (*element) ["offsetY"];
+                    json::arrayNode *nodes = (json::arrayNode *) (*element) ["nodes"];
+                    json::stringNode *color = (json::stringNode *) (*element) ["color"];
 
                     layoutElementType elemType;
-                    if (strcmp (type->getValue (), "tank") == 0)
+                    if (strcmp (type->getValue (), "tank") == 0) {
                         elemType = layoutElementType::TANK;
-                    else if (strcmp (type->getValue (), "image") == 0)
-                        elemType = layoutElementType::IMAGE;
-                    else if (strcmp (type->getValue (), "line") == 0)
-                        elemType = layoutElementType::LINE;
-                    else
-                        continue;
+                        elemId = (int) id->getValue ();
+                    } else if (strcmp (type->getValue (), "meter") == 0) {
+                        elemType = layoutElementType::FUELMETER;
+                        elemId = (int) id->getValue ();
+                    } else if (strcmp (type->getValue (), "image") == 0) {
+                        json::stringNode *image = (json::stringNode *) (*element) ["image"];
 
+                        if (strcmp (image->getValue (), "engine") == 0) {
+                            elemId = layoutImage::ENGINE;
+                        } else {
+                            elemId = layoutImage::NONE;
+                        }
+
+                        elemType = layoutElementType::IMAGE;
+                    } else if (strcmp (type->getValue (), "pipe") == 0) {
+                        elemType = layoutElementType::PIPE;
+                        elemId = (int) id->getValue ();
+                    } else {
+                        continue;
+                    }
+
+                    layoutOrientation orientation;
+                    if (orient == json::nothing) {
+                        orientation = layoutOrientation::UNKNOWN; 
+                    } else {
+                        if (strcmp (orient->getValue (), "horizontal") == 0) {
+                            orientation = layoutOrientation::HORIZONTAL;
+                        } else if (strcmp (orient->getValue (), "vertical") == 0) {
+                            orientation = layoutOrientation::VERTICAL;
+                        } else {
+                            orientation = layoutOrientation::UNKNOWN; 
+                        }
+                    }
                     layoutUnit elemUnit;
                     if (strcmp (unit->getValue (), "pixel") == 0)
                         elemUnit = layoutUnit::PIXELS;
@@ -199,33 +232,94 @@ void parseCfgFile (config& cfg) {
                     else
                         continue;
 
-                    layoutLabelPos lblPos;
-                    if (strcmp (labelPos->getValue (), "above") == 0)
-                        lblPos = layoutLabelPos::ABOVE;
-                    else if (strcmp (labelPos->getValue (), "below") == 0)
-                        lblPos = layoutLabelPos::BELOW;
-                    else if (strcmp (labelPos->getValue (), "left") == 0)
-                        lblPos = layoutLabelPos::LEFT;
-                    else if (strcmp (labelPos->getValue (), "right") == 0)
-                        lblPos = layoutLabelPos::RIGHT;
-                    else if (labelPos->getValue () [0])
-                        continue;
-                    else
-                        lblPos = layoutLabelPos::BELOW;
+                    penColor clr;
+                    if (color == json::nothing) {
+                        clr = penColor::BLACK;
+                    } else {
+                        if (strcmp (color->getValue (), "black") == 0)
+                            clr = penColor::BLACK;
+                        else if (strcmp (color->getValue (), "blue") == 0)
+                            clr = penColor::BLUE;
+                        else if (strcmp (color->getValue (), "red") == 0)
+                            clr = penColor::RED;
+                        else if (strcmp (color->getValue (), "green") == 0)
+                            clr = penColor::GREEN;
+                        else if (strcmp (color->getValue (), "blue") == 0)
+                            clr = penColor::BLUE;
+                        else if (strcmp (color->getValue (), "gray") == 0)
+                            clr = penColor::GRAY;
+                        else
+                            clr = penColor::BLACK;
+                    }
 
-                    cfg.layout.emplace (
-                        (int) id->getValue (),
+                    layoutLabelPos lblPos;
+                    std::string lblText;
+                    if (label == json::nothing) {
+                        lblPos = layoutLabelPos::BELOW;
+                    } else {
+                        json::stringNode *labelPos = (json::stringNode *) (*label) ["pos"];
+                        json::stringNode *labelText = (json::stringNode *) (*label) ["text"];
+                        if (labelPos != json::nothing) {
+                            if (strcmp (labelPos->getValue (), "above") == 0)
+                                lblPos = layoutLabelPos::ABOVE;
+                            else if (strcmp (labelPos->getValue (), "below") == 0)
+                                lblPos = layoutLabelPos::BELOW;
+                            else if (strcmp (labelPos->getValue (), "left") == 0)
+                                lblPos = layoutLabelPos::LEFT;
+                            else if (strcmp (labelPos->getValue (), "right") == 0)
+                                lblPos = layoutLabelPos::RIGHT;
+                            else if (labelPos->getValue () [0])
+                                continue;
+                            else
+                                lblPos = layoutLabelPos::BELOW;
+                        } else {
+                            lblPos = layoutLabelPos::BELOW;
+                        }
+                        if (labelText != json::nothing) {
+                            lblText = labelText->getValue ();
+                        }
+                    }
+
+                    auto getNumericValue = [] (json::numberNode *node) {
+                        return node == json::nothing ? 0 : (int) node->getValue ();
+                    };
+
+                    auto newItem = cfg.layout.emplace (
+                        elemId,
                         layoutElement (
                             elemType,
                             elemUnit,
                             lblPos,
-                            (int) id->getValue (),
-                            (int) x->getValue (),
-                            (int) y->getValue (),
-                            (int) width->getValue (),
-                            (int) height->getValue ()
+                            lblText.c_str (),
+                            elemId,
+                            getNumericValue (x),
+                            getNumericValue (y),
+                            getNumericValue (width),
+                            getNumericValue (height),
+                            orientation,
+                            getNumericValue (offsetX),
+                            getNumericValue (offsetY),
+                            clr
                         )
                     );
+
+                    if (nodes != json::nothing) {
+                        for (auto i = 0; i < nodes->size (); ++ i) {
+                            json::hashNode *nodeItem = (json::hashNode *) nodes->at (i);
+
+                            json::numberNode *nodeX = (json::numberNode *) (*nodeItem) ["x"];
+                            json::numberNode *nodeY = (json::numberNode *) (*nodeItem) ["y"];
+                            json::numberNode *nodeOffsetX = (json::numberNode *) (*nodeItem) ["offsetX"];
+                            json::numberNode *nodeOffsetY = (json::numberNode *) (*nodeItem) ["offsetY"];
+
+                            newItem.first->second.addNode (
+                                getNumericValue (nodeX),
+                                getNumericValue (nodeY),
+                                getNumericValue (nodeOffsetX),
+                                getNumericValue (nodeOffsetY)
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -244,7 +338,7 @@ void parseCfgFile (config& cfg) {
                     auto& newParam = cfg.params.emplace (
                         (uint8_t) id->getValue (),
                         param (
-                            (uint8_t) id->getValue (),
+                            (uint8_t) elemId,
                             key->getValue (),
                             name->getValue (),
                             (uint8_t) multiplier->getValue (),

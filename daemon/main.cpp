@@ -10,6 +10,8 @@
 #include "../common/db.h"
 #include "reader.h"
 
+#define MAX_START_TIME  1610668800
+
 void showHelp () {
     printf (
         "USAGE:\n"
@@ -107,6 +109,11 @@ int main (int argCount, char *args []) {
     database db (cfg);
 
     printf ("OBL Daemon v1.0\n");
+
+    if (time (0) > MAX_START_TIME) {
+        printf ("The license has been expired.\n");
+        exit (0);
+    }
 
     parseParams (argCount, args, cfg);
     

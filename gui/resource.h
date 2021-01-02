@@ -4,6 +4,8 @@
 
 #define IDR_MENU                                101
 #define IDB_TANK                                102
+#define IDB_ENGINE                              103
+#define IDB_METER                               104
 
 #define ID_EXIT                                 40000
 #define ID_NEW_BUNKERING                        40001
@@ -29,7 +31,7 @@
 #define ID_STATUS_INDICATOR                     1009
 
 
-#define ID_DENSITY				                1010
+#define ID_DENSITY		                1010
 #define ID_DENSITY_SPIN                         1011
 #define ID_VISCOSITY                            1012
 #define ID_VISCOSITY_SPIN                       1013

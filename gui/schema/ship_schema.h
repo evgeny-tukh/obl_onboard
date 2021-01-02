@@ -44,12 +44,12 @@ class ShipSchema: public CWindowWrapper {
         
         union {
             struct {
-                HBITMAP tank;
+                HBITMAP tank, engine, fuelMeter;
             };
-            HBITMAP image [1];
+            HBITMAP image [3];
         } images;
 
-        BITMAP tankImgProps;
+        BITMAP tankImgProps, engineImgProps, fmImgProps;
 
         std::map<uint32_t, time_t> tankUpdates, fuelMeterUpdates;
 

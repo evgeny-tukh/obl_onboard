@@ -5,7 +5,40 @@
 #include "gdiobjects.h"
 #include "../wui/WindowWrapper.h"
 
-class tankDisplay {
+class layoutElementDisplay {
+    public:
+        layoutElementDisplay (layoutElement& elem): layout (elem), x (0), y (0), width (0), height (0) {}
+
+        static bool adjust (layoutUnit unit, layoutNode& layout, int& x, int&y, int& width, int& height, int wndWidth, int wndHeight);
+        inline bool adjust (int wndWidth, int wndHeight) {
+            return adjust (layout.unit, layout, x, y, width, height, wndWidth, wndHeight);
+        }
+
+        void paint (HDC drawCtx, HBITMAP srcImage);
+
+    protected:
+        layoutElement& layout;
+        int x, y, width, height;
+};
+
+class pipeDisplay: public layoutElementDisplay {
+    public:
+        pipeDisplay (layoutElement& elem): layoutElementDisplay (elem) {}
+
+        void paint (HDC drawCtx, gdiObjects& objects);
+        bool adjust (int wndWidth, int wndHeight);
+
+        struct point {
+            int x, y;
+
+            point (int _x, int _y): x (_x), y (_y) {}
+        };
+
+    protected:
+        std::vector<point> nodes;
+};
+
+class tankDisplay: public layoutElementDisplay {
     public:
         static const int VER_EDGE = 80;
         static const int HOR_EDGE = 10;
@@ -19,17 +52,25 @@ class tankDisplay {
         tankDisplay (tank&, layoutElement&);
         ~tankDisplay ();
 
-        bool adjust (int wndWidth, int wndHeight);
         void draw (HDC drawCtx, HWND wnd, metrics&, gdiObjects& objects, double volume, uint16_t id, const char *type, bool selected);
         void paint (HDC drawCtx, HBITMAP tankImage, double volume, uint16_t id, const char *type);
         void updateValue (HDC drawCtx, double volume, uint16_t id);
 
     protected:
         tank& tankCfg;
-        layoutElement& layout;
         BITMAP imageInfo;
         HBITMAP image;
-        int x, y, width, height;
+};
+
+class fmDisplay: public layoutElementDisplay {
+    public:
+        fmDisplay (fuelMeter&, layoutElement&);
+        ~fmDisplay () {}
+
+        void paint (HDC drawCtx, HBITMAP fmImage, double counter, uint16_t id);
+
+    protected:
+        fuelMeter& fmCfg;
 };
 
 #if 0

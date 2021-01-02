@@ -191,3 +191,5 @@ FONT 8, "Ms Shell Dlg"
 }
 
 IDB_TANK BITMAP ".\\res\\tank.bmp"
+IDB_ENGINE BITMAP ".\\res\\engine.bmp"
+IDB_METER BITMAP ".\\res\\fm.bmp"

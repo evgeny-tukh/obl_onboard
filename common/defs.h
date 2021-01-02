@@ -37,7 +37,14 @@ struct fuelMeter {
 enum layoutElementType {
     TANK = 1,
     IMAGE = 2,
-    LINE = 3,
+    FUELMETER = 3,
+    PIPE = 4,
+};
+
+enum layoutOrientation {
+    HORIZONTAL = 1,
+    VERTICAL = 2,
+    UNKNOWN = 0,
 };
 
 enum layoutUnit {
@@ -52,14 +59,64 @@ enum layoutLabelPos {
     RIGHT = 4,
 };
 
-struct layoutElement {
+enum layoutImage {
+    NONE = 0,
+    ENGINE = 100,
+};
+
+#define rgb(r,g,b)  ((b<<16)+(g<<8)+r)
+
+enum penColor {
+    BLACK = 0,
+    RED = rgb (255, 0, 0),
+    GREEN = rgb (0, 255, 0),
+    BLUE = rgb (0, 0, 255),
+    GRAY = rgb (180, 180, 180),
+};
+
+struct layoutNode {
+    int x, y, offsetX, offsetY, width, height;
+
+    layoutNode (int _x, int _y, int _offsX, int _offsY, int _width, int _height): x (_x), y (_y), offsetX (_offsX), offsetY (_offsY), width (_width), height (_height) {}
+};
+
+struct layoutElement: layoutNode {
     layoutElementType type;
+    layoutOrientation orientation;
     layoutLabelPos labelPos;
     layoutUnit unit;
-    int id, x, y, width, height;
+    std::string labelText;
+    int id;
+    std::vector<layoutNode> nodes;
+    penColor color;
 
-    layoutElement (layoutElementType _type, layoutUnit _unit, layoutLabelPos _lblPos, int _id, int _x, int _y, int _width, int _height):
-        type (_type), unit (_unit), id (_id), x (_x), y (_y), width (_width), height (_height), labelPos (_lblPos) {
+    layoutElement (
+        layoutElementType _type,
+        layoutUnit _unit,
+        layoutLabelPos _lblPos,
+        const char *_lblText,
+        int _id,
+        int _x,
+        int _y,
+        int _width,
+        int _height,
+        layoutOrientation _orient,
+        int _offsX,
+        int _offsY,
+        penColor _color
+    ):
+        layoutNode (_x, _y, _offsX, _offsY, _width, _height),
+        type (_type),
+        unit (_unit),
+        id (_id),
+        labelPos (_lblPos),
+        labelText (_lblText),
+        orientation (_orient),
+        color (_color) {
+    }
+
+    inline void addNode (int _x, int _y, int _offsX, int _offsY) {
+        nodes.emplace_back (_x, _y, _offsX, _offsY, 0, 0);
     }
 };
 
