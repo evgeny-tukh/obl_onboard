@@ -5,6 +5,8 @@
 
 const char *database::dbPath = "data.db";
 
+void log (char *msg);
+
 char *initialQueries [] {
     "create table logbook"
     "(id integer not null primary key asc,"
@@ -120,10 +122,14 @@ void logString (char *string) {
     }
 }
 
-database::database (config& _cfg): cfg (_cfg) {
-    if (sqlite3_open_v2 (dbPath, & db, SQLITE_OPEN_READWRITE, 0) == SQLITE_OK) {
+database::database (config& _cfg, char *workingFolder): cfg (_cfg) {
+    std::string dbFilePath (workingFolder ? workingFolder : "");
+
+    dbFilePath += dbPath;
+
+    if (sqlite3_open_v2 (dbFilePath.c_str (), & db, SQLITE_OPEN_READWRITE, 0) == SQLITE_OK) {
         return;
-    } else if (sqlite3_open (dbPath, & db) == SQLITE_OK) {
+    } else if (sqlite3_open (dbFilePath.c_str (), & db) == SQLITE_OK) {
         initDb (); return;
     }
 

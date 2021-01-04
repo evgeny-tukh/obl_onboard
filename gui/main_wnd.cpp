@@ -6,6 +6,7 @@
 #include "../common/defs.h"
 #include "../common/tools.h"
 #include "../common/json.h"
+#include "../common/path.h"
 #include "../nmea/nmea.h"
 #include "wui/StaticWrapper.h"
 #include "wui/DateTimePickerWrapper.h"
@@ -24,7 +25,7 @@ CMainWnd::CMainWnd (HINSTANCE instance):
     sog (nmea::NO_VALID_DATA),
     hdg (nmea::NO_VALID_DATA),
     lastDataUpdate (0),
-    db (cfg)
+    db (cfg, getPath ())
 {
     char path [MAX_PATH];
 

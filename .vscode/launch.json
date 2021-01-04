@@ -44,10 +44,9 @@
             "name": "debug Daemon",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/daemon.exe",
+            "program": "${workspaceFolder}/bin/daemon64.exe",
             "args": [
-                "-c:C:\\Users\\jecat\\source\\repos\\obl\\bin\\cfg.dat",
-                "-q",
+                "-s",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/bin",

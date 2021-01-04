@@ -15,7 +15,7 @@ struct bunkeringContext {
 
 class database {
     public:
-        database (config&);
+        database (config&, char *);
         virtual ~database ();
 
         bool execute (char *query, uint64_t *insertID = 0);

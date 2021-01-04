@@ -11,6 +11,8 @@
 
 extern logbook::record logbookData;
 
+char *getPath ();
+
 class tankData {
     public:
         tankData (config& _cfg, time_t ts = 0): cfg (_cfg), timestamp (ts) {}
@@ -123,7 +125,7 @@ void poll (reqManager& reqMgr, config& cfg, database& db) {
 }
 
 void pollerProc (pollerContext *ctx, config& cfg) {
-    database db (cfg);
+    database db (cfg, getPath ());
     reqManager reqMgr (cfg.port, (char *) cfg.host.c_str (), (char *) cfg.path.c_str ());
 
     while (ctx->keepRunning) {
