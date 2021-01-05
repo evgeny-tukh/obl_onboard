@@ -370,5 +370,25 @@ struct logbookRecord {
     std::pair<float, bool> cog, sog, hdg;
 };
 
+enum changedDataType {
+    POS = 1,
+    SOG = 2,
+    COG = 3,
+    STW = 4,
+    HDG = 5,
+};
+
+#pragma pack(1)
+struct changedData {
+    uint16_t size;
+    uint8_t type;
+
+    union {
+        struct { int32_t lat, lon; };
+        uint32_t value; 
+    };
+};
+#pragma pack()
+
 extern pollerContext *startPoller (config& cfg);
 extern void parseCfgFile (config& cfg);

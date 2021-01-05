@@ -19,14 +19,19 @@ std::vector<readerContext *> readerContexts;
 
 void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& sensor) {
     WSAData data;
+    SOCKET transmitter;
 
     WSAStartup (0x202, & data);
 
     ctx->socket = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    transmitter = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
     uint32_t yes = 1;
 
-    auto result = setsockopt (ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char *) & yes, sizeof (yes));
+    setsockopt (ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char *) & yes, sizeof (yes));
+    
+    setsockopt (transmitter, SOL_SOCKET, SO_REUSEADDR, (const char *) & yes, sizeof (yes));
+    setsockopt (transmitter, SOL_SOCKET, SO_BROADCAST, (const char *) & yes, sizeof (yes));
 
     sockaddr_in addr;
 
@@ -34,7 +39,13 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
     addr.sin_family = AF_INET;
     addr.sin_port = htons (sensor.port);
 
-    result = bind (ctx->socket, (const sockaddr *) & addr, sizeof (addr));
+    bind (ctx->socket, (const sockaddr *) & addr, sizeof (addr));
+
+    addr.sin_addr.S_un.S_addr = INADDR_ANY;
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+
+    bind (transmitter, (const sockaddr *) & addr, sizeof (addr));
 
     time_t lastAliveCheck = time (0), lastRecord = 0;
 
@@ -44,10 +55,24 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
     uint32_t lastSentCOG = nmea::NO_VALID_DATA;
     uint32_t lastSentHDG = nmea::NO_VALID_DATA;
 
+    sockaddr_in transmitterDest;
+
+    transmitterDest.sin_family = AF_INET;
+    transmitterDest.sin_addr.S_un.S_addr = INADDR_BROADCAST;
+    transmitterDest.sin_port = htons (7000);
+
+    changedData packet { sizeof (packet) };
+
+    auto transmit = [transmitter, & packet, transmitterDest] (changedDataType type) {
+        packet.type = type;
+
+        sendto (transmitter, (const char *) & packet, packet.size, 0, (sockaddr *) & transmitterDest, sizeof (transmitterDest));
+    };
+
     while (ctx->keepRunning) {
         u_long available;
 
-        if (result = ioctlsocket (ctx->socket, FIONREAD, & available), result == S_OK && available > 0) {
+        if (ioctlsocket (ctx->socket, FIONREAD, & available) == S_OK && available > 0) {
             sockaddr_in sender;
             char buffer [2000];
             int senderSize = sizeof (sender);
@@ -71,21 +96,34 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
                         PostMessage (HWND_BROADCAST, cfg.posChangedMsg, lat, lon);
                         lastSentLat = lat;
                         lastSentLon = lon;
+
+                        packet.lat = lat;
+                        packet.lon = lon;
+                        transmit (changedDataType::POS);
                     }
 
                     if (sog != lastSentSOG) {
                         PostMessage (HWND_BROADCAST, cfg.sogChangedMsg, 0, sog);
                         lastSentSOG = sog;
+
+                        packet.value = sog;
+                        transmit (changedDataType::SOG);
                     }
 
                     if (cog != lastSentCOG) {
                         PostMessage (HWND_BROADCAST, cfg.cogChangedMsg, 0, cog);
                         lastSentCOG = cog;
+
+                        packet.value = cog;
+                        transmit (changedDataType::COG);
                     }
 
                     if (hdg != lastSentHDG) {
                         PostMessage (HWND_BROADCAST, cfg.hdgChangedMsg, 0, hdg);
                         lastSentHDG = hdg;
+
+                        packet.value = hdg;
+                        transmit (changedDataType::HDG);
                     }
                 }
             }
@@ -128,6 +166,7 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
     }
 
     closesocket (ctx->socket);
+    closesocket (transmitter);
 }
 
 readerContext *startReader (config& cfg, database& db, sensorCfg& sensor) {
