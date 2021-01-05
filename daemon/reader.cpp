@@ -48,6 +48,10 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
     bind (transmitter, (const sockaddr *) & addr, sizeof (addr));
 
     time_t lastAliveCheck = time (0), lastRecord = 0;
+    time_t lastSentPosTime = 0;
+    time_t lastSentSOGTime = 0;
+    time_t lastSentCOGTime = 0;
+    time_t lastSentHDGTime = 0;
 
     int32_t lastSentLat = nmea::NO_VALID_DATA;
     int32_t lastSentLon = nmea::NO_VALID_DATA;
@@ -71,6 +75,7 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
 
     while (ctx->keepRunning) {
         u_long available;
+        time_t now = time (0);
 
         if (ioctlsocket (ctx->socket, FIONREAD, & available) == S_OK && available > 0) {
             sockaddr_in sender;
@@ -92,35 +97,39 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
                     uint32_t cog = nmea::getEncodedCOG ();
                     uint32_t hdg = nmea::getEncodedHDG ();
 
-                    if (lat != lastSentLat || lon != lastSentLon) {
+                    if (lat != lastSentLat || lon != lastSentLon || (now - lastSentPosTime) > 10) {
                         PostMessage (HWND_BROADCAST, cfg.posChangedMsg, lat, lon);
                         lastSentLat = lat;
                         lastSentLon = lon;
+                        lastSentPosTime = now;
 
                         packet.lat = lat;
                         packet.lon = lon;
                         transmit (changedDataType::POS);
                     }
 
-                    if (sog != lastSentSOG) {
+                    if (sog != lastSentSOG || (now - lastSentSOGTime) > 10) {
                         PostMessage (HWND_BROADCAST, cfg.sogChangedMsg, 0, sog);
                         lastSentSOG = sog;
+                        lastSentSOGTime = now;
 
                         packet.value = sog;
                         transmit (changedDataType::SOG);
                     }
 
-                    if (cog != lastSentCOG) {
+                    if (cog != lastSentCOG || (now - lastSentCOGTime) > 10) {
                         PostMessage (HWND_BROADCAST, cfg.cogChangedMsg, 0, cog);
                         lastSentCOG = cog;
+                        lastSentCOGTime = now;
 
                         packet.value = cog;
                         transmit (changedDataType::COG);
                     }
 
-                    if (hdg != lastSentHDG) {
+                    if (hdg != lastSentHDG || (now - lastSentHDGTime) > 10) {
                         PostMessage (HWND_BROADCAST, cfg.hdgChangedMsg, 0, hdg);
                         lastSentHDG = hdg;
+                        lastSentHDGTime = now;
 
                         packet.value = hdg;
                         transmit (changedDataType::HDG);
@@ -128,8 +137,6 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
                 }
             }
         }
-
-        time_t now = time (0);
 
         if ((now - lastAliveCheck) >= 5) {
             nmea::checkAlive (now);
@@ -162,7 +169,7 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
             lastRecord = now;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds (5));
     }
 
     closesocket (ctx->socket);

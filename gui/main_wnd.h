@@ -19,6 +19,7 @@
 #include "bunkering/bunkering_wnd.h"
 #include "bunkering/bunkering_edit.h"
 #include "data_history.h"
+#include "agent.h"
 
 class CMainWnd : public CWindowWrapper
 {
@@ -40,6 +41,7 @@ class CMainWnd : public CWindowWrapper
         CStaticWrapper  *navData;
         ShipSchema      *shipSchema;
         BunkeringWindow *bunkerings;
+        pollerContext   *context;
 
         CComboBoxWrapper       *tankSelector;
         CStaticWrapper         *tankLabel, *beginLabel, *endLabel, *dateTime;

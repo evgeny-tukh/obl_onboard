@@ -25,7 +25,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
     sog (nmea::NO_VALID_DATA),
     hdg (nmea::NO_VALID_DATA),
     lastDataUpdate (0),
-    db (cfg, getPath ())
+    db (cfg, getPath ()),
+    context (0)
 {
     char path [MAX_PATH];
 
@@ -37,6 +38,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 
     parseCfgFile (cfg);
 
+    context = startAgent (cfg);
+
     history = new dataHistory (db, cfg);
 
     beginTimestamp = history->minTime ();
@@ -44,6 +47,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
 }
 
 CMainWnd::~CMainWnd () {
+    stopAgent (context);
+
     delete modeSwitch;
     delete bunkerings;
     delete navData;
@@ -106,11 +111,11 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
                 showNavData ();
             } else if (message == cfg.cogChangedMsg) {
                 lastDataUpdate = time (0);
-                cog = lParam;
+                cog = wParam;
                 showNavData ();
             } else if (message == cfg.sogChangedMsg) {
                 lastDataUpdate = time (0);
-                sog = lParam;
+                sog = wParam;
                 showNavData ();
             }
     }
