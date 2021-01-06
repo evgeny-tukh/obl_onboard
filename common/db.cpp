@@ -507,7 +507,7 @@ int volumeCollectCb (void *param, int numOfFields, char **values, char **fields)
 void database::collectCurrentVolumes (valueMap& volumes) {
     valueCollectCtx context { volumes, cfg.tanks.size (), false };
 
-    executeAndGet ("select tank,value,stimestamp from volumes order by timestamp desc", volumeCollectCb, & context, 0);
+    executeAndGet ("select tank,value,timestamp from volumes order by timestamp desc", volumeCollectCb, & context, 0);
 }
 
 void database::collectCurrentMeters (valueMap& volumes) {

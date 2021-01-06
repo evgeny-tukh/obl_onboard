@@ -18,6 +18,8 @@
 #include "../common/db.h"
 #include "bunkering/bunkering_wnd.h"
 #include "bunkering/bunkering_edit.h"
+#include "logbook/logbook_wnd.h"
+#include "daily_rep/daily_rep.h"
 #include "data_history.h"
 #include "agent.h"
 
@@ -31,17 +33,21 @@ class CMainWnd : public CWindowWrapper
         enum mode {
             SCHEMA = 1,
             BUNKERINGS,
+            LOGBOOK,
+            DAILY_REPORT
         };
 
         static const int SHIP_SCHEMA_WIDTH = 300;
         static const int BUNK_INFO_HEIGHT = 200;
         
-        mode             viewMode;
-        CTabCtrlWrapper *modeSwitch;
-        CStaticWrapper  *navData;
-        ShipSchema      *shipSchema;
-        BunkeringWindow *bunkerings;
-        pollerContext   *context;
+        mode               viewMode;
+        CTabCtrlWrapper   *modeSwitch;
+        CStaticWrapper    *navData;
+        ShipSchema        *shipSchema;
+        BunkeringWindow   *bunkerings;
+        LogbookWindow     *logbook;
+        DailyReportWindow *dailyReport;
+        pollerContext     *context;
 
         CComboBoxWrapper       *tankSelector;
         CStaticWrapper         *tankLabel, *beginLabel, *endLabel, *dateTime;

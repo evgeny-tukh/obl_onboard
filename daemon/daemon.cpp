@@ -185,9 +185,6 @@ void serviceMain (int argc, char** argv) {
     }
 
     doNormalWork ();
-    /*while (true) {
-        Sleep (100);
-    }*/
 }
 
 void runService () {

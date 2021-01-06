@@ -22,3 +22,11 @@ doc/
 *.xml
 *.rels
 *.aps
+bin*/
+bbb/
+export/
+IntecsPoll*/
+*.rar
+!cfg.dat
+build-x86
+

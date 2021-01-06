@@ -17,6 +17,8 @@ CMainWnd::CMainWnd (HINSTANCE instance):
     navData (0),
     modeSwitch (0),
     bunkerings (0),
+    logbook (0),
+    dailyReport (0),
     selectedTank (-1),
     viewMode (mode::SCHEMA),
     lat (nmea::NO_VALID_DATA),
@@ -53,6 +55,8 @@ CMainWnd::~CMainWnd () {
     delete bunkerings;
     delete navData;
     delete shipSchema;
+    delete logbook;
+    delete dailyReport;
 }
 
 void CMainWnd::switchToMode (mode newMode) {
@@ -62,6 +66,10 @@ void CMainWnd::switchToMode (mode newMode) {
     shipSchema->Update ();
     bunkerings->Show (viewMode == mode::BUNKERINGS ? SW_SHOW : SW_HIDE);
     bunkerings->Update ();
+    logbook->Show (viewMode == mode::LOGBOOK ? SW_SHOW : SW_HIDE);
+    logbook->Update ();
+    dailyReport->Show (viewMode == mode::DAILY_REPORT ? SW_SHOW : SW_HIDE);
+    dailyReport->Update ();
 }
 
 void CMainWnd::OnCreate () {
@@ -75,15 +83,21 @@ void CMainWnd::OnCreate () {
     modeSwitch->CreateControl (0, 0, client.right - 199, 50, WS_VISIBLE | TCS_BUTTONS, 0);
     modeSwitch->AddItem ("Мнемосхема", mode::SCHEMA);
     modeSwitch->AddItem ("Бункеровки", mode::BUNKERINGS);
+    modeSwitch->AddItem ("Судовой журнал", mode::LOGBOOK);
+    modeSwitch->AddItem ("Дневной отчет", mode::DAILY_REPORT);
 
     navData = new CStaticWrapper (m_hwndHandle, ID_NAV_DATA);
     navData->CreateControl (client.right - 199, 0, 200, 50, SS_LEFT, "POS: N/A\nSOG: N/A\nCOG: N/A");
 
-    shipSchema = new ShipSchema (m_hInstance, m_hwndHandle, db, cfg, history);
-    bunkerings = new BunkeringWindow (m_hInstance, m_hwndHandle, cfg, db);
+    shipSchema  = new ShipSchema (m_hInstance, m_hwndHandle, db, cfg, history);
+    bunkerings  = new BunkeringWindow (m_hInstance, m_hwndHandle, cfg, db);
+    logbook     = new LogbookWindow (m_hInstance, m_hwndHandle, cfg, db);
+    dailyReport = new DailyReportWindow (m_hInstance, m_hwndHandle, cfg, db);
 
     shipSchema->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
     bunkerings->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
+    logbook->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
+    dailyReport->Create (0, 0, 50, client.right + 1, client.bottom - 49, WS_VISIBLE | WS_CHILD);
 
     switchToMode (mode::SCHEMA);
 
@@ -227,6 +241,8 @@ LRESULT CMainWnd::OnSize (const DWORD requestType, const WORD width, const WORD 
     modeSwitch->Move (0, 0, width - 200, 50, TRUE);
     shipSchema->Move (0, 50, width, height - 49, TRUE);
     bunkerings->Move (0, 50, width, height - 49, TRUE);
+    logbook->Move (0, 50, width, height - 49, TRUE);
+    dailyReport->Move (0, 50, width, height - 49, TRUE);
     navData->Move (width - 200, 0, 200, 50, TRUE);
 
     return FALSE;

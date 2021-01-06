@@ -135,9 +135,9 @@ void stopPoller () {
     if (runnerCtx) {
         runnerCtx->keepRunning = false;
     
-        if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
+        /*if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
 
-        stopAllReaders ();
+        stopAllReaders ();*/
     }
 }
 
@@ -174,27 +174,27 @@ int main (int argCount, char *args []) {
         runService ();
     } else if (args [1][0] == '-' || args [1][0] == '/') {
         if (manageService (tolower (args [1][1]))) exit (0);
-    }
 
-    config cfg;
-    database db (cfg, getPath ());
+        config cfg;
+        database db (cfg, getPath ());
 
-    printf ("OBL Daemon v1.0\n");
+        printf ("OBL Daemon v1.0\n");
 
-    if (time (0) > MAX_START_TIME) {
-        printf ("The license has been expired.\n");
-        exit (0);
-    }
+        if (time (0) > MAX_START_TIME) {
+            printf ("The license has been expired.\n");
+            exit (0);
+        }
 
-    parseParams (argCount, args, cfg);
+        parseParams (argCount, args, cfg);
+        
+        auto runnerCtx = startPoller (cfg);
+
+        startAllReaders (cfg, db);
     
-    auto runnerCtx = startPoller (cfg);
+        if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
 
-    startAllReaders (cfg, db);
- 
-    if (runnerCtx->runner->joinable ()) runnerCtx->runner->join ();
-
-    stopAllReaders ();
-
+        stopAllReaders ();
+    }
+    
     exit (0);
 }
