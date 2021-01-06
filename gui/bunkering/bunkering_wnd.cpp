@@ -74,8 +74,8 @@ void BunkeringWindow::OnCreate () {
     tabSwitch->CreateControl (0, BUNK_LIST_HEIGHT, bunkerListWidth, client.bottom - BUNK_LIST_HEIGHT, TCS_BUTTONS);
     tabSwitch->Show (SW_HIDE);
     tabSwitch->AddItem ("Общая информация", 0);
-    tabSwitch->AddItem ("До закачки", 1);
-    tabSwitch->AddItem ("После закачки", 2);
+    tabSwitch->AddItem ("До бункеровки", 1);
+    tabSwitch->AddItem ("После бункеровки", 2);
 
     auto switchHandle = tabSwitch->GetHandle ();
 

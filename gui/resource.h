@@ -69,6 +69,8 @@
 #define ID_NAV_DATA                             1041
 #define ID_BUNK_HDR_HW_DATA                     1042
 
+#define ID_LOGBOOK_TABS                         1043
+
 #define ID_TANK_INFO_BEFORE_FIRST               2000
 #define ID_TANK_INFO_AFTER_FIRST                2100
 #define ID_HW_DATA_EDIT_BEFORE_FIRST            2200

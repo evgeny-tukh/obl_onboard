@@ -22,6 +22,7 @@ class LogbookWindow: public CWindowWrapper {
     private:
         config& cfg;
         database& db;
+        CTabCtrlWrapper *tabSwitch;
         
         virtual void OnCreate ();
         virtual LRESULT OnCommand (WPARAM wParam, LPARAM lParam);
