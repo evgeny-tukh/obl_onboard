@@ -330,5 +330,66 @@
        "problemMatcher": ["$msCompile"],
        "group": { "kind": "build", "isDefault": true }
      },
-   ]
+     {
+      "type": "shell",
+      "label": "cl.exe build updater - x64",
+      "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64/cl.exe",
+      "args": [
+        "/MTd",
+        "/EHsc",
+        "/Zi",
+        "/Fo:",
+        "updater/build/",
+        "/Fe:",
+        "bin/updater.exe",
+        "updater/main.cpp",
+        "User32.lib",
+        "wsock32.lib",
+        "wininet.lib",
+        "advapi32.lib",
+        "Comdlg32.lib",
+        "shlwapi.lib"
+      ],
+      "problemMatcher": ["$msCompile"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+     {
+      "type": "shell",
+      "label": "cl.exe build updater - x86",
+       "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx86/x86/cl.exe",
+      "args": [
+        "/MTd",
+        "/EHsc",
+        "/Zi",
+        "/Fo:",
+        "updater/build-x86/",
+        "/Fe:",
+        "bin/updater-x86.exe",
+        "updater/main.cpp",
+         "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libconcrtd.lib",
+         "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/vcruntimed.lib",
+         "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/msvcrtd.lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/ucrt/x86/ucrtd.lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Uuid.Lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/ShLwApi.Lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Ole32.lib",
+         "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcpmtd.lib",
+         "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/lib/x86/libcmtd.lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/kernel32.Lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/shell32.Lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Comdlg32.lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/user32.Lib",
+         "/link",
+         "/MACHINE:X86"
+      ],
+      "problemMatcher": ["$msCompile"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+  ]
 }
