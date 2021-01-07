@@ -3,7 +3,6 @@
 #include <Windows.h>
 #include <shlwapi.h>
 #include <functional>
-#include "service.h"
 
 auto const SERVICE_NAME = "Obl---Daemon";
 
@@ -33,8 +32,7 @@ void log (char *msg) {
     }
 }
 
-void setServiceStatus (unsigned long currentState, unsigned long exitCode = NO_ERROR, unsigned long waitHint = 0)
-{
+void setServiceStatus (unsigned long currentState, unsigned long exitCode = NO_ERROR, unsigned long waitHint = 0) {
     static unsigned long checkPoint = 1;
 
     srvData.status.dwCurrentState  = currentState;

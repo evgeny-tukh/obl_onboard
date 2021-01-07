@@ -348,6 +348,7 @@
         "wininet.lib",
         "advapi32.lib",
         "Comdlg32.lib",
+        "Shell32.lib",
         "shlwapi.lib"
       ],
       "problemMatcher": ["$msCompile"],
@@ -381,6 +382,7 @@
          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/kernel32.Lib",
          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/shell32.Lib",
          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Comdlg32.lib",
+         "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/Shell32.lib",
          "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.17763.0/um/x86/user32.Lib",
          "/link",
          "/MACHINE:X86"

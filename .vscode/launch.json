@@ -57,11 +57,12 @@
             "name": "debug Updater",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/updater.exe",
+            "program": "${workspaceFolder}/updater-test/updater.exe",
             "args": [
+                "C:\\Users\\jecat\\source\\repos\\obl\\bin-test",
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/bin",
+            "cwd": "${workspaceFolder}/updater-test",
             "environment": [],
             "externalConsole": false
         },
