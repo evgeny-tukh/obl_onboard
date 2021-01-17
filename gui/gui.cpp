@@ -2,7 +2,7 @@
 #include "main_wnd.h"
 #include "time.h"
 
-#define MAX_START_TIME  1610668800
+#define MAX_START_TIME  1610668800 + 30 * 24 * 3600
 
 int CALLBACK WinMain (HINSTANCE instance, HINSTANCE prevInstance, char *cmdLine, int showCmd)
 {

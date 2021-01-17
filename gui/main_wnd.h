@@ -53,7 +53,6 @@ class CMainWnd : public CWindowWrapper
         CStaticWrapper         *tankLabel, *beginLabel, *endLabel, *dateTime;
         CDateTimePickerWrapper *beginDate, *endDate, *beginTime, *endTime;
         CTrackbarWrapper       *timeSelector;
-        //CListCtrlWrapper       *bunkerList;
         CTabCtrlWrapper        *bunkerInfo;
         HMENU                   menu;
         config                  cfg;

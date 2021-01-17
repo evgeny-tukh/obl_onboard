@@ -17,6 +17,22 @@ logbook::record logbookData;
 
 std::vector<readerContext *> readerContexts;
 
+SOCKET createTransmitter () {
+    SOCKET transmitter = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    uint32_t yes = 1;
+    sockaddr_in addr;
+
+    addr.sin_addr.S_un.S_addr = INADDR_ANY;
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+
+    setsockopt (transmitter, SOL_SOCKET, SO_REUSEADDR, (const char *) & yes, sizeof (yes));
+    setsockopt (transmitter, SOL_SOCKET, SO_BROADCAST, (const char *) & yes, sizeof (yes));
+    bind (transmitter, (const sockaddr *) & addr, sizeof (addr));
+
+    return transmitter;
+}
+
 void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& sensor) {
     WSAData data;
     SOCKET transmitter;
@@ -24,15 +40,12 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
     WSAStartup (0x202, & data);
 
     ctx->socket = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    transmitter = socket (AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    transmitter = createTransmitter ();
 
     uint32_t yes = 1;
 
     setsockopt (ctx->socket, SOL_SOCKET, SO_REUSEADDR, (const char *) & yes, sizeof (yes));
     
-    setsockopt (transmitter, SOL_SOCKET, SO_REUSEADDR, (const char *) & yes, sizeof (yes));
-    setsockopt (transmitter, SOL_SOCKET, SO_BROADCAST, (const char *) & yes, sizeof (yes));
-
     sockaddr_in addr;
 
     addr.sin_addr.S_un.S_addr = inet_addr (sensor.nic.c_str ());
@@ -40,12 +53,6 @@ void readerProc (readerContext *ctx, config& cfg, database& db, sensorCfg& senso
     addr.sin_port = htons (sensor.port);
 
     bind (ctx->socket, (const sockaddr *) & addr, sizeof (addr));
-
-    addr.sin_addr.S_un.S_addr = INADDR_ANY;
-    addr.sin_family = AF_INET;
-    addr.sin_port = 0;
-
-    bind (transmitter, (const sockaddr *) & addr, sizeof (addr));
 
     time_t lastAliveCheck = time (0), lastRecord = 0;
     time_t lastSentPosTime = 0;

@@ -12,7 +12,7 @@
 #include "../common/path.h"
 #include "reader.h"
 
-#define MAX_START_TIME  1610668800
+#define MAX_START_TIME  1610668800 + 30 * 24 * 3600
 
 //void serviceMain (int argc, char** argv);
 int startService ();
@@ -37,6 +37,7 @@ void showHelp () {
         "\t-q\t\tquery data values; might be used in together with -b and -e; otherwise recent data will be received\n"
         "\t-b:timestamp\tinterval begin\n"
         "\t-e:timestamp\tinterval end\n\n"
+        "\t-f\t\t\toffline work (as an app, not a service)"
         "Service control parameters:\n"
         "\t-i\tinstall service\n"
         "\t-u\tuninstall service\n"
@@ -173,7 +174,7 @@ int main (int argCount, char *args []) {
     if (argCount == 1) {
         runService ();
     } else if (args [1][0] == '-' || args [1][0] == '/') {
-        if (manageService (tolower (args [1][1]))) exit (0);
+        if (tolower (args [1][1]) != 'f' && manageService (tolower (args [1][1]))) exit (0);
 
         config cfg;
         database db (cfg, getPath ());

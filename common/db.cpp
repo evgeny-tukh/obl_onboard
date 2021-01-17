@@ -28,12 +28,12 @@ char *initialQueries [] {
     "create index idx_order on data(operation,parameter,column)",
 
     "create table volumes(id integer not null primary key asc,tank integer not null,timestamp integer not null,value real not null)",
-    "create index idx_vol1 on volumes(tank,timestamp)",
-    "create index idx_vol2 on volumes(timestamp,tank)",
+    "create unique index idx_vol1 on volumes(tank,timestamp)",
+    "create unique index idx_vol2 on volumes(timestamp,tank)",
 
     "create table meters(id integer not null primary key asc,meter integer not null,timestamp integer not null,value real not null)",
-    "create index idx_mtr1 on meters(meter,timestamp)",
-    "create index idx_mtr2 on meters(timestamp,meter)",
+    "create unique index idx_mtr1 on meters(meter,timestamp)",
+    "create unique index idx_mtr2 on meters(timestamp,meter)",
 
     "create table bunkerings("
     "id integer not null primary key asc,"
@@ -103,8 +103,8 @@ char *initialQueries [] {
     "vcf_after_rep real not null,"
     "vcf_after_by_vol real not null,"
     "vcf_after_by_cnt real not null)",
-    "create index idx_tankstate1 on tank_state(bunkering,tank)",
-    "create index idx_tankstate2 on tank_state(tank,bunkering)",
+    "create unique index idx_tankstate1 on tank_state(bunkering,tank)",
+    "create unique index idx_tankstate2 on tank_state(tank,bunkering)",
 
     0,
 };

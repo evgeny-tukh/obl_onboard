@@ -74,6 +74,7 @@ void parseCfgFile (config& cfg) {
         json::stringNode *draftAft = (json::stringNode *) (*root) ["draftAftChannel"];
         json::stringNode *draftFore = (json::stringNode *) (*root) ["draftForeChannel"];
         json::arrayNode *layout = (json::arrayNode *) (*root) ["layout"];
+        json::hashNode *nmeaSources = (json::hashNode *) (*root) ["nmeaSources"];
 
         if (host != json::nothing) cfg.host = host->getValue ();
         if (path != json::nothing) cfg.path = path->getValue ();
@@ -131,6 +132,15 @@ void parseCfgFile (config& cfg) {
                     if (id != json::nothing && name != json::nothing && type != json::nothing) {
                         cfg.fuelMeters.emplace_back ((uint16_t) id->getValue (), name->getValue (), type->getValue ());
                     }
+                }
+            }
+        }
+        if (nmeaSources != json::nothing) {
+            for (auto& item = nmeaSources->begin (); item != nmeaSources->end (); ++ item) {
+                json::numberNode *source = (json::numberNode *) item->second;
+
+                if (source != json::nothing) {
+                    cfg.nmeaSources.emplace_back (item->first, (uint16_t) source->getValue ());
                 }
             }
         }

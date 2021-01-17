@@ -120,15 +120,18 @@ LRESULT CMainWnd::OnMessage (UINT message, WPARAM wParam, LPARAM lParam) {
                 shipSchema->onNewData ();
             } else if (message == cfg.posChangedMsg) {
                 lastDataUpdate = time (0);
+                shipSchema->setNmeaUpdateTime (lastDataUpdate);
                 lat = wParam;
                 lon = lParam;
                 showNavData ();
             } else if (message == cfg.cogChangedMsg) {
                 lastDataUpdate = time (0);
+                shipSchema->setNmeaUpdateTime (lastDataUpdate);
                 cog = wParam;
                 showNavData ();
             } else if (message == cfg.sogChangedMsg) {
                 lastDataUpdate = time (0);
+                shipSchema->setNmeaUpdateTime (lastDataUpdate);
                 sog = wParam;
                 showNavData ();
             }
@@ -261,7 +264,8 @@ LRESULT CMainWnd::OnNotify (NMHDR *header) {
 
 LRESULT CMainWnd::OnTimer (unsigned int timerID) {
     if (timerID == 1100) {
-        if ((time (0) - lastDataUpdate) > cfg.timeout) {
+        time_t now = time (0);
+        if ((now - lastDataUpdate) > cfg.timeout) {
             lat = nmea::NO_VALID_DATA;
             lon = nmea::NO_VALID_DATA;
             sog = nmea::NO_VALID_DATA;

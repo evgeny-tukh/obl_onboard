@@ -32,4 +32,16 @@ void walkThroughFolder (char *path, walkCb cb, void *param);
 
 void exportJson (json::hashNode& root, config& cfg);
 
+inline auto hex2int (char digit) {
+    if (digit >= '0' && digit <= '9')
+        return digit - '0';
+    else if (digit >= 'a' && digit <= 'f')
+        return digit - 'a' + 10;
+    else if (digit >= 'A' && digit <= 'F')
+        return digit - 'A' + 10;
+    else
+        return 0;
+}
+
+
 

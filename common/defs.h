@@ -254,6 +254,15 @@ struct sensorCfg {
     sensorCfg (const char *_type, const char *_nic, uint32_t _port): type (_type), nic (_nic), port (_port) {}
 };
 
+struct nmeaSource {
+    char source [10];
+    uint16_t port;
+
+    nmeaSource (char *_source, uint16_t _port): port (_port) {
+        strcpy (source, _source);
+    }
+};
+
 struct config {
     std::string host, path;
     uint16_t port;
@@ -263,6 +272,7 @@ struct config {
     bool queryData;
     std::vector<tank> tanks;
     std::vector<fuelMeter> fuelMeters;
+    std::vector<nmeaSource> nmeaSources;
     ship shipInfo;
     time_t pollingInterval, timeout, logbookPeriod;
     uint32_t newDataMsg, posChangedMsg, sogChangedMsg, cogChangedMsg, hdgChangedMsg;
@@ -273,6 +283,14 @@ struct config {
     std::vector<sensorCfg> sensors;
     std::string draftForeChannel, draftAftChannel;
     std::map<int, layoutElement> layout;
+
+    nmeaSource *findNmeaSource (char *name) {
+        for (auto& src: nmeaSources) {
+            if (strcmp (src.source, name) == 0) return & src;
+        }
+        
+        return 0;
+    }
 
     tank *findTank (char *name) {
         for (auto& tank: tanks) {

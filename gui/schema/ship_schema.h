@@ -25,6 +25,11 @@ class ShipSchema: public CWindowWrapper {
         void onNewData ();
 
         void redrawTanks ();
+
+        inline void setNmeaUpdateTime (time_t time) {
+            nmeaUpdateTime = time;
+            updateStatus ();
+        }
         
     private:
         static const int DATE_TIME_WIDTH = 200;
@@ -38,7 +43,7 @@ class ShipSchema: public CWindowWrapper {
         gdiObjects objects;
         int selectedTank;
         dataHistory *history;
-        time_t timestamp;
+        time_t timestamp, nmeaUpdateTime;
         uint32_t updateTimer;
         bool isHistoryMode;
         

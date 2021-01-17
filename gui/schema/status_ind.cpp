@@ -6,7 +6,7 @@ StatusIndicator::StatusIndicator (HINSTANCE instance, HWND parent, UINT_PTR id):
 {
     red = CreateSolidBrush (RGB (255, 0, 0));
     green = CreateSolidBrush (RGB (0, 255, 0));
-    yellow = CreateSolidBrush (RGB (255, 150, 0));
+    yellow = CreateSolidBrush (RGB (255, 200, 0));
 }
 
 StatusIndicator::~StatusIndicator () {

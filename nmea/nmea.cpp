@@ -1,6 +1,7 @@
 #include "nmea.h"
 #include <iostream>
 #include <sstream>
+#include "../common/tools.h"
 
 namespace nmea {
     gpsPos pos;
@@ -53,6 +54,7 @@ bool nmea::sentence::parse (char *source) {
     if (!asteriskPos) return false;
 
     // look for crc
+    #if 0
     auto hex2int = [] (char digit) {
         if (digit >= '0' && digit <= '9')
             return digit - '0';
@@ -63,6 +65,7 @@ bool nmea::sentence::parse (char *source) {
         else
             return 0;
     };
+    #endif
     
     uint8_t crc = source [1], presentCrc = hex2int (asteriskPos [1]) * 16 + hex2int (asteriskPos [2]);
 

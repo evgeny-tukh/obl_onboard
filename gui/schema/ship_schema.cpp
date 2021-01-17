@@ -11,6 +11,7 @@ ShipSchema::ShipSchema (HINSTANCE instance, HWND parent, database& _db, config& 
     selectedTank (-1),
     timeline (0),
     dateTime (0),
+    nmeaUpdateTime (0),
     historyMode (0), onlineMode (0), statusIndicator (0),
     isHistoryMode (false),
     CWindowWrapper (instance, parent, "obl_ship_schema") {
@@ -363,6 +364,10 @@ void ShipSchema::updateStatus () {
 
     time_t minDelay = 2000000000, maxDelay = 0, maxTimestamp = 0;
 
+    auto nmeaDelay = now - nmeaUpdateTime;
+    if (nmeaDelay > maxDelay) maxDelay = nmeaDelay;
+    if (nmeaDelay < minDelay) minDelay = nmeaDelay;
+
     auto checkValues = [&minDelay, &maxDelay, now, & maxTimestamp] (database::valueMap& values) {
         for (auto& value: values) {
             auto delay = now - value.second.timestamp;
@@ -379,7 +384,7 @@ void ShipSchema::updateStatus () {
 
     if (maxDelay < cfg.timeout)
         statusIndicator->setStatus (StatusIndicator::dataStatus::ok);
-    else if (maxDelay < cfg.timeout)
+    else if (minDelay < cfg.timeout)
         statusIndicator->setStatus (StatusIndicator::dataStatus::warning);
     else
         statusIndicator->setStatus (StatusIndicator::dataStatus::failure);
