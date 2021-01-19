@@ -166,7 +166,7 @@ LRESULT BunkeringWindow::OnSize (const DWORD requestType, const WORD width, cons
     return FALSE;
 }
 
-void BunkeringWindow::exportReportData (bunkeringData& data) {
+bool BunkeringWindow::exportReportData (bunkeringData& data) {
     json::hashNode root, dataNode, fuelMeters, fuelMetersBefore, fuelMetersAfter, loaded, draft, draftBefore, draftAfter;
     json::arrayNode tanks;
 
@@ -232,7 +232,7 @@ void BunkeringWindow::exportReportData (bunkeringData& data) {
     root.add ("type", new json::stringNode ("bunkering"));
     root.add ("data", & dataNode);
 
-    exportJson (root, cfg);
+    return exportJson (root, cfg);
 }
 
 void BunkeringWindow::calcFuelWeight () {
@@ -350,8 +350,7 @@ LRESULT BunkeringWindow::OnCommand (WPARAM wParam, LPARAM lParam) {
         case ID_EXPORT_REPORT: {
             int index = bunkerList->GetSelectedItem ();
             if (index >= 0) {
-                exportReportData (list [index]);
-                MessageBox ("Результаты букировки успешно экспортированы", "Информация", MB_ICONINFORMATION);
+                if (exportReportData (list [index])) MessageBox ("Результаты букировки успешно экспортированы", "Информация", MB_ICONINFORMATION);
             }
             break;
         }

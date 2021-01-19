@@ -1,9 +1,10 @@
-#include <stdlib.h>
+﻿#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <cstdint>
 #include <Windows.h>
 #include <Shlwapi.h>
+#include <ShlObj.h>
 
 #include "tools.h"
 #include "json.h"
@@ -120,18 +121,43 @@ void walkThroughFolder (char *path, walkCb cb, void *param) {
     }
 }
 
-void exportJson (json::hashNode& root, config& cfg) {
+bool exportJson (json::hashNode& root, config& cfg) {
     char buffer [100];
     auto content = root.serialize ();
     
     char path [MAX_PATH];
+
+    auto folder = cfg.repCfg.exportPath.c_str ();
+
+    if (!PathFileExists (folder)) {
+        char msg [1000];
+        sprintf (msg, "Папка '%s' не существует.\nЖелаете создать ее?", folder);
+        if (MessageBox (HWND_DESKTOP, msg, "Ошибка", MB_YESNO | MB_ICONQUESTION) == IDYES) {
+            wchar_t folderW [MAX_PATH];
+            MultiByteToWideChar (CP_ACP, 0, folder, -1, folderW, MAX_PATH);
+            if (SHCreateDirectory (HWND_DESKTOP, folderW) != ERROR_SUCCESS) {
+                sprintf (msg, "Невозможно создать папку '%s'", folder);
+                MessageBox (HWND_DESKTOP, msg, "Ошибка", MB_ICONSTOP);
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
     PathCombineA (path, cfg.repCfg.exportPath.c_str (), _ltoa (time (0), buffer, 10));
     PathRenameExtensionA (path, ".json");
     replaceSlashes (path);
 
     FILE *output = fopen (path, "wb");
 
-    fwrite (content.c_str (), 1, content.length (), output);
-    fclose (output);
+    if (output) {
+        fwrite (content.c_str (), 1, content.length (), output);
+        fclose (output);
+
+        return true;
+    } else {
+        MessageBox (HWND_DESKTOP, "Невозможно экспортировать бункеровку", "Ошибка", MB_ICONSTOP); return false;
+    }
 }
 

@@ -82,7 +82,7 @@ class BunkeringWindow: public CWindowWrapper {
         void enableEditor (bool enable);
 
         void preLoadData (bunkeringData& data);
-        void exportReportData (bunkeringData& data);
+        bool exportReportData (bunkeringData& data);
 
         bool isTankInfoBefore (uint32_t id);
         bool isTankInfoAfter (uint32_t id);
